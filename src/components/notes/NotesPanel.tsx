@@ -13,6 +13,7 @@ interface NotesPanelProps {
   onCreateNote: () => void;
   onSearchChange: (query: string) => void;
   onEmptyTrash?: () => void;
+  searchInputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
 export const NotesPanel: React.FC<NotesPanelProps> = ({
@@ -24,8 +25,10 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
   onCreateNote,
   onSearchChange,
   onEmptyTrash,
+  searchInputRef: externalSearchRef,
 }) => {
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const internalSearchRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = externalSearchRef || internalSearchRef;
 
   const searchResults = searchService.filterNotes(notes, filter);
 

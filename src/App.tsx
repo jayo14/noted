@@ -7,6 +7,7 @@ import { authService } from "@/services/authService";
 import { getStorageAdapter } from "@/lib/storage";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { MobileDrawer } from "@/components/navigation/MobileDrawer";
+import { ShortcutsModal } from "@/components/navigation/ShortcutsModal";
 import { NotesPanel } from "@/components/notes/NotesPanel";
 import { Editor } from "@/components/editor/Editor";
 import { SettingsModal } from "@/components/settings/SettingsModal";
@@ -26,6 +27,8 @@ export function App() {
 
   const [theme, setTheme] = useState<ThemePreference>("system");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const [supabaseUrl, setSupabaseUrl] = useState("");
@@ -371,15 +374,43 @@ export function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isCmdOrCtrl = e.metaKey || e.ctrlKey;
 
+      if (e.key === "Escape") {
+        setIsSettingsOpen(false);
+        setIsShortcutsOpen(false);
+        return;
+      }
+
       if (isCmdOrCtrl && e.key.toLowerCase() === "n") {
         e.preventDefault();
         handleCreateNote();
+      } else if (isCmdOrCtrl && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
       } else if (isCmdOrCtrl && e.key.toLowerCase() === "p") {
         e.preventDefault();
         handleTogglePin();
       } else if (isCmdOrCtrl && e.shiftKey && e.key.toLowerCase() === "d") {
         e.preventDefault();
         handleDeleteCurrentNote();
+      } else if (isCmdOrCtrl && e.shiftKey && e.key.toLowerCase() === "m") {
+        e.preventDefault();
+        handleExportNote();
+      } else if (isCmdOrCtrl && (e.key === "," || (e.shiftKey && e.key.toLowerCase() === "s"))) {
+        e.preventDefault();
+        setIsSettingsOpen((prev) => !prev);
+      } else if (isCmdOrCtrl && e.key === "/") {
+        e.preventDefault();
+        setIsShortcutsOpen((prev) => !prev);
+      } else if (isCmdOrCtrl && e.key === "1") {
+        e.preventDefault();
+        setFilter((prev) => ({ ...prev, section: "all", collectionId: null }));
+      } else if (isCmdOrCtrl && e.key === "2") {
+        e.preventDefault();
+        setFilter((prev) => ({ ...prev, section: "pinned", collectionId: null }));
+      } else if (isCmdOrCtrl && e.key === "3") {
+        e.preventDefault();
+        setFilter((prev) => ({ ...prev, section: "trash", collectionId: null }));
       }
     };
 
@@ -419,6 +450,7 @@ export function App() {
               onCreateNote={handleCreateNote}
               onSearchChange={(searchQuery) => setFilter((prev) => ({ ...prev, searchQuery }))}
               onEmptyTrash={handleEmptyTrash}
+              searchInputRef={searchInputRef}
             />
           </div>
 
@@ -512,6 +544,7 @@ export function App() {
                   onCreateNote={handleCreateNote}
                   onSearchChange={(searchQuery) => setFilter((prev) => ({ ...prev, searchQuery }))}
                   onEmptyTrash={handleEmptyTrash}
+                  searchInputRef={searchInputRef}
                 />
               </div>
             </div>
@@ -589,6 +622,12 @@ export function App() {
           await authService.configureClient(url, key);
         }}
         onImportFile={handleImportFile}
+      />
+
+      {/* Keyboard Shortcuts Cheat Sheet */}
+      <ShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
       />
     </div>
   );
