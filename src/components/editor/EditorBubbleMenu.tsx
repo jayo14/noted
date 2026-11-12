@@ -1,19 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import type { Editor } from "@tiptap/core";
-import {
-  Bold,
-  Italic,
-  Underline as UnderlineIcon,
-  Strikethrough,
-  Code,
-  Highlighter,
-  Link2,
-  Heading1,
-  Heading2,
-  CheckSquare,
-  List,
-  Quote,
-} from "lucide-react";
+import { Icon } from "@/components/ui/Icon";
 
 interface EditorBubbleMenuProps {
   editor: Editor | null;
@@ -92,11 +79,11 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
         transform: "translateX(-50%)",
         zIndex: 50,
       }}
-      className="flex items-center gap-0.5 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] px-1.5 py-1 shadow-lg backdrop-blur-md transition-opacity duration-150"
+      className="flex items-center gap-0.5 rounded-full border border-black/10 dark:border-white/10 bg-[#161514] text-white px-2 py-1 shadow-2xl backdrop-blur-md transition-opacity duration-150 select-none animate-in fade-in zoom-in-95"
       onMouseDown={(e) => e.preventDefault()}
     >
       {showLinkInput ? (
-        <div className="flex items-center gap-1 px-1 py-0.5">
+        <div className="flex items-center gap-1.5 px-1 py-0.5">
           <input
             type="text"
             placeholder="https://..."
@@ -110,12 +97,12 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
                 setShowLinkInput(false);
               }
             }}
-            className="w-44 bg-[var(--bg-app)] px-2 py-1 text-xs outline-none rounded border border-[var(--border-subtle)] text-[var(--text-primary)]"
+            className="w-44 bg-white/10 px-2.5 py-1 text-xs outline-none rounded-full border border-white/20 text-white placeholder-neutral-400"
             autoFocus
           />
           <button
             onClick={handleSetLink}
-            className="rounded bg-[var(--accent)] px-2 py-1 text-xs text-[var(--accent-contrast)] hover:opacity-90"
+            className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#161514] hover:opacity-90"
           >
             Apply
           </button>
@@ -124,77 +111,77 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
         <>
           <button
             onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
               editor.isActive("bold")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)]"
+                ? "bg-white/25 text-white font-bold"
+                : "text-neutral-300 hover:bg-white/10 hover:text-white"
             }`}
             title="Bold (Cmd+B)"
           >
-            <Bold size={14} />
+            <span className="font-bold text-xs px-0.5">B</span>
           </button>
 
           <button
             onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
               editor.isActive("italic")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)]"
+                ? "bg-white/25 text-white font-bold"
+                : "text-neutral-300 hover:bg-white/10 hover:text-white"
             }`}
             title="Italic (Cmd+I)"
           >
-            <Italic size={14} />
+            <span className="italic font-serif text-xs px-0.5">I</span>
           </button>
 
           <button
             onClick={() => editor.chain().focus().toggleUnderline().run()}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
               editor.isActive("underline")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)]"
+                ? "bg-white/25 text-white font-bold"
+                : "text-neutral-300 hover:bg-white/10 hover:text-white"
             }`}
             title="Underline (Cmd+U)"
           >
-            <UnderlineIcon size={14} />
+            <span className="underline text-xs px-0.5">U</span>
           </button>
 
           <button
             onClick={() => editor.chain().focus().toggleStrike().run()}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
               editor.isActive("strike")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)]"
+                ? "bg-white/25 text-white font-bold"
+                : "text-neutral-300 hover:bg-white/10 hover:text-white"
             }`}
             title="Strikethrough"
           >
-            <Strikethrough size={14} />
+            <span className="line-through text-xs px-0.5">S</span>
           </button>
 
           <button
             onClick={() => editor.chain().focus().toggleCode().run()}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
               editor.isActive("code")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)]"
+                ? "bg-white/25 text-white font-bold"
+                : "text-neutral-300 hover:bg-white/10 hover:text-white"
             }`}
             title="Inline Code"
           >
-            <Code size={14} />
+            <Icon name="code" size={15} />
           </button>
 
           <button
             onClick={() => editor.chain().focus().toggleHighlight().run()}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
               editor.isActive("highlight")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)]"
+                ? "bg-white/25 text-white font-bold"
+                : "text-neutral-300 hover:bg-white/10 hover:text-white"
             }`}
             title="Highlight"
           >
-            <Highlighter size={14} />
+            <Icon name="ink_highlighter" size={15} />
           </button>
 
-          <div className="mx-1 h-3.5 w-px bg-[var(--border-strong)]" />
+          <div className="mx-1 h-3.5 w-px bg-white/20" />
 
           <button
             onClick={() => {
@@ -202,74 +189,74 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
               setLinkUrl(prevUrl);
               setShowLinkInput(true);
             }}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
               editor.isActive("link")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)]"
+                ? "bg-white/25 text-white font-bold"
+                : "text-neutral-300 hover:bg-white/10 hover:text-white"
             }`}
             title="Add Link"
           >
-            <Link2 size={14} />
+            <Icon name="link" size={15} />
           </button>
 
           <button
             onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
               editor.isActive("heading", { level: 1 })
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)]"
+                ? "bg-white/25 text-white font-bold"
+                : "text-neutral-300 hover:bg-white/10 hover:text-white"
             }`}
             title="Heading 1"
           >
-            <Heading1 size={14} />
+            <Icon name="format_h1" size={15} />
           </button>
 
           <button
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
               editor.isActive("heading", { level: 2 })
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)]"
+                ? "bg-white/25 text-white font-bold"
+                : "text-neutral-300 hover:bg-white/10 hover:text-white"
             }`}
             title="Heading 2"
           >
-            <Heading2 size={14} />
+            <Icon name="format_h2" size={15} />
           </button>
 
           <button
             onClick={() => editor.chain().focus().toggleTaskList().run()}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
               editor.isActive("taskList")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)]"
+                ? "bg-white/25 text-white font-bold"
+                : "text-neutral-300 hover:bg-white/10 hover:text-white"
             }`}
             title="Checklist"
           >
-            <CheckSquare size={14} />
+            <Icon name="check_box" size={15} />
           </button>
 
           <button
             onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
               editor.isActive("bulletList")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)]"
+                ? "bg-white/25 text-white font-bold"
+                : "text-neutral-300 hover:bg-white/10 hover:text-white"
             }`}
             title="Bullet List"
           >
-            <List size={14} />
+            <Icon name="format_list_bulleted" size={15} />
           </button>
 
           <button
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            className={`p-1.5 rounded transition-colors ${
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
               editor.isActive("blockquote")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)]"
+                ? "bg-white/25 text-white font-bold"
+                : "text-neutral-300 hover:bg-white/10 hover:text-white"
             }`}
             title="Quote"
           >
-            <Quote size={14} />
+            <Icon name="format_quote" size={15} />
           </button>
         </>
       )}

@@ -5,8 +5,21 @@ import Link from "@tiptap/extension-link";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import Placeholder from "@tiptap/extension-placeholder";
+import { Extension, wrappingInputRule } from "@tiptap/core";
 
-export function getEditorExtensions(placeholder = "Write freely...") {
+export const ChecklistInputRule = Extension.create({
+  name: "checklistInputRule",
+  addInputRules() {
+    return [
+      wrappingInputRule({
+        find: /^\s*(\[ \]|\[\])\s$/,
+        type: this.editor.schema.nodes.taskList,
+      }),
+    ];
+  },
+});
+
+export function getEditorExtensions(placeholder = "Write freely... (type '/' for commands)") {
   return [
     StarterKit.configure({
       heading: {
@@ -51,6 +64,7 @@ export function getEditorExtensions(placeholder = "Write freely...") {
         class: "noted-task-item",
       },
     }),
+    ChecklistInputRule,
     Placeholder.configure({
       placeholder,
       emptyEditorClass: "is-editor-empty",
