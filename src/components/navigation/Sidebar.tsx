@@ -84,7 +84,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           data-tauri-drag-region
           className="flex items-center gap-2.5 px-1 pt-1 pb-4"
         >
-          <div className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-[#141312] text-white shadow-xs">
+          <div className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-[var(--accent)] text-[var(--accent-contrast)] shadow-xs">
             {/* Angled pen symbol from noted logo */}
             <svg
               width="13"
@@ -99,7 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
             </svg>
           </div>
-          <span className="text-[14.5px] font-bold tracking-tight text-[#141312] dark:text-[#f7f5f0]">
+          <span className="text-[14.5px] font-bold tracking-tight text-[var(--text-primary)]">
             noted.
           </span>
         </div>
@@ -289,7 +289,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Synced Card */}
         <div className="flex items-center justify-between rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-2.5 text-xs shadow-2xs">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--bg-editor)] text-[var(--text-muted)]">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--bg-editor)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
               <Icon name="cloud_done" size={17} />
             </div>
             <div>
