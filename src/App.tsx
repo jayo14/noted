@@ -113,8 +113,11 @@ export function App() {
         const laterCol = loadedCollections.find((c) => c.name === "Later")?.id || null;
 
         // Note 1: Weekend plans (Pinned, Active, matching Image 0)
+        const nowMs = Date.now();
         const noteWeekend = await noteService.createNote(personalCol, "Weekend plans");
         noteWeekend.is_pinned = true;
+        noteWeekend.created_at = new Date(nowMs - 2 * 60 * 1000).toISOString();
+        noteWeekend.updated_at = new Date(nowMs - 2 * 60 * 1000).toISOString();
         noteWeekend.content = {
           type: "doc",
           content: [
@@ -193,6 +196,8 @@ export function App() {
 
         // Note 2: Project ideas (matching Image 0)
         const noteIdeas = await noteService.createNote(ideasCol, "Project ideas");
+        noteIdeas.created_at = new Date(nowMs - 60 * 60 * 1000).toISOString();
+        noteIdeas.updated_at = new Date(nowMs - 60 * 60 * 1000).toISOString();
         noteIdeas.content = {
           type: "doc",
           content: [
@@ -206,6 +211,8 @@ export function App() {
 
         // Note 3: A little poem (matching Image 0)
         const notePoem = await noteService.createNote(personalCol, "A little poem");
+        notePoem.created_at = new Date(nowMs - 2 * 60 * 60 * 1000).toISOString();
+        notePoem.updated_at = new Date(nowMs - 2 * 60 * 60 * 1000).toISOString();
         notePoem.content = {
           type: "doc",
           content: [
@@ -224,6 +231,8 @@ export function App() {
 
         // Note 4: Groceries (matching Image 0)
         const noteGroceries = await noteService.createNote(tasksCol, "Groceries");
+        noteGroceries.created_at = new Date(nowMs - 3 * 60 * 60 * 1000).toISOString();
+        noteGroceries.updated_at = new Date(nowMs - 3 * 60 * 60 * 1000).toISOString();
         noteGroceries.content = {
           type: "doc",
           content: [
@@ -253,6 +262,8 @@ export function App() {
 
         // Note 5: Study notes (matching Image 0)
         const noteStudy = await noteService.createNote(projectsCol, "Study notes");
+        noteStudy.created_at = new Date(nowMs - 24 * 60 * 60 * 1000).toISOString();
+        noteStudy.updated_at = new Date(nowMs - 24 * 60 * 60 * 1000).toISOString();
         noteStudy.content = {
           type: "doc",
           content: [
@@ -266,6 +277,8 @@ export function App() {
 
         // Note 6: Later (matching Image 0)
         const noteLater = await noteService.createNote(laterCol, "Later");
+        noteLater.created_at = new Date(nowMs - 25 * 60 * 60 * 1000).toISOString();
+        noteLater.updated_at = new Date(nowMs - 25 * 60 * 60 * 1000).toISOString();
         noteLater.content = {
           type: "doc",
           content: [
@@ -288,8 +301,36 @@ export function App() {
         setNotes(allSeedNotes);
         setSelectedNoteId(noteWeekend.id);
       } else {
-        setNotes(loadedNotes);
-        const active = loadedNotes.filter((n) => n.deleted_at === null);
+        // Self-heal any seeded notes that had their titles clobbered by the previous cross-note bug
+        const repairedNotes = await Promise.all(
+          loadedNotes.map(async (n) => {
+            const text = extractTextFromJSONContent(n.content);
+            let intendedTitle = n.title;
+
+            if (text.includes("Finish the Kova update") && n.title !== "Weekend plans") {
+              intendedTitle = "Weekend plans";
+            } else if (text.includes("dev gigs in Nigeria") && n.title !== "Project ideas") {
+              intendedTitle = "Project ideas";
+            } else if (text.includes("The night is quiet") && n.title !== "A little poem") {
+              intendedTitle = "A little poem";
+            } else if (text.includes("Milk") && text.includes("Eggs") && n.title !== "Groceries") {
+              intendedTitle = "Groceries";
+            } else if (text.includes("Data structures: trees") && n.title !== "Study notes") {
+              intendedTitle = "Study notes";
+            } else if (text.includes("Tauri features") && n.title !== "Later") {
+              intendedTitle = "Later";
+            }
+
+            if (intendedTitle !== n.title) {
+              await noteService.updateNote(n.id, { title: intendedTitle });
+              return { ...n, title: intendedTitle };
+            }
+            return n;
+          }),
+        );
+
+        setNotes(repairedNotes);
+        const active = repairedNotes.filter((n) => n.deleted_at === null);
         if (active.length > 0) {
           setSelectedNoteId(active[0].id);
         }
