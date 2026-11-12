@@ -51,7 +51,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-      <div className="flex h-[520px] w-full max-w-lg flex-col rounded-xl border border-[var(--border-strong)] bg-[var(--bg-app)] shadow-2xl overflow-hidden">
+      <div className="flex h-[520px] w-full max-w-lg flex-col rounded-xl border border-[var(--border-strong)] bg-[var(--bg-editor)] shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-5 py-3.5 bg-[var(--bg-surface)]">
           <div className="flex items-center gap-2">
@@ -62,7 +62,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
           </div>
           <button
             onClick={onClose}
-            className="rounded p-1 text-[var(--text-subtle)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] transition-colors"
+            className="rounded p-1 text-[var(--text-subtle)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -72,7 +72,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
         <div className="flex-1 overflow-y-auto p-5 space-y-5 text-xs">
           {shortcutGroups.map((group) => (
             <div key={group.group}>
-              <h3 className="text-[11px] font-semibold text-[var(--text-subtle)] uppercase tracking-wider mb-2">
+              <h3 className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
                 {group.group}
               </h3>
               <div className="space-y-1.5">
@@ -81,8 +81,8 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
                     key={item.label}
                     className="flex items-center justify-between py-1 border-b border-[var(--border-subtle)]/50"
                   >
-                    <span className="text-[var(--text-primary)]">{item.label}</span>
-                    <kbd className="rounded bg-[var(--bg-surface)] px-2 py-0.5 font-mono text-[10px] text-[var(--text-muted)] border border-[var(--border-subtle)]">
+                    <span className="text-[var(--text-primary)] font-medium">{item.label}</span>
+                    <kbd className="rounded bg-white dark:bg-[var(--bg-surface)] px-2 py-0.5 font-mono text-[10px] text-[var(--text-secondary)] border border-[var(--border-subtle)] shadow-2xs">
                       {item.shortcut}
                     </kbd>
                   </div>
