@@ -41,14 +41,14 @@ export function formatDate(isoString: string): string {
 export function formatNoteDateTime(isoString?: string | null): string {
   if (!isoString) {
     const now = new Date();
-    return `Today, ${now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+    return `Today, ${now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}`;
   }
 
   try {
     const date = new Date(isoString);
     if (isNaN(date.getTime())) {
       const now = new Date();
-      return `Today, ${now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+      return `Today, ${now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}`;
     }
 
     const now = new Date();
@@ -57,7 +57,7 @@ export function formatNoteDateTime(isoString?: string | null): string {
       date.getMonth() === now.getMonth() &&
       date.getFullYear() === now.getFullYear();
 
-    const timeStr = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    const timeStr = date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
 
     if (isToday) {
       return `Today, ${timeStr}`;
@@ -75,7 +75,7 @@ export function formatNoteDateTime(isoString?: string | null): string {
     }
 
     const isThisYear = date.getFullYear() === now.getFullYear();
-    const dateStr = date.toLocaleDateString([], {
+    const dateStr = date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       ...(isThisYear ? {} : { year: "numeric" }),
@@ -84,7 +84,7 @@ export function formatNoteDateTime(isoString?: string | null): string {
     return `${dateStr}, ${timeStr}`;
   } catch {
     const now = new Date();
-    return `Today, ${now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+    return `Today, ${now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}`;
   }
 }
 
