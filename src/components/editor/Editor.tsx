@@ -5,7 +5,7 @@ import { getEditorExtensions } from "./extensions";
 import { EditorBubbleMenu } from "./EditorBubbleMenu";
 import { FormatToolbar } from "./FormatToolbar";
 import { SlashCommandMenu } from "./SlashCommandMenu";
-import { calculateNoteStats, extractTitleAndPreview } from "@/lib/utils";
+import { calculateNoteStats, extractTitleAndPreview, formatNoteDateTime } from "@/lib/utils";
 import type { NoteStats, Collection } from "@/types";
 import { Icon } from "@/components/ui/Icon";
 import { settingsService, type AppPreferences } from "@/services/settingsService";
@@ -14,12 +14,13 @@ interface EditorProps {
   noteId: string;
   initialTitle: string;
   initialContent: JSONContent;
+  updatedAt?: string | null;
   isPinned?: boolean;
   collectionId?: string | null;
   collections?: Collection[];
   onSelectCollection?: (colId: string | null) => void;
   onCreateCollection?: (name: string) => Promise<void>;
-  onSave: (title: string, content: JSONContent, stats: NoteStats) => void;
+  onSave: (noteId: string, title: string, content: JSONContent, stats: NoteStats) => void;
   onTogglePin?: () => void;
   onDuplicate?: () => void;
   onDelete?: () => void;
@@ -36,6 +37,7 @@ export const Editor: React.FC<EditorProps> = ({
   noteId,
   initialTitle,
   initialContent,
+  updatedAt,
   isPinned = false,
   collectionId = null,
   collections = [],
@@ -63,6 +65,19 @@ export const Editor: React.FC<EditorProps> = ({
   const [isCreatingInlineCol, setIsCreatingInlineCol] = useState(false);
   const [typographyMode, setTypographyMode] = useState<"serif" | "sans">("serif");
   const [prefs, setPrefs] = useState<AppPreferences>(settingsService.getPreferences());
+  const [displayDateTime, setDisplayDateTime] = useState(() => formatNoteDateTime(updatedAt));
+
+  const noteIdRef = useRef(noteId);
+  noteIdRef.current = noteId;
+  const titleRef = useRef(title);
+  titleRef.current = title;
+  const isTitleExplicitRef = useRef(isTitleExplicit);
+  isTitleExplicitRef.current = isTitleExplicit;
+  const isSettingContentRef = useRef(false);
+
+  useEffect(() => {
+    setDisplayDateTime(formatNoteDateTime(updatedAt));
+  }, [noteId, updatedAt]);
 
   useEffect(() => {
     const unsub = settingsService.subscribe((p) => {
@@ -91,14 +106,16 @@ export const Editor: React.FC<EditorProps> = ({
 
   // Debounced save dispatcher
   const triggerSave = useCallback(
-    (currentTitle: string, currentContent: JSONContent) => {
+    (targetNoteId: string, currentTitle: string, currentContent: JSONContent) => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
       saveTimeoutRef.current = setTimeout(() => {
         const computedStats = calculateNoteStats(currentContent);
         setStats(computedStats);
-        onSave(currentTitle, currentContent, computedStats);
+        onSave(targetNoteId, currentTitle, currentContent, computedStats);
+        const now = new Date();
+        setDisplayDateTime(`Today, ${now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`);
       }, 350);
     },
     [onSave],
@@ -110,30 +127,42 @@ export const Editor: React.FC<EditorProps> = ({
     editable: !isReadOnly,
     autofocus: "end",
     onUpdate: ({ editor }) => {
+      if (isSettingContentRef.current) return;
+
       const json = editor.getJSON();
       const currentStats = calculateNoteStats(json);
       setStats(currentStats);
 
-      let effectiveTitle = title;
-      if (!isTitleExplicit) {
+      let effectiveTitle = titleRef.current;
+      if (!isTitleExplicitRef.current && prefs.autoGenerateTitle) {
         const { title: autoTitle } = extractTitleAndPreview(json, "Untitled");
         effectiveTitle = autoTitle;
         setTitle(autoTitle);
+        titleRef.current = autoTitle;
       }
 
-      triggerSave(effectiveTitle, json);
+      triggerSave(noteIdRef.current, effectiveTitle, json);
     },
   });
 
   // When noteId changes, update editor content and title
   useEffect(() => {
     if (editor && !editor.isDestroyed) {
-      editor.commands.setContent(initialContent || { type: "doc", content: [] });
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      isSettingContentRef.current = true;
+      editor.commands.setContent(initialContent || { type: "doc", content: [] }, { emitUpdate: false });
       setTitle(initialTitle);
+      titleRef.current = initialTitle;
       const isExplicit = initialTitle.trim().length > 0 && initialTitle !== "Untitled";
       setIsTitleExplicit(isExplicit);
+      isTitleExplicitRef.current = isExplicit;
       setStats(calculateNoteStats(initialContent));
+      setDisplayDateTime(formatNoteDateTime(updatedAt));
+
       setTimeout(() => {
+        isSettingContentRef.current = false;
         if (!editor.isDestroyed) {
           editor.commands.focus("end");
         }
@@ -153,9 +182,11 @@ export const Editor: React.FC<EditorProps> = ({
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
     setTitle(newTitle);
+    titleRef.current = newTitle;
     setIsTitleExplicit(true);
+    isTitleExplicitRef.current = true;
     if (editor) {
-      triggerSave(newTitle, editor.getJSON());
+      triggerSave(noteIdRef.current, newTitle, editor.getJSON());
     }
   };
 
@@ -167,7 +198,6 @@ export const Editor: React.FC<EditorProps> = ({
   };
 
   const currentCollection = collections.find((c) => c.id === collectionId);
-  const formattedDateTime = "Today, 2:47 PM";
 
   const scrollToTop = () => {
     canvasScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
@@ -217,7 +247,7 @@ export const Editor: React.FC<EditorProps> = ({
             {/* Date info */}
             <div className="flex items-center gap-1.5">
               <Icon name="calendar_today" size={14} className="text-[var(--text-muted)]" />
-              <span className="text-[12px] font-medium text-[var(--text-secondary)]">{formattedDateTime}</span>
+              <span className="text-[12px] font-medium text-[var(--text-secondary)]">{displayDateTime}</span>
             </div>
 
             <span className="h-3 w-px bg-[var(--border-subtle)]" />
