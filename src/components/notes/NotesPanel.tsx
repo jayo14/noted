@@ -64,7 +64,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
             placeholder="Search notes..."
             value={filter.searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full rounded-xl bg-[#EFECE5] dark:bg-[#252522] py-2 pl-9 pr-14 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none border border-transparent focus:border-[var(--border-strong)] transition-all"
+            className="w-full rounded-xl bg-[var(--bg-surface)] py-2 pl-9 pr-14 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none border border-[var(--border-subtle)] focus:border-[var(--border-strong)] transition-all"
           />
           <div className="absolute right-2.5 flex items-center gap-1 pointer-events-none">
             <kbd className="rounded-md border border-[var(--border-strong)] bg-[var(--bg-editor)] px-1.5 py-0.5 font-mono text-[9.5px] font-medium text-[var(--text-muted)]">
@@ -79,7 +79,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
         <div className="relative">
           <button
             onClick={onCreateNote}
-            className="flex items-center gap-1.5 rounded-full bg-[#161514] dark:bg-[#f7f5f0] px-3.5 py-1.5 text-xs font-semibold text-white dark:text-[#161514] hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
+            className="flex items-center gap-1.5 rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] px-3.5 py-1.5 text-xs font-semibold hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
             title="Create note"
           >
             <Icon name="add" size={15} />

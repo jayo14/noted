@@ -75,7 +75,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
       }}
       className={`group relative flex cursor-pointer gap-2.5 rounded-xl p-3 transition-all select-none mb-1 mx-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
         isSelected
-          ? "bg-white dark:bg-[#232321] border border-[var(--border-subtle)] shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+          ? "bg-[var(--bg-card-active)] border border-[var(--border-strong)] shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
           : "bg-transparent hover:bg-[var(--bg-surface-hover)] border border-transparent"
       }`}
     >
