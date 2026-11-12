@@ -18,13 +18,14 @@ export class CollectionService {
     return await storage.getCollections();
   }
 
-  public async createCollection(name: string): Promise<Collection> {
+  public async createCollection(name: string, icon?: string): Promise<Collection> {
     const storage = await getStorageAdapter();
     const now = nowISO();
     const collection: Collection = {
       id: generateUUID(),
       user_id: authService.getCurrentUserId(),
       name: name.trim() || "New Collection",
+      icon: icon || undefined,
       created_at: now,
       updated_at: now,
     };
