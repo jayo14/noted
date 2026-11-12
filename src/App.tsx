@@ -10,6 +10,7 @@ import { NotesPanel } from "@/components/notes/NotesPanel";
 import { Editor } from "@/components/editor/Editor";
 import { SettingsModal } from "@/components/settings/SettingsModal";
 import { extractTextFromJSONContent } from "@/lib/utils";
+import { exportNoteAsFile, jsonContentToMarkdown } from "@/lib/export";
 import { Menu } from "lucide-react";
 
 export function App() {
@@ -315,14 +316,7 @@ export function App() {
   // Export handlers
   const handleExportNote = () => {
     if (!currentNote) return;
-    const text = extractTextFromJSONContent(currentNote.content);
-    const blob = new Blob([`# ${currentNote.title}\n\n${text}`], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${currentNote.title.replace(/[^a-z0-9_-]/gi, "_") || "note"}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
+    exportNoteAsFile(currentNote, "markdown");
   };
 
   const handleExportAll = (format: "markdown" | "json") => {
@@ -337,7 +331,7 @@ export function App() {
       URL.revokeObjectURL(url);
     } else {
       const combined = active
-        .map((n) => `# ${n.title}\n\n${extractTextFromJSONContent(n.content)}\n\n---\n`)
+        .map((n) => `# ${n.title}\n\n${jsonContentToMarkdown(n.content)}\n\n---\n`)
         .join("\n");
       const blob = new Blob([combined], { type: "text/markdown" });
       const url = URL.createObjectURL(blob);
