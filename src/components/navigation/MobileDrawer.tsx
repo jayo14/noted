@@ -1,19 +1,7 @@
 import React, { useState, useEffect } from "react";
 import type { NavSection, Collection, Note, ThemePreference } from "@/types";
 import { authService, type AuthUser } from "@/services/authService";
-import {
-  FileText,
-  Pin,
-  Folder,
-  Trash2,
-  Settings,
-  X,
-  Plus,
-  Check,
-  Sun,
-  Moon,
-  Monitor,
-} from "lucide-react";
+import { Icon } from "@/components/ui/Icon";
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -27,6 +15,19 @@ interface MobileDrawerProps {
   onSelectSection: (section: NavSection, collectionId?: string | null) => void;
   onCreateCollection: (name: string) => Promise<void>;
   onOpenSettings: () => void;
+}
+
+function getCollectionIcon(name: string, customIcon?: string): string {
+  if (customIcon) return customIcon;
+  const lower = name.toLowerCase();
+  if (lower.includes("idea")) return "lightbulb";
+  if (lower.includes("task") || lower.includes("todo")) return "check_box";
+  if (lower.includes("work")) return "folder";
+  if (lower.includes("personal") || lower.includes("life")) return "folder";
+  if (lower.includes("study") || lower.includes("learn") || lower.includes("book")) return "school";
+  if (lower.includes("travel") || lower.includes("trip")) return "flight";
+  if (lower.includes("later") || lower.includes("wait")) return "schedule";
+  return "folder";
 }
 
 export const MobileDrawer: React.FC<MobileDrawerProps> = ({
@@ -58,7 +59,6 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   const activeNotes = notes.filter((n) => n.deleted_at === null);
   const allCount = activeNotes.length;
   const pinnedCount = activeNotes.filter((n) => n.is_pinned).length;
-  const trashCount = notes.filter((n) => n.deleted_at !== null).length;
 
   const handleSelect = (section: NavSection, colId: string | null = null) => {
     onSelectSection(section, colId);
@@ -67,23 +67,23 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex bg-black/60 backdrop-blur-xs">
-      <div className="relative flex h-full w-72 flex-col justify-between bg-[var(--bg-surface)] p-4 shadow-xl">
+      <div className="relative flex h-full w-72 flex-col justify-between bg-[var(--bg-sidebar)] p-4 shadow-2xl select-none">
         {/* Header */}
         <div>
           <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded bg-[var(--accent)] flex items-center justify-center text-[var(--accent-contrast)] text-xs font-bold">
-                N
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-[#141312] text-white">
+                <span className="text-xs font-bold leading-none">N</span>
               </div>
-              <span className="text-base font-semibold tracking-tight text-[var(--text-primary)]">
-                Noted
+              <span className="text-[15px] font-semibold tracking-tight text-[var(--text-primary)]">
+                Notes
               </span>
             </div>
             <button
               onClick={onClose}
-              className="rounded p-1 text-[var(--text-subtle)] hover:text-[var(--text-primary)]"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
             >
-              <X size={18} />
+              <Icon name="close" size={17} />
             </button>
           </div>
 
@@ -91,44 +91,74 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
           <nav className="mt-4 flex flex-col gap-1">
             <button
               onClick={() => handleSelect("all")}
-              className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+              className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
                 activeSection === "all"
                   ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)] font-semibold"
-                  : "text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
+                  : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <FileText size={15} />
-                <span>All Notes</span>
+                <Icon name="description" size={17} className={activeSection === "all" ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
+                <span className="text-[13px]">All Notes</span>
               </div>
-              <span className="text-[11px] text-[var(--text-subtle)]">{allCount}</span>
+              <span className="text-[11px] font-medium text-[var(--text-muted)]">{allCount}</span>
             </button>
 
             <button
               onClick={() => handleSelect("pinned")}
-              className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+              className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
                 activeSection === "pinned"
                   ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)] font-semibold"
-                  : "text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
+                  : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <Pin size={15} />
-                <span>Pinned</span>
+                <Icon name="push_pin" size={17} className={activeSection === "pinned" ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
+                <span className="text-[13px]">Pinned</span>
               </div>
-              <span className="text-[11px] text-[var(--text-subtle)]">{pinnedCount}</span>
+              {pinnedCount > 0 && (
+                <span className="text-[11px] font-medium text-[var(--text-muted)]">{pinnedCount}</span>
+              )}
+            </button>
+
+            <button
+              onClick={() => handleSelect("archive")}
+              className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                activeSection === "archive"
+                  ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)] font-semibold"
+                  : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Icon name="archive" size={17} className={activeSection === "archive" ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
+                <span className="text-[13px]">Archive</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleSelect("trash")}
+              className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                activeSection === "trash"
+                  ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)] font-semibold"
+                  : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Icon name="delete" size={17} className={activeSection === "trash" ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
+                <span className="text-[13px]">Trash</span>
+              </div>
             </button>
 
             {/* Collections */}
             <div className="mt-4">
-              <div className="flex items-center justify-between px-3 py-1 text-[11px] font-semibold text-[var(--text-subtle)] tracking-wider">
-                <span>COLLECTIONS</span>
+              <div className="flex items-center justify-between px-3 py-1 text-[11px] font-medium text-[var(--text-muted)]">
+                <span>Collections</span>
                 <button
                   onClick={() => setIsCreatingCol((prev) => !prev)}
-                  className="rounded p-0.5 hover:text-[var(--text-primary)]"
+                  className="flex h-5 w-5 items-center justify-center rounded hover:text-[var(--text-primary)]"
                   title="New Collection"
                 >
-                  <Plus size={13} />
+                  <Icon name="add" size={15} />
                 </button>
               </div>
 
@@ -149,7 +179,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                         setIsCreatingCol(false);
                       }
                     }}
-                    className="flex-1 rounded border border-[var(--border-strong)] bg-[var(--bg-app)] px-2 py-1 text-xs outline-none"
+                    className="flex-1 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-2 py-1 text-xs outline-none"
                   />
                   <button
                     onClick={async () => {
@@ -161,7 +191,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                     }}
                     className="rounded p-1 text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)]"
                   >
-                    <Check size={13} />
+                    <Icon name="check" size={15} />
                   </button>
                 </div>
               )}
@@ -170,125 +200,88 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                 {collections.map((col) => {
                   const count = activeNotes.filter((n) => n.collection_id === col.id).length;
                   const isSelected = activeSection === "collection" && activeCollectionId === col.id;
+                  const collIcon = getCollectionIcon(col.name, col.icon);
                   return (
                     <button
                       key={col.id}
                       onClick={() => handleSelect("collection", col.id)}
-                      className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                      className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
                         isSelected
                           ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)] font-semibold"
-                          : "text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
+                          : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
                       }`}
                     >
                       <div className="flex items-center gap-2.5 truncate">
-                        <Folder size={14} className="flex-shrink-0" />
-                        <span className="truncate">{col.name}</span>
+                        <Icon name={collIcon} size={16} className={isSelected ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
+                        <span className="truncate text-[13px]">{col.name}</span>
                       </div>
-                      <span className="text-[11px] text-[var(--text-subtle)]">{count}</span>
+                      <span className="text-[11px] font-medium text-[var(--text-muted)]">{count}</span>
                     </button>
                   );
                 })}
-                {collections.length === 0 && (
-                  <p className="px-3 py-1.5 text-xs text-[var(--text-subtle)] italic">
-                    No collections yet
-                  </p>
-                )}
               </div>
-            </div>
-
-            {/* Trash */}
-            <div className="mt-2 border-t border-[var(--border-subtle)] pt-2">
-              <button
-                onClick={() => handleSelect("trash")}
-                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
-                  activeSection === "trash"
-                    ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)] font-semibold"
-                    : "text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Trash2 size={15} />
-                  <span>Trash</span>
-                </div>
-                <span className="text-[11px] text-[var(--text-subtle)]">{trashCount}</span>
-              </button>
             </div>
           </nav>
         </div>
 
-        {/* Footer: Theme toggles and Settings button */}
-        <div className="border-t border-[var(--border-subtle)] pt-3 flex flex-col gap-2">
+        {/* Footer: Theme, Settings */}
+        <div className="border-t border-[var(--border-subtle)] pt-3">
           <div className="flex items-center justify-between px-1">
-            <span className="text-xs text-[var(--text-muted)]">Theme</span>
-            <div className="flex items-center rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-app)] p-0.5">
+            <div className="flex items-center gap-1 rounded-lg bg-[var(--bg-surface)] p-0.5">
               <button
                 onClick={() => onThemeChange("light")}
-                className={`rounded p-1 text-xs ${
+                className={`rounded px-2 py-1 text-xs ${
                   theme === "light"
-                    ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)]"
-                    : "text-[var(--text-subtle)]"
+                    ? "bg-[var(--bg-surface-active)] font-semibold text-[var(--text-primary)] shadow-2xs"
+                    : "text-[var(--text-muted)]"
                 }`}
+                title="Light Theme"
               >
-                <Sun size={13} />
+                <Icon name="light_mode" size={14} />
               </button>
               <button
                 onClick={() => onThemeChange("dark")}
-                className={`rounded p-1 text-xs ${
+                className={`rounded px-2 py-1 text-xs ${
                   theme === "dark"
-                    ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)]"
-                    : "text-[var(--text-subtle)]"
+                    ? "bg-[var(--bg-surface-active)] font-semibold text-[var(--text-primary)] shadow-2xs"
+                    : "text-[var(--text-muted)]"
                 }`}
+                title="Dark Theme"
               >
-                <Moon size={13} />
+                <Icon name="dark_mode" size={14} />
               </button>
               <button
                 onClick={() => onThemeChange("system")}
-                className={`rounded p-1 text-xs ${
+                className={`rounded px-2 py-1 text-xs ${
                   theme === "system"
-                    ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)]"
-                    : "text-[var(--text-subtle)]"
+                    ? "bg-[var(--bg-surface-active)] font-semibold text-[var(--text-primary)] shadow-2xs"
+                    : "text-[var(--text-muted)]"
                 }`}
+                title="System Theme"
               >
-                <Monitor size={13} />
+                <Icon name="devices" size={14} />
               </button>
             </div>
+
+            <button
+              onClick={() => {
+                onClose();
+                onOpenSettings();
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
+              title="Settings"
+            >
+              <Icon name="settings" size={18} />
+            </button>
           </div>
 
-          <div
-            onClick={() => {
-              onClose();
-              onOpenSettings();
-            }}
-            className="flex cursor-pointer items-center justify-between rounded-md px-2.5 py-1 text-[11px] text-[var(--text-muted)] bg-[var(--bg-app)] border border-[var(--border-subtle)]"
-          >
-            <div className="flex items-center gap-1.5 truncate">
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${
-                  currentUser ? "bg-green-500" : "bg-[var(--text-subtle)]"
-                }`}
-              />
-              <span className="truncate">
-                {currentUser?.email ? currentUser.email.split("@")[0] : "Local Storage"}
-              </span>
-            </div>
-            <span className="text-[10px] text-[var(--text-subtle)]">
-              {currentUser ? "Cloud Sync" : "Offline"}
-            </span>
-          </div>
-
-          <button
-            onClick={() => {
-              onClose();
-              onOpenSettings();
-            }}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--bg-surface-active)] hover:text-[var(--text-primary)] transition-colors"
-          >
-            <Settings size={15} />
-            <span>Settings & Sync</span>
-          </button>
+          {currentUser && (
+            <p className="mt-2 truncate px-1 text-[11px] text-[var(--text-muted)]">
+              {currentUser.email}
+            </p>
+          )}
         </div>
       </div>
-      <div className="flex-1" onClick={onClose} />
     </div>
   );
 };
