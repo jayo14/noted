@@ -6,6 +6,7 @@ export type FontFamily = "serif" | "sans" | "mono";
 export type FontSize = "compact" | "normal" | "large";
 export type LineHeight = "tight" | "normal" | "relaxed";
 export type NoteListDensity = "comfortable" | "compact";
+export type NotesViewMode = "list" | "grid";
 
 export interface AppPreferences {
   // Writing & Typography
@@ -27,6 +28,7 @@ export interface AppPreferences {
   theme: ThemePreference;
   accentColor: AccentColor;
   noteListDensity: NoteListDensity;
+  notesViewMode: NotesViewMode;
   showChecklistPreview: boolean;
 
   // Cloud & Data
@@ -51,6 +53,7 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   theme: "system",
   accentColor: "default",
   noteListDensity: "comfortable",
+  notesViewMode: "list",
   showChecklistPreview: true,
 
   confirmBeforeDelete: true,
