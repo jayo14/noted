@@ -6,6 +6,7 @@ import { EditorBubbleMenu } from "./EditorBubbleMenu";
 import { FormatToolbar } from "./FormatToolbar";
 import { SlashCommandMenu } from "./SlashCommandMenu";
 import { calculateNoteStats, extractTitleAndPreview, formatNoteDateTime } from "@/lib/utils";
+import { isMarkdownText, markdownToTipTapHtml } from "@/lib/markdownPaste";
 import type { NoteStats, Collection } from "@/types";
 import { Icon } from "@/components/ui/Icon";
 import { settingsService, type AppPreferences } from "@/services/settingsService";
@@ -121,11 +122,94 @@ export const Editor: React.FC<EditorProps> = ({
     [onSave],
   );
 
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null);
+
   const editor = useEditor({
     extensions: getEditorExtensions(),
     content: initialContent,
     editable: !isReadOnly,
     autofocus: "end",
+    editorProps: {
+      handlePaste(view, event) {
+        // 1. Check for image files in clipboard
+        if (event.clipboardData?.files && event.clipboardData.files.length > 0) {
+          const files = Array.from(event.clipboardData.files);
+          const imageFiles = files.filter((f) => f.type.startsWith("image/"));
+          if (imageFiles.length > 0) {
+            event.preventDefault();
+            for (const file of imageFiles) {
+              const reader = new FileReader();
+              reader.onload = (readerEvent) => {
+                const src = readerEvent.target?.result as string;
+                if (src && view.state.schema.nodes.image) {
+                  const node = view.state.schema.nodes.image.create({
+                    src,
+                    alt: file.name || "Pasted image",
+                  });
+                  const transaction = view.state.tr.replaceSelectionWith(node);
+                  view.dispatch(transaction);
+                }
+              };
+              reader.readAsDataURL(file);
+            }
+            return true;
+          }
+        }
+
+        // 2. Check for markdown plain text in clipboard
+        const plainText = event.clipboardData?.getData("text/plain");
+        const html = event.clipboardData?.getData("text/html");
+
+        if (plainText && isMarkdownText(plainText)) {
+          // If html exists, check if it's just raw markdown copied from a code block or pre
+          const isRawMarkdownHtml =
+            !html || html.includes("<pre") || !/<(p|h[1-6]|ul|ol|table)/i.test(html);
+          if (isRawMarkdownHtml) {
+            event.preventDefault();
+            const formattedHtml = markdownToTipTapHtml(plainText);
+            setTimeout(() => {
+              editorRef.current?.commands.insertContent(formattedHtml);
+            }, 0);
+            return true;
+          }
+        }
+
+        return false;
+      },
+
+      handleDrop(view, event, _slice, moved) {
+        if (!moved && event.dataTransfer?.files?.length) {
+          const files = Array.from(event.dataTransfer.files);
+          const imageFiles = files.filter((f) => f.type.startsWith("image/"));
+          if (imageFiles.length > 0) {
+            event.preventDefault();
+            for (const file of imageFiles) {
+              const reader = new FileReader();
+              reader.onload = (readerEvent) => {
+                const src = readerEvent.target?.result as string;
+                if (src && view.state.schema.nodes.image) {
+                  const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
+                  const node = view.state.schema.nodes.image.create({
+                    src,
+                    alt: file.name || "Dropped image",
+                  });
+                  let tr = view.state.tr;
+                  if (coordinates) {
+                    tr = tr.insert(coordinates.pos, node);
+                  } else {
+                    tr = tr.replaceSelectionWith(node);
+                  }
+                  view.dispatch(tr);
+                }
+              };
+              reader.readAsDataURL(file);
+            }
+            return true;
+          }
+        }
+        return false;
+      },
+    },
     onUpdate: ({ editor }) => {
       if (isSettingContentRef.current) return;
 
@@ -144,6 +228,8 @@ export const Editor: React.FC<EditorProps> = ({
       triggerSave(noteIdRef.current, effectiveTitle, json);
     },
   });
+
+  editorRef.current = editor;
 
   // When noteId changes, update editor content and title
   useEffect(() => {
