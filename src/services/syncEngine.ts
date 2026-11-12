@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Note, Collection, SyncQueueItem } from "@/types";
 import { getStorageAdapter } from "@/lib/storage";
 import { generateUUID, nowISO } from "@/lib/utils";
+import { authService } from "./authService";
 
 export interface SyncEngineStatus {
   isSyncing: boolean;
@@ -151,6 +152,7 @@ export class SyncEngine {
       // 2. Process Inbound Remote Sync (Pull changes)
       if (this.client) {
         await this.pullRemoteChanges();
+        await this.syncDeviceHeartbeat();
       }
 
       const now = nowISO();
@@ -242,6 +244,35 @@ export class SyncEngine {
     }
   }
 
+  private getDevicePlatformName(): string {
+    if (typeof navigator === "undefined") return "Desktop";
+    const ua = navigator.userAgent;
+    if (/Android/i.test(ua)) return "Android";
+    if (/iPhone|iPad/i.test(ua)) return "iOS";
+    if (/Windows/i.test(ua)) return "Windows";
+    if (/Mac/i.test(ua)) return "macOS";
+    if (/Linux/i.test(ua)) return "Linux";
+    return "Desktop";
+  }
+
+  private async syncDeviceHeartbeat(): Promise<void> {
+    if (!this.client || !this.deviceId) return;
+    const userId = authService.getCurrentUserId();
+    if (userId === "local-user") return;
+
+    try {
+      await this.client.from("devices").upsert({
+        id: this.deviceId,
+        user_id: userId,
+        device_name: `${this.deviceName} (${this.getDevicePlatformName()})`,
+        last_synced_at: nowISO(),
+      });
+    } catch (e) {
+      // Non-blocking device heartbeat
+      console.warn("[SyncEngine] Device heartbeat warning:", e);
+    }
+  }
+
   private async pullRemoteChanges(): Promise<void> {
     if (!this.client) return;
     const storage = await getStorageAdapter();
@@ -254,9 +285,52 @@ export class SyncEngine {
     if (notesError) throw notesError;
 
     if (remoteNotes && remoteNotes.length > 0) {
+      const pendingQueue = await storage.getPendingSyncQueue();
+      const pendingNoteIds = new Set(
+        pendingQueue.filter((q) => q.entity_type === "note").map((q) => q.entity_id),
+      );
+
       for (const remoteNote of remoteNotes as Note[]) {
         const localNote = await storage.getNoteById(remoteNote.id);
-        if (!localNote || remoteNote.revision >= localNote.revision) {
+
+        if (!localNote) {
+          await storage.saveNote(remoteNote);
+          continue;
+        }
+
+        // Detect conflict: local has pending unpushed changes and contents differ
+        const hasLocalPendingChanges = pendingNoteIds.has(localNote.id);
+        const hasDifferentContent =
+          JSON.stringify(localNote.content) !== JSON.stringify(remoteNote.content) ||
+          localNote.title !== remoteNote.title;
+
+        if (hasLocalPendingChanges && hasDifferentContent && remoteNote.revision !== localNote.revision) {
+          // Conflict detected during pull! Preserve local version as conflict copy
+          console.warn(`[SyncEngine] Conflict detected during pull for note: ${localNote.title}`);
+          const conflictNote: Note = {
+            id: generateUUID(),
+            user_id: localNote.user_id,
+            title: `${localNote.title} (Local Copy - ${this.getDevicePlatformName()})`,
+            content: localNote.content,
+            collection_id: localNote.collection_id,
+            is_pinned: false,
+            created_at: nowISO(),
+            updated_at: nowISO(),
+            deleted_at: null,
+            revision: 1,
+          };
+
+          await storage.saveNote(conflictNote);
+          await storage.enqueueSync({
+            entity_type: "note",
+            entity_id: conflictNote.id,
+            operation: "insert",
+            payload: conflictNote as unknown as Record<string, unknown>,
+          });
+
+          // Update primary note to remote's version
+          await storage.saveNote(remoteNote);
+        } else if (remoteNote.revision >= (localNote.revision || 1)) {
           await storage.saveNote(remoteNote);
         }
       }
