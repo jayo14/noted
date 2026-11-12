@@ -557,15 +557,10 @@ export function App() {
   }, [currentNote]);
 
   return (
-    <div className="relative flex h-screen w-screen overflow-hidden bg-gradient-to-b from-[#ded9cf] via-[#cfc9be] to-[#b8b1a4] dark:from-[#141312] dark:via-[#1c1a18] dark:to-[#11100f] text-[var(--text-primary)] antialiased select-none items-center justify-center p-0 md:p-3.5 lg:p-5">
-      {/* Subtle misty ambient backdrop details */}
-      <div className="pointer-events-none absolute inset-0 opacity-40 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/30 via-transparent to-black/20" />
-
-      {/* macOS Window Frame Container */}
-      <div className="relative z-10 flex h-full w-full max-w-[1440px] overflow-hidden rounded-none md:rounded-[18px] border-0 md:border border-black/[0.08] dark:border-white/[0.08] bg-[var(--bg-window)] shadow-none md:shadow-[0_25px_70px_-12px_rgba(0,0,0,0.28)]">
-        {/* Desktop 3-pane layout */}
-        {!isMobile ? (
-          <div className="flex h-full w-full">
+    <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-editor)] text-[var(--text-primary)] antialiased select-none">
+      {/* Desktop 3-pane layout */}
+      {!isMobile ? (
+        <div className="flex h-full w-full">
           {/* Pane 1: Navigation Sidebar */}
           {!isZenMode && (
             <Sidebar
@@ -733,7 +728,6 @@ export function App() {
           )}
         </div>
       )}
-      </div>
 
       {/* Share Note Modal */}
       <ShareModal
