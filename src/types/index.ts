@@ -21,6 +21,7 @@ export interface Collection {
   id: CollectionId;
   user_id: UserId;
   name: string;
+  icon?: string;
   created_at: string;
   updated_at: string;
 }
@@ -50,7 +51,7 @@ export interface DeviceInfo {
 
 export type ThemePreference = "light" | "dark" | "system";
 
-export type NavSection = "all" | "pinned" | "collection" | "trash" | "settings";
+export type NavSection = "all" | "pinned" | "today" | "archive" | "collection" | "trash" | "settings";
 
 export type SortOption = "updated" | "created" | "title";
 

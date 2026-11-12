@@ -33,6 +33,14 @@ export class SearchService {
         scopedNotes = activeNotes;
       } else if (section === "pinned") {
         scopedNotes = activeNotes.filter((n) => n.is_pinned);
+      } else if (section === "today") {
+        const todayIso = new Date().toISOString().slice(0, 10);
+        scopedNotes = activeNotes.filter(
+          (n) => n.updated_at.slice(0, 10) === todayIso || n.created_at.slice(0, 10) === todayIso,
+        );
+      } else if (section === "archive") {
+        // Notes marked as archived or without active collection
+        scopedNotes = activeNotes.filter((n) => n.collection_id === "archive" || n.is_pinned === false);
       } else if (section === "collection" && collectionId) {
         scopedNotes = activeNotes.filter((n) => n.collection_id === collectionId);
       } else {
