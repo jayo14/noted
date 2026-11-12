@@ -79,7 +79,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
       </div>
 
       {/* Note List Scrollable Area */}
-      <div className="flex-1 overflow-y-auto pt-1 pb-2">
+      <div className="flex-1 overflow-y-auto pt-1 pb-3">
         {searchResults.length === 0 ? (
           <div className="p-6 text-center text-xs text-[var(--text-muted)]">
             {filter.searchQuery ? "No matching notes found." : "No notes in this view."}
@@ -96,12 +96,6 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
             />
           ))
         )}
-      </div>
-
-      {/* Bottom Notes Panel Footer */}
-      <div className="flex items-center justify-between border-t border-[var(--border-subtle)] px-4 py-2 text-[11px] text-[var(--text-muted)] bg-[var(--bg-notes-panel)]">
-        <span>{searchResults.length} {searchResults.length === 1 ? "note" : "notes"}</span>
-        <span>Last edited: {lastEditedTime}</span>
       </div>
     </div>
   );
