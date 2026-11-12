@@ -13,6 +13,7 @@ import { Editor } from "@/components/editor/Editor";
 import { SettingsModal } from "@/components/settings/SettingsModal";
 import { extractTextFromJSONContent } from "@/lib/utils";
 import { exportNoteAsFile, jsonContentToMarkdown, parseImportFile } from "@/lib/export";
+import { ShareModal } from "@/components/editor/ShareModal";
 import { Menu } from "lucide-react";
 
 export function App() {
@@ -28,6 +29,7 @@ export function App() {
   const [theme, setTheme] = useState<ThemePreference>("system");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
@@ -79,80 +81,223 @@ export function App() {
   // Initial data load
   const loadInitialData = useCallback(async () => {
     try {
-      const [loadedNotes, loadedCollections] = await Promise.all([
+      let [loadedNotes, loadedCollections] = await Promise.all([
         noteService.getAllNotes(true),
         collectionService.getCollections(),
       ]);
 
-      setCollections(loadedCollections);
+      if (loadedCollections.length === 0) {
+        const seedCollectionsData = [
+          { name: "Personal", icon: "folder" },
+          { name: "Work", icon: "folder" },
+          { name: "Ideas", icon: "lightbulb" },
+          { name: "Learning", icon: "school" },
+          { name: "Travel", icon: "flight" },
+        ];
+        const createdCols: Collection[] = [];
+        for (const col of seedCollectionsData) {
+          const created = await collectionService.createCollection(col.name, col.icon);
+          createdCols.push(created);
+        }
+        loadedCollections = createdCols;
+        setCollections(createdCols);
+      } else {
+        setCollections(loadedCollections);
+      }
 
       if (loadedNotes.length === 0) {
-        // Create first welcome note if brand new
-        const welcome = await noteService.createNote(
-          null,
-          "Welcome to Noted",
-        );
-        welcome.content = {
+        const workCol = loadedCollections.find((c) => c.name === "Work")?.id || null;
+        const personalCol = loadedCollections.find((c) => c.name === "Personal")?.id || null;
+        const ideasCol = loadedCollections.find((c) => c.name === "Ideas")?.id || null;
+        const learningCol = loadedCollections.find((c) => c.name === "Learning")?.id || null;
+        const travelCol = loadedCollections.find((c) => c.name === "Travel")?.id || null;
+
+        // Note 1: Project roadmap (Pinned, Active)
+        const noteRoadmap = await noteService.createNote(workCol, "Project roadmap");
+        noteRoadmap.is_pinned = true;
+        noteRoadmap.content = {
           type: "doc",
           content: [
             {
               type: "paragraph",
-              content: [
-                {
-                  type: "text",
-                  text: "Open. Write. Everything else takes care of itself.",
-                },
-              ],
-            },
-            {
-              type: "paragraph",
-              content: [
-                {
-                  type: "text",
-                  text: "Noted is a native, local-first personal writing application. Your words are saved immediately to your local database and synchronised quietly in the background.",
-                },
-              ],
+              content: [{ type: "text", text: "Here are the key milestones for the next quarter:" }],
             },
             {
               type: "taskList",
               content: [
                 {
                   type: "taskItem",
+                  attrs: { checked: false },
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Finalize the core experience" }] }],
+                },
+                {
+                  type: "taskItem",
                   attrs: { checked: true },
-                  content: [
-                    {
-                      type: "paragraph",
-                      content: [{ type: "text", text: "Create your first note" }],
-                    },
-                  ],
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Improve synchronisation reliability" }] }],
                 },
                 {
                   type: "taskItem",
                   attrs: { checked: false },
-                  content: [
-                    {
-                      type: "paragraph",
-                      content: [{ type: "text", text: "Format with shortcuts or the selection menu" }],
-                    },
-                  ],
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Add theme customisation" }] }],
                 },
                 {
                   type: "taskItem",
                   attrs: { checked: false },
-                  content: [
-                    {
-                      type: "paragraph",
-                      content: [{ type: "text", text: "Organise thoughts with collections" }],
-                    },
-                  ],
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Prepare for mobile release" }] }],
+                },
+              ],
+            },
+            {
+              type: "heading",
+              attrs: { level: 2 },
+              content: [{ type: "text", text: "Notes" }],
+            },
+            {
+              type: "bulletList",
+              content: [
+                {
+                  type: "listItem",
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Keep the interface minimal and focused" }] }],
+                },
+                {
+                  type: "listItem",
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Make synchronisation completely seamless" }] }],
+                },
+                {
+                  type: "listItem",
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Ensure the editor feels great on both desktop and mobile" }] }],
+                },
+              ],
+            },
+            {
+              type: "blockquote",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "A great notes app should disappear, letting you focus on what matters: your thoughts." }],
                 },
               ],
             },
           ],
         };
-        await noteService.updateNote(welcome.id, { content: welcome.content });
-        setNotes([welcome]);
-        setSelectedNoteId(welcome.id);
+        await noteService.updateNote(noteRoadmap.id, { content: noteRoadmap.content, is_pinned: true });
+
+        // Note 2: Weekend plans
+        const noteWeekend = await noteService.createNote(personalCol, "Weekend plans");
+        noteWeekend.content = {
+          type: "doc",
+          content: [
+            {
+              type: "taskList",
+              content: [
+                {
+                  type: "taskItem",
+                  attrs: { checked: false },
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Hike in the mountains" }] }],
+                },
+                {
+                  type: "taskItem",
+                  attrs: { checked: false },
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Try that new coffee place" }] }],
+                },
+              ],
+            },
+          ],
+        };
+        await noteService.updateNote(noteWeekend.id, { content: noteWeekend.content });
+
+        // Note 3: Book recommendations
+        const noteBooks = await noteService.createNote(learningCol, "Book recommendations");
+        noteBooks.content = {
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Some great books I want to read..." }],
+            },
+          ],
+        };
+        await noteService.updateNote(noteBooks.id, { content: noteBooks.content });
+
+        // Note 4: Study notes — Machine Learning
+        const noteStudy = await noteService.createNote(learningCol, "Study notes — Machine Learning");
+        noteStudy.content = {
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Key concepts: overfitting, regularisation..." }],
+            },
+          ],
+        };
+        await noteService.updateNote(noteStudy.id, { content: noteStudy.content });
+
+        // Note 5: Grocery list
+        const noteGrocery = await noteService.createNote(personalCol, "Grocery list");
+        noteGrocery.content = {
+          type: "doc",
+          content: [
+            {
+              type: "taskList",
+              content: [
+                {
+                  type: "taskItem",
+                  attrs: { checked: true },
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Milk" }] }],
+                },
+                {
+                  type: "taskItem",
+                  attrs: { checked: true },
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Eggs" }] }],
+                },
+                {
+                  type: "taskItem",
+                  attrs: { checked: false },
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Bread" }] }],
+                },
+              ],
+            },
+          ],
+        };
+        await noteService.updateNote(noteGrocery.id, { content: noteGrocery.content });
+
+        // Note 6: Ideas for the app
+        const noteIdeas = await noteService.createNote(ideasCol, "Ideas for the app");
+        noteIdeas.content = {
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Maybe add a distraction-free mode?" }],
+            },
+          ],
+        };
+        await noteService.updateNote(noteIdeas.id, { content: noteIdeas.content });
+
+        // Note 7: Travel wishlist
+        const noteTravel = await noteService.createNote(travelCol, "Travel wishlist");
+        noteTravel.content = {
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Japan, Iceland, New Zealand..." }],
+            },
+          ],
+        };
+        await noteService.updateNote(noteTravel.id, { content: noteTravel.content });
+
+        const allSeedNotes = [
+          noteRoadmap,
+          noteWeekend,
+          noteBooks,
+          noteStudy,
+          noteGrocery,
+          noteIdeas,
+          noteTravel,
+        ];
+        setNotes(allSeedNotes);
+        setSelectedNoteId(noteRoadmap.id);
       } else {
         setNotes(loadedNotes);
         const active = loadedNotes.filter((n) => n.deleted_at === null);
@@ -423,10 +568,12 @@ export function App() {
   }, [currentNote]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-app)] text-[var(--text-primary)] antialiased select-none">
-      {/* Desktop 3-pane layout */}
-      {!isMobile ? (
-        <div className="flex h-full w-full">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#E2ded5] dark:bg-[#121110] text-[var(--text-primary)] antialiased select-none items-center justify-center p-0 md:p-3 lg:p-4">
+      {/* macOS Window Frame Container */}
+      <div className="flex h-full w-full max-w-[1440px] overflow-hidden rounded-none md:rounded-[18px] border-0 md:border border-black/[0.08] dark:border-white/[0.08] bg-[var(--bg-window)] shadow-none md:shadow-[0_22px_70px_rgba(0,0,0,0.22)]">
+        {/* Desktop 3-pane layout */}
+        {!isMobile ? (
+          <div className="flex h-full w-full">
           {/* Pane 1: Navigation Sidebar */}
           {!isZenMode && (
             <Sidebar
@@ -506,6 +653,7 @@ export function App() {
                   onDuplicate={handleDuplicateNote}
                   onDelete={handleDeleteCurrentNote}
                   onExport={handleExportNote}
+                  onShare={() => setIsShareModalOpen(true)}
                   isMobile={false}
                   isZenMode={isZenMode}
                   onToggleZenMode={() => setIsZenMode((prev) => !prev)}
@@ -583,6 +731,7 @@ export function App() {
                   onDuplicate={handleDuplicateNote}
                   onDelete={handleDeleteCurrentNote}
                   onExport={handleExportNote}
+                  onShare={() => setIsShareModalOpen(true)}
                   onBack={() => setMobileScreen("notes")}
                   isMobile={true}
                   isReadOnly={filter.section === "trash"}
@@ -592,6 +741,15 @@ export function App() {
           )}
         </div>
       )}
+      </div>
+
+      {/* Share Note Modal */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        note={currentNote}
+        onExportMarkdown={handleExportNote}
+      />
 
       {/* Mobile Navigation Drawer */}
       <MobileDrawer
