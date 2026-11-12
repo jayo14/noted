@@ -1,8 +1,9 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import type { Note, Collection, FilterState, SortOption } from "@/types";
 import { NoteCard } from "./NoteCard";
 import { searchService } from "@/services/searchService";
-import { Search, Plus, X, FileText, Trash2, ArrowUpDown, CheckSquare } from "lucide-react";
+import { formatCompactRelativeTime } from "@/lib/utils";
+import { Icon } from "@/components/ui/Icon";
 
 interface NotesPanelProps {
   notes: Note[];
@@ -33,143 +34,152 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
 }) => {
   const internalSearchRef = useRef<HTMLInputElement>(null);
   const searchInputRef = externalSearchRef || internalSearchRef;
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [isNewMenuOpen, setIsNewMenuOpen] = useState(false);
 
   const searchResults = searchService.filterNotes(notes, filter);
 
-  const currentCollection = collections.find((c) => c.id === filter.collectionId);
+  // Compute most recently edited note for the bottom bar "Last edited: X"
+  const mostRecentNote = notes.reduce<Note | null>((latest, current) => {
+    if (!latest) return current;
+    return new Date(current.updated_at).getTime() > new Date(latest.updated_at).getTime()
+      ? current
+      : latest;
+  }, null);
 
-  const getSectionTitle = () => {
-    switch (filter.section) {
-      case "all":
-        return "All Notes";
-      case "pinned":
-        return "Pinned";
-      case "collection":
-        return currentCollection ? currentCollection.name : "Collection";
-      case "trash":
-        return "Trash";
-      default:
-        return "Notes";
-    }
-  };
+  const lastEditedTime = mostRecentNote
+    ? formatCompactRelativeTime(mostRecentNote.updated_at)
+    : "Recently";
 
   return (
-    <div className="flex h-full w-full flex-col border-r border-[var(--border-subtle)] bg-[var(--bg-app)]">
-      {/* Top Header with title and New Note action */}
-      <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-3">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold tracking-tight text-[var(--text-primary)]">
-            {getSectionTitle()}
-          </h2>
-          <span className="text-xs text-[var(--text-subtle)]">
-            ({searchResults.length})
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          {filter.section === "trash" ? (
-            onEmptyTrash && searchResults.length > 0 && (
-              <button
-                onClick={onEmptyTrash}
-                className="flex items-center gap-1 rounded px-2 py-1 text-xs text-red-500 hover:bg-red-500/10 transition-colors"
-                title="Empty Trash"
-              >
-                <Trash2 size={13} />
-                <span>Empty</span>
-              </button>
-            )
-          ) : (
-            <button
-              onClick={onCreateNote}
-              className="flex items-center gap-1 rounded-md bg-[var(--accent)] px-2.5 py-1 text-xs font-medium text-[var(--accent-contrast)] hover:opacity-90 transition-opacity"
-              title="New Note (Cmd+N)"
-            >
-              <Plus size={14} />
-              <span>New</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Search Input */}
-      <div className="border-b border-[var(--border-subtle)] px-3 py-2">
+    <div className="flex h-full w-[285px] flex-shrink-0 flex-col border-r border-[var(--border-subtle)] bg-[var(--bg-notes-panel)] select-none">
+      {/* Search Input Bar matching Image 1 */}
+      <div className="p-3 pb-2">
         <div className="relative flex items-center">
-          <Search size={14} className="absolute left-2.5 text-[var(--text-subtle)] pointer-events-none" />
+          <Icon
+            name="search"
+            size={16}
+            className="absolute left-3 text-[var(--text-muted)] pointer-events-none"
+          />
           <input
             ref={searchInputRef}
             type="text"
             placeholder="Search notes..."
             value={filter.searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full rounded-md bg-[var(--bg-surface)] py-1.5 pl-8 pr-7 text-xs text-[var(--text-primary)] placeholder-[var(--text-subtle)] outline-none transition-colors border border-transparent focus:border-[var(--border-strong)]"
+            className="w-full rounded-xl bg-[#EFECE5] dark:bg-[#252522] py-2 pl-9 pr-14 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none border border-transparent focus:border-[var(--border-strong)] transition-all"
           />
-          {filter.searchQuery && (
-            <button
-              onClick={() => onSearchChange("")}
-              className="absolute right-2 text-[var(--text-subtle)] hover:text-[var(--text-primary)]"
-            >
-              <X size={13} />
-            </button>
-          )}
-        </div>
-
-        {/* Sort & Quick Filter Pill Controls */}
-        <div className="mt-2 flex items-center justify-between text-[11px] text-[var(--text-muted)]">
-          <div className="flex items-center gap-1">
-            <span className="flex items-center gap-1 text-[var(--text-subtle)]">
-              <ArrowUpDown size={11} />
-            </span>
-            <select
-              value={filter.sortBy || "updated"}
-              onChange={(e) => onSortChange?.(e.target.value as SortOption)}
-              className="bg-transparent text-[11px] text-[var(--text-muted)] outline-none hover:text-[var(--text-primary)] cursor-pointer"
-            >
-              <option value="updated" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Updated</option>
-              <option value="created" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Created</option>
-              <option value="title" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Title (A-Z)</option>
-            </select>
+          <div className="absolute right-2.5 flex items-center gap-1 pointer-events-none">
+            <kbd className="rounded-md border border-[var(--border-strong)] bg-[var(--bg-editor)] px-1.5 py-0.5 font-mono text-[9.5px] font-medium text-[var(--text-muted)]">
+              Ctrl K
+            </kbd>
           </div>
-
-          {onToggleChecklistFilter && (
-            <button
-              onClick={onToggleChecklistFilter}
-              className={`flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors ${
-                filter.onlyChecklists
-                  ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                  : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
-              }`}
-              title="Filter notes with checklists"
-            >
-              <CheckSquare size={11} />
-              <span>Tasks</span>
-            </button>
-          )}
         </div>
       </div>
 
-      {/* Notes List */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Action Row: + New Note button and View Switchers */}
+      <div className="flex items-center justify-between px-3 pb-2.5">
+        <div className="relative">
+          <button
+            onClick={onCreateNote}
+            className="flex items-center gap-1.5 rounded-full bg-[#161514] dark:bg-[#f7f5f0] px-3.5 py-1.5 text-xs font-semibold text-white dark:text-[#161514] hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
+            title="Create note"
+          >
+            <Icon name="add" size={15} />
+            <span className="text-[12.5px]">New Note</span>
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsNewMenuOpen((prev) => !prev);
+              }}
+              className="hover:opacity-75"
+            >
+              <Icon name="expand_more" size={14} />
+            </span>
+          </button>
+
+          {/* New note dropdown */}
+          {isNewMenuOpen && (
+            <div className="absolute left-0 top-9 z-30 w-44 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-editor)] p-1 shadow-lg">
+              <button
+                onClick={() => {
+                  onCreateNote();
+                  setIsNewMenuOpen(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"
+              >
+                <Icon name="edit_note" size={15} />
+                <span>Blank Note</span>
+              </button>
+              {onToggleChecklistFilter && (
+                <button
+                  onClick={() => {
+                    onToggleChecklistFilter();
+                    setIsNewMenuOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"
+                >
+                  <Icon name="check_box" size={15} />
+                  <span>Checklist Note</span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* View toggles: List & Grid icons matching Image 1 */}
+        <div className="flex items-center gap-1">
+          {filter.section === "trash" && onEmptyTrash && searchResults.length > 0 && (
+            <button
+              onClick={onEmptyTrash}
+              className="mr-1 rounded p-1 text-xs text-red-500 hover:bg-red-500/10"
+              title="Empty Trash"
+            >
+              <Icon name="delete" size={15} />
+            </button>
+          )}
+
+          <button
+            onClick={() => setViewMode("list")}
+            className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
+              viewMode === "list"
+                ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)]"
+                : "text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
+            }`}
+            title="List view"
+          >
+            <Icon name="segment" size={17} />
+          </button>
+
+          <button
+            onClick={() => setViewMode("grid")}
+            className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
+              viewMode === "grid"
+                ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)]"
+                : "text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
+            }`}
+            title="Grid view"
+          >
+            <Icon name="grid_view" size={16} />
+          </button>
+        </div>
+      </div>
+
+      {/* Note Cards List */}
+      <div className="flex-1 overflow-y-auto px-1 py-1">
         {searchResults.length === 0 ? (
-          <div className="flex h-64 flex-col items-center justify-center p-6 text-center">
-            <FileText size={28} className="mb-2 text-[var(--text-subtle)] opacity-40" />
-            <p className="text-xs font-medium text-[var(--text-muted)]">
+          <div className="flex h-56 flex-col items-center justify-center p-6 text-center text-[var(--text-muted)]">
+            <Icon name="description" size={32} className="mb-2 text-[var(--text-subtle)] opacity-40" />
+            <p className="text-xs font-medium">
               {filter.searchQuery
                 ? `No notes matching "${filter.searchQuery}"`
                 : filter.section === "trash"
                 ? "Trash is empty"
-                : "No notes yet"}
+                : "No notes here yet"}
             </p>
-            {filter.section !== "trash" && !filter.searchQuery && (
-              <button
-                onClick={onCreateNote}
-                className="mt-3 text-xs text-[var(--text-primary)] underline underline-offset-4 hover:opacity-80"
-              >
-                Create your first note
-              </button>
-            )}
           </div>
         ) : (
-          <div>
+          <div className={viewMode === "grid" ? "grid grid-cols-2 gap-1" : "flex flex-col"}>
             {searchResults.map(({ note, snippet }) => (
               <NoteCard
                 key={note.id}
@@ -182,6 +192,12 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
             ))}
           </div>
         )}
+      </div>
+
+      {/* Bottom Bar: note count and Last edited */}
+      <div className="flex h-9 items-center justify-between border-t border-[var(--border-subtle)] px-4 text-[11px] text-[var(--text-muted)] bg-[var(--bg-notes-panel)]">
+        <span>{searchResults.length} notes</span>
+        <span>Last edited: {lastEditedTime}</span>
       </div>
     </div>
   );
