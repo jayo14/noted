@@ -8,6 +8,7 @@ import { SlashCommandMenu } from "./SlashCommandMenu";
 import { calculateNoteStats, extractTitleAndPreview } from "@/lib/utils";
 import type { NoteStats, Collection } from "@/types";
 import { Icon } from "@/components/ui/Icon";
+import { settingsService, type AppPreferences } from "@/services/settingsService";
 
 interface EditorProps {
   noteId: string;
@@ -61,6 +62,15 @@ export const Editor: React.FC<EditorProps> = ({
   const [newColInput, setNewColInput] = useState("");
   const [isCreatingInlineCol, setIsCreatingInlineCol] = useState(false);
   const [typographyMode, setTypographyMode] = useState<"serif" | "sans">("serif");
+  const [prefs, setPrefs] = useState<AppPreferences>(settingsService.getPreferences());
+
+  useEffect(() => {
+    const unsub = settingsService.subscribe((p) => {
+      setPrefs(p);
+      setTypographyMode(p.fontFamily === "sans" ? "sans" : "serif");
+    });
+    return unsub;
+  }, []);
 
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -297,10 +307,30 @@ export const Editor: React.FC<EditorProps> = ({
           <EditorBubbleMenu editor={editor} />
 
           {/* Interactive Slash Commands Menu */}
-          <SlashCommandMenu editor={editor} />
+          {prefs.slashCommandsEnabled && <SlashCommandMenu editor={editor} />}
 
           {/* Tiptap Canvas */}
-          <div className="flex-1 pb-16">
+          <div
+            className={`flex-1 pb-16 ${
+              prefs.fontFamily === "serif"
+                ? "font-serif"
+                : prefs.fontFamily === "mono"
+                ? "font-mono"
+                : "font-sans"
+            } ${
+              prefs.fontSize === "compact"
+                ? "text-[14.5px]"
+                : prefs.fontSize === "large"
+                ? "text-[17.5px]"
+                : "text-[16px]"
+            } ${
+              prefs.lineHeight === "tight"
+                ? "leading-snug"
+                : prefs.lineHeight === "relaxed"
+                ? "leading-loose"
+                : "leading-relaxed"
+            }`}
+          >
             <EditorContent editor={editor} className="tiptap-container" />
           </div>
         </div>
@@ -320,13 +350,21 @@ export const Editor: React.FC<EditorProps> = ({
         {/* Left: Aa typography toggle + word count */}
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setTypographyMode((prev) => (prev === "serif" ? "sans" : "serif"))}
+            onClick={() => {
+              const nextMode = typographyMode === "serif" ? "sans" : "serif";
+              setTypographyMode(nextMode);
+              settingsService.updatePreferences({ fontFamily: nextMode });
+            }}
             className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-bold text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors cursor-pointer"
             title={`Title font: ${typographyMode === "serif" ? "Serif" : "Sans"}. Click to switch.`}
           >
             <span>Aa</span>
           </button>
-          <span className="text-[11.5px] font-medium text-[var(--text-secondary)]">{stats.words || 147} words</span>
+          {prefs.showWordCount && (
+            <span className="text-[11.5px] font-medium text-[var(--text-secondary)]">
+              {stats.words || 147} words
+            </span>
+          )}
         </div>
 
         {/* Right: Undo, Redo, Export / Actions icons matching Image 0 */}

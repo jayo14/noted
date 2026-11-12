@@ -3,6 +3,7 @@ import type { Note, Collection } from "@/types";
 import { extractTextFromJSONContent, formatCompactRelativeTime } from "@/lib/utils";
 import { classifyNoteIcon } from "@/lib/noteClassifier";
 import { Icon } from "@/components/ui/Icon";
+import { settingsService } from "@/services/settingsService";
 
 interface NoteCardProps {
   note: Note;
@@ -57,6 +58,12 @@ export const NoteCard: React.FC<NoteCardProps> = ({
   onClick,
 }) => {
   const collection = collections.find((c) => c.id === note.collection_id);
+  const [prefs, setPrefs] = React.useState(settingsService.getPreferences());
+
+  React.useEffect(() => {
+    return settingsService.subscribe((p) => setPrefs(p));
+  }, []);
+
   const iconMeta = classifyNoteIcon(note, collection?.name);
   const relativeTime = formatCompactRelativeTime(note.updated_at);
   const previewItems = extractStructuredPreview(note);
@@ -73,7 +80,9 @@ export const NoteCard: React.FC<NoteCardProps> = ({
           onClick();
         }
       }}
-      className={`group relative flex cursor-pointer gap-2.5 rounded-xl p-3 transition-all select-none mb-1 mx-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
+      className={`group relative flex cursor-pointer gap-2.5 rounded-xl transition-all select-none mb-1 mx-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
+        prefs.noteListDensity === "compact" ? "p-2" : "p-3"
+      } ${
         isSelected
           ? "bg-[var(--bg-card-active)] border border-[var(--border-strong)] shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
           : "bg-transparent hover:bg-[var(--bg-surface-hover)] border border-transparent"
@@ -131,7 +140,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
                 }`}
               >
                 {item.type === "task"
-                  ? `${item.checked ? "✔ " : "- "}${item.text}`
+                  ? `${prefs.showChecklistPreview ? (item.checked ? "✔ " : "- ") : ""}${item.text}`
                   : item.text}
               </p>
             ))
