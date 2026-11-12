@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { NavSection, Collection, Note } from "@/types";
+import { authService, type AuthUser } from "@/services/authService";
 import {
   FileText,
   Pin,
@@ -12,6 +13,7 @@ import {
   Edit2,
   Check,
   X,
+  User,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -42,6 +44,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [newCollectionName, setNewCollectionName] = useState("");
   const [editingCollectionId, setEditingCollectionId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    const unsub = authService.subscribe((state) => {
+      setCurrentUser(state.user);
+    });
+    return unsub;
+  }, []);
 
   const activeNotes = notes.filter((n) => n.deleted_at === null);
   const allCount = activeNotes.length;
@@ -257,8 +267,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      {/* Bottom Nav: Trash & Settings */}
+      {/* Bottom Nav: User status, Trash & Settings */}
       <div className="flex flex-col border-t border-[var(--border-subtle)] p-3 gap-0.5">
+        {/* User indicator */}
+        <div
+          onClick={onOpenSettings}
+          className="mb-1 flex cursor-pointer items-center justify-between rounded-md px-2.5 py-1 text-[11px] text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] transition-colors"
+          title={currentUser ? `Signed in as ${currentUser.email}` : "Using offline local storage. Click to sign in."}
+        >
+          <div className="flex items-center gap-1.5 truncate">
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                currentUser ? "bg-green-500" : "bg-[var(--text-subtle)]"
+              }`}
+            />
+            <span className="truncate">
+              {currentUser?.email ? currentUser.email.split("@")[0] : "Local Storage"}
+            </span>
+          </div>
+          <span className="text-[10px] text-[var(--text-subtle)]">
+            {currentUser ? "Sync" : "Offline"}
+          </span>
+        </div>
+
         <button
           onClick={() => onSelectSection("trash")}
           className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${

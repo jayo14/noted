@@ -3,6 +3,7 @@ import type { Note, Collection, NavSection, FilterState, ThemePreference, NoteSt
 import { noteService } from "@/services/noteService";
 import { collectionService } from "@/services/collectionService";
 import { syncEngine } from "@/services/syncEngine";
+import { authService } from "@/services/authService";
 import { getStorageAdapter } from "@/lib/storage";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { MobileDrawer } from "@/components/navigation/MobileDrawer";
@@ -175,6 +176,7 @@ export function App() {
       setSupabaseKey(savedKey);
 
       await syncEngine.init(savedUrl, savedKey);
+      await authService.init(savedUrl, savedKey);
       const queue = await storage.getPendingSyncQueue();
       setPendingSyncCount(queue.length);
     })();
@@ -562,6 +564,7 @@ export function App() {
           setSupabaseUrl(url);
           setSupabaseKey(key);
           await syncEngine.configureSupabase(url, key);
+          await authService.configureClient(url, key);
         }}
       />
     </div>
