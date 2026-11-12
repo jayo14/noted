@@ -8,6 +8,7 @@ import {
   type FontSize,
   type LineHeight,
   type NoteListDensity,
+  type NotesViewMode,
 } from "@/services/settingsService";
 import { Icon } from "@/components/ui/Icon";
 
@@ -221,6 +222,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     { group: "Writing", label: "Heading 1 / 2 / 3", key: "# / ## / ### + Space" },
     { group: "Navigation", label: "New note", key: "Cmd/Ctrl + N" },
     { group: "Navigation", label: "Search notes", key: "Cmd/Ctrl + F or Ctrl + K" },
+    { group: "Navigation", label: "Toggle list / grid layout", key: "Cmd/Ctrl + Shift + L" },
     { group: "Navigation", label: "Pin note", key: "Cmd/Ctrl + P" },
     { group: "Navigation", label: "Export Markdown", key: "Cmd/Ctrl + Shift + M" },
     { group: "Navigation", label: "Delete note", key: "Cmd/Ctrl + Shift + D" },
@@ -564,6 +566,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
 
                 <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]/40 p-4">
+                  <SettingRow
+                    title="Default Notes Layout"
+                    description="Choose your preferred presentation in the notes pane."
+                  >
+                    <div className="flex rounded-lg bg-[var(--bg-surface)] p-0.5 border border-[var(--border-subtle)]">
+                      {(["list", "grid"] as NotesViewMode[]).map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => updatePref("notesViewMode", v)}
+                          className={`rounded-md px-2.5 py-1 text-xs font-medium capitalize transition-colors cursor-pointer ${
+                            prefs.notesViewMode === v
+                              ? "bg-[var(--bg-editor)] font-semibold text-[var(--text-primary)] shadow-2xs"
+                              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                          }`}
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </SettingRow>
+
                   <SettingRow
                     title="Note List Density"
                     description="Adjust spacing and padding in the middle notes panel."
