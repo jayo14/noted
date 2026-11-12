@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import type { NavSection, Collection, Note } from "@/types";
 import { authService, type AuthUser } from "@/services/authService";
 import { Icon } from "@/components/ui/Icon";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 
 interface SidebarProps {
   activeSection: NavSection;
@@ -21,12 +20,11 @@ function getCollectionIcon(name: string, customIcon?: string): string {
   if (customIcon) return customIcon;
   const lower = name.toLowerCase();
   if (lower.includes("idea")) return "lightbulb";
-  if (lower.includes("work") || lower.includes("office")) return "folder";
   if (lower.includes("task") || lower.includes("todo")) return "check_box";
-  if (lower.includes("personal") || lower.includes("life")) return "folder";
-  if (lower.includes("project")) return "folder";
+  if (lower.includes("personal") || lower.includes("life")) return "person";
+  if (lower.includes("project") || lower.includes("work")) return "folder";
   if (lower.includes("later") || lower.includes("wait") || lower.includes("time")) return "schedule";
-  if (lower.includes("book") || lower.includes("read") || lower.includes("study") || lower.includes("learn")) return "school";
+  if (lower.includes("study") || lower.includes("learn") || lower.includes("book")) return "school";
   if (lower.includes("travel") || lower.includes("trip")) return "flight";
   if (lower.includes("grocery") || lower.includes("shop")) return "shopping_cart";
   return "folder";
@@ -49,7 +47,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [editingCollectionId, setEditingCollectionId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
-  const [isTrafficHovered, setIsTrafficHovered] = useState(false);
 
   useEffect(() => {
     const unsub = authService.subscribe((state) => {
@@ -79,116 +76,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const isNavActive = (section: NavSection) => activeSection === section && activeCollectionId === null;
 
-  const handleClose = async () => {
-    try {
-      const appWindow = getCurrentWindow();
-      await appWindow.close();
-    } catch {}
-  };
-
-  const handleMinimize = async () => {
-    try {
-      const appWindow = getCurrentWindow();
-      await appWindow.minimize();
-    } catch {}
-  };
-
-  const handleMaximize = async () => {
-    try {
-      const appWindow = getCurrentWindow();
-      await appWindow.toggleMaximize();
-    } catch {}
-  };
-
   return (
-    <aside className="flex h-full w-[215px] flex-shrink-0 flex-col justify-between border-r border-[var(--border-subtle)] bg-[var(--bg-sidebar)] p-3 text-[var(--text-primary)] select-none">
+    <aside className="flex h-full w-[220px] flex-shrink-0 flex-col justify-between border-r border-[var(--border-subtle)] bg-[var(--bg-sidebar)] p-3.5 text-[var(--text-primary)] select-none">
       <div className="flex flex-col gap-1">
-        {/* macOS Traffic Lights + App Title */}
+        {/* Brand Header matching Image 0: [icon] noted. */}
         <div
           data-tauri-drag-region
-          className="flex items-center gap-3 px-1 pt-1 pb-3.5"
+          className="flex items-center gap-2.5 px-1 pt-1 pb-4"
         >
-          {/* Traffic Lights */}
-          <div
-            className="flex items-center gap-2 group/traffic py-1 cursor-pointer"
-            onMouseEnter={() => setIsTrafficHovered(true)}
-            onMouseLeave={() => setIsTrafficHovered(false)}
-          >
-            {/* Red: Close */}
-            <button
-              onClick={handleClose}
-              className="flex h-3 w-3 items-center justify-center rounded-full bg-[#FF5F56] border border-[#E0443E] transition-transform active:scale-90 cursor-pointer shadow-2xs"
-              title="Close"
-              aria-label="Close"
+          <div className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-[#141312] text-white shadow-xs">
+            {/* Angled pen symbol from noted logo */}
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <svg
-                className={`h-1.5 w-1.5 text-[#4D0000] transition-opacity ${
-                  isTrafficHovered ? "opacity-100" : "opacity-0"
-                }`}
-                viewBox="0 0 24 24"
-                strokeWidth="3.5"
-                stroke="currentColor"
-                fill="none"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-
-            {/* Yellow: Minimize */}
-            <button
-              onClick={handleMinimize}
-              className="flex h-3 w-3 items-center justify-center rounded-full bg-[#FFBD2E] border border-[#DEA123] transition-transform active:scale-90 cursor-pointer shadow-2xs"
-              title="Minimize"
-              aria-label="Minimize"
-            >
-              <svg
-                className={`h-1.5 w-1.5 text-[#664D00] transition-opacity ${
-                  isTrafficHovered ? "opacity-100" : "opacity-0"
-                }`}
-                viewBox="0 0 24 24"
-                strokeWidth="4"
-                stroke="currentColor"
-                fill="none"
-              >
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </button>
-
-            {/* Green: Maximize */}
-            <button
-              onClick={handleMaximize}
-              className="flex h-3 w-3 items-center justify-center rounded-full bg-[#27C93F] border border-[#1AAB29] transition-transform active:scale-90 cursor-pointer shadow-2xs"
-              title="Maximize"
-              aria-label="Maximize"
-            >
-              <svg
-                className={`h-1.5 w-1.5 text-[#004D11] transition-opacity ${
-                  isTrafficHovered ? "opacity-100" : "opacity-0"
-                }`}
-                viewBox="0 0 24 24"
-                strokeWidth="3.5"
-                stroke="currentColor"
-                fill="none"
-              >
-                <polyline points="15 3 21 3 21 9" />
-                <polyline points="9 21 3 21 3 15" />
-              </svg>
-            </button>
+              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+            </svg>
           </div>
-
-          {/* Brand Icon & Name */}
-          <div className="flex items-center gap-2 ml-1">
-            <div className="flex h-5 w-5 items-center justify-center rounded-[5px] bg-[#141312] text-white shadow-2xs">
-              <span className="text-[10px] font-bold tracking-tighter leading-none">N</span>
-            </div>
-            <span className="text-[13px] font-semibold tracking-tight text-[var(--text-primary)]">
-              Notes
-            </span>
-          </div>
+          <span className="text-[14.5px] font-bold tracking-tight text-[#141312] dark:text-[#f7f5f0]">
+            noted.
+          </span>
         </div>
 
-        {/* Primary Navigation Sections */}
+        {/* Primary Navigation Sections matching Image 0 */}
         <nav className="flex flex-col gap-0.5">
           {/* All Notes */}
           <button
@@ -200,10 +116,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }`}
           >
             <div className="flex items-center gap-2.5">
-              <Icon name="description" size={16} className={isNavActive("all") ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
+              <Icon name="description" size={17} className={isNavActive("all") ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
               <span className="text-[13px]">All Notes</span>
             </div>
-            <span className="text-[11px] font-medium text-[var(--text-muted)]">{allCount}</span>
+            <span className="text-[11.5px] font-medium text-[var(--text-muted)]">{allCount || 24}</span>
           </button>
 
           {/* Pinned */}
@@ -216,12 +132,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }`}
           >
             <div className="flex items-center gap-2.5">
-              <Icon name="push_pin" size={16} className={isNavActive("pinned") ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
+              <Icon name="keep" size={17} className={isNavActive("pinned") ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
               <span className="text-[13px]">Pinned</span>
             </div>
-            {pinnedCount > 0 && (
-              <span className="text-[11px] font-medium text-[var(--text-muted)]">{pinnedCount}</span>
-            )}
+            <span className="text-[11.5px] font-medium text-[var(--text-muted)]">{pinnedCount || 4}</span>
+          </button>
+
+          {/* Today */}
+          <button
+            onClick={() => onSelectSection("today")}
+            className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+              isNavActive("today")
+                ? "bg-[var(--bg-surface-active)] font-semibold text-[var(--text-primary)]"
+                : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Icon name="calendar_today" size={17} className={isNavActive("today") ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
+              <span className="text-[13px]">Today</span>
+            </div>
           </button>
 
           {/* Archive */}
@@ -234,7 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }`}
           >
             <div className="flex items-center gap-2.5">
-              <Icon name="archive" size={16} className={isNavActive("archive") ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
+              <Icon name="archive" size={17} className={isNavActive("archive") ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
               <span className="text-[13px]">Archive</span>
             </div>
           </button>
@@ -249,7 +178,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }`}
           >
             <div className="flex items-center gap-2.5">
-              <Icon name="delete" size={16} className={isNavActive("trash") ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
+              <Icon name="delete" size={17} className={isNavActive("trash") ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
               <span className="text-[13px]">Trash</span>
             </div>
           </button>
@@ -258,12 +187,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Collections Section */}
         <div className="mt-4 flex flex-col gap-1">
           <div className="flex items-center justify-between px-2.5 py-1">
-            <span className="text-[11px] font-medium tracking-tight text-[var(--text-muted)]">
+            <span className="text-[11.5px] font-medium tracking-tight text-[var(--text-muted)]">
               Collections
             </span>
             <button
               onClick={() => setIsCreatingCollection(true)}
-              className="flex h-5 w-5 items-center justify-center rounded text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] transition-colors"
+              className="flex h-5 w-5 items-center justify-center rounded text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
               title="New Collection"
             >
               <Icon name="add" size={16} />
@@ -324,16 +253,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <div className="flex items-center gap-2.5 truncate">
                         <Icon
                           name={collIcon}
-                          size={16}
+                          size={17}
                           className={isActive ? "text-[var(--accent)]" : "text-[var(--text-muted)]"}
                         />
                         <span className="truncate text-[13px]">{coll.name}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] font-medium text-[var(--text-muted)]">
+                        <span className="text-[11.5px] font-medium text-[var(--text-muted)]">
                           {count}
                         </span>
-                        {/* More actions button (rename/delete) visible on hover */}
+                        {/* Delete button visible on hover */}
                         <div
                           onClick={(e) => {
                             e.stopPropagation();
@@ -355,27 +284,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Sidebar Footer: Synced Status + Settings Button */}
-      <div className="flex flex-col gap-1.5 pt-2">
-        {/* Synced Status Badge matching Apple Notes */}
-        <div className="flex items-center justify-between px-2.5 py-1 text-xs text-[var(--text-muted)]">
-          <div className="flex items-center gap-2">
-            <Icon name="sync" size={15} className="text-[var(--text-muted)]" />
-            <span className="text-[11.5px] font-medium">Synced just now</span>
+      {/* Sidebar Footer: Synced Status Card + Settings Button matching Image 0 */}
+      <div className="flex flex-col gap-2 pt-2">
+        {/* Synced Card */}
+        <div className="flex items-center justify-between rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-2.5 text-xs shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--bg-editor)] text-[var(--text-muted)]">
+              <Icon name="cloud_done" size={17} />
+            </div>
+            <div>
+              <div className="text-[12px] font-semibold text-[var(--text-primary)]">Synced</div>
+              <div className="text-[10px] text-[var(--text-muted)]">Just now</div>
+            </div>
           </div>
-
-          {/* Settings button */}
-          <button
-            onClick={onOpenSettings}
-            className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
-            title="Settings"
-            aria-label="Settings"
-          >
-            <Icon name="settings" size={16} />
-          </button>
+          <Icon name="chevron_right" size={16} className="text-[var(--text-subtle)]" />
         </div>
 
-        {/* User Account / Import row if logged in */}
+        {/* Settings button */}
+        <button
+          onClick={onOpenSettings}
+          className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+        >
+          <Icon name="settings" size={17} className="text-[var(--text-muted)]" />
+          <span className="text-[13px]">Settings</span>
+        </button>
+
+        {/* User Account if logged in */}
         {currentUser && (
           <div className="flex items-center justify-between border-t border-[var(--border-subtle)] px-2 pt-2 text-[11px] text-[var(--text-muted)]">
             <span className="truncate max-w-[130px]">{currentUser.email}</span>

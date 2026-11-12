@@ -88,11 +88,11 @@ export function App() {
 
       if (loadedCollections.length === 0) {
         const seedCollectionsData = [
-          { name: "Personal", icon: "folder" },
-          { name: "Work", icon: "folder" },
           { name: "Ideas", icon: "lightbulb" },
-          { name: "Learning", icon: "school" },
-          { name: "Travel", icon: "flight" },
+          { name: "Tasks", icon: "check_box" },
+          { name: "Personal", icon: "person" },
+          { name: "Projects", icon: "folder" },
+          { name: "Later", icon: "schedule" },
         ];
         const createdCols: Collection[] = [];
         for (const col of seedCollectionsData) {
@@ -106,51 +106,69 @@ export function App() {
       }
 
       if (loadedNotes.length === 0) {
-        const workCol = loadedCollections.find((c) => c.name === "Work")?.id || null;
-        const personalCol = loadedCollections.find((c) => c.name === "Personal")?.id || null;
         const ideasCol = loadedCollections.find((c) => c.name === "Ideas")?.id || null;
-        const learningCol = loadedCollections.find((c) => c.name === "Learning")?.id || null;
-        const travelCol = loadedCollections.find((c) => c.name === "Travel")?.id || null;
+        const tasksCol = loadedCollections.find((c) => c.name === "Tasks")?.id || null;
+        const personalCol = loadedCollections.find((c) => c.name === "Personal")?.id || null;
+        const projectsCol = loadedCollections.find((c) => c.name === "Projects")?.id || null;
+        const laterCol = loadedCollections.find((c) => c.name === "Later")?.id || null;
 
-        // Note 1: Project roadmap (Pinned, Active)
-        const noteRoadmap = await noteService.createNote(workCol, "Project roadmap");
-        noteRoadmap.is_pinned = true;
-        noteRoadmap.content = {
+        // Note 1: Weekend plans (Pinned, Active, matching Image 0)
+        const noteWeekend = await noteService.createNote(personalCol, "Weekend plans");
+        noteWeekend.is_pinned = true;
+        noteWeekend.content = {
           type: "doc",
           content: [
-            {
-              type: "paragraph",
-              content: [{ type: "text", text: "Here are the key milestones for the next quarter:" }],
-            },
             {
               type: "taskList",
               content: [
                 {
                   type: "taskItem",
-                  attrs: { checked: false },
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Finalize the core experience" }] }],
+                  attrs: { checked: true },
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Finish the Kova update" }] }],
                 },
                 {
                   type: "taskItem",
                   attrs: { checked: true },
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Improve synchronisation reliability" }] }],
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Read something good" }] }],
                 },
                 {
                   type: "taskItem",
                   attrs: { checked: false },
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Add theme customisation" }] }],
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Work on Log2Def slides" }] }],
                 },
                 {
                   type: "taskItem",
                   attrs: { checked: false },
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Prepare for mobile release" }] }],
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Go for a walk" }] }],
+                },
+                {
+                  type: "taskItem",
+                  attrs: { checked: false },
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Plan next week" }] }],
+                },
+              ],
+            },
+            {
+              type: "horizontalRule",
+            },
+            {
+              type: "heading",
+              attrs: { level: 2 },
+              content: [{ type: "text", text: "▾ Ideas" }],
+            },
+            {
+              type: "blockquote",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "A calmer mind builds a better future." }],
                 },
               ],
             },
             {
               type: "heading",
               attrs: { level: 2 },
-              content: [{ type: "text", text: "Notes" }],
+              content: [{ type: "text", text: "Notes:" }],
             },
             {
               type: "bulletList",
@@ -161,80 +179,52 @@ export function App() {
                 },
                 {
                   type: "listItem",
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Make synchronisation completely seamless" }] }],
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Make formatting feel effortless" }] }],
                 },
                 {
                   type: "listItem",
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Ensure the editor feels great on both desktop and mobile" }] }],
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Sync across all my devices" }] }],
                 },
               ],
             },
+          ],
+        };
+        await noteService.updateNote(noteWeekend.id, { content: noteWeekend.content, is_pinned: true });
+
+        // Note 2: Project ideas (matching Image 0)
+        const noteIdeas = await noteService.createNote(ideasCol, "Project ideas");
+        noteIdeas.content = {
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "A better way to track dev gigs in Nigeria. Maybe a platform..." }],
+            },
+          ],
+        };
+        await noteService.updateNote(noteIdeas.id, { content: noteIdeas.content });
+
+        // Note 3: A little poem (matching Image 0)
+        const notePoem = await noteService.createNote(personalCol, "A little poem");
+        notePoem.content = {
+          type: "doc",
+          content: [
             {
               type: "blockquote",
               content: [
                 {
                   type: "paragraph",
-                  content: [{ type: "text", text: "A great notes app should disappear, letting you focus on what matters: your thoughts." }],
+                  content: [{ type: "text", text: "The night is quiet,\nand so is my mind..." }],
                 },
               ],
             },
           ],
         };
-        await noteService.updateNote(noteRoadmap.id, { content: noteRoadmap.content, is_pinned: true });
+        await noteService.updateNote(notePoem.id, { content: notePoem.content });
 
-        // Note 2: Weekend plans
-        const noteWeekend = await noteService.createNote(personalCol, "Weekend plans");
-        noteWeekend.content = {
-          type: "doc",
-          content: [
-            {
-              type: "taskList",
-              content: [
-                {
-                  type: "taskItem",
-                  attrs: { checked: false },
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Hike in the mountains" }] }],
-                },
-                {
-                  type: "taskItem",
-                  attrs: { checked: false },
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Try that new coffee place" }] }],
-                },
-              ],
-            },
-          ],
-        };
-        await noteService.updateNote(noteWeekend.id, { content: noteWeekend.content });
-
-        // Note 3: Book recommendations
-        const noteBooks = await noteService.createNote(learningCol, "Book recommendations");
-        noteBooks.content = {
-          type: "doc",
-          content: [
-            {
-              type: "paragraph",
-              content: [{ type: "text", text: "Some great books I want to read..." }],
-            },
-          ],
-        };
-        await noteService.updateNote(noteBooks.id, { content: noteBooks.content });
-
-        // Note 4: Study notes — Machine Learning
-        const noteStudy = await noteService.createNote(learningCol, "Study notes — Machine Learning");
-        noteStudy.content = {
-          type: "doc",
-          content: [
-            {
-              type: "paragraph",
-              content: [{ type: "text", text: "Key concepts: overfitting, regularisation..." }],
-            },
-          ],
-        };
-        await noteService.updateNote(noteStudy.id, { content: noteStudy.content });
-
-        // Note 5: Grocery list
-        const noteGrocery = await noteService.createNote(personalCol, "Grocery list");
-        noteGrocery.content = {
+        // Note 4: Groceries (matching Image 0)
+        const noteGroceries = await noteService.createNote(tasksCol, "Groceries");
+        noteGroceries.content = {
           type: "doc",
           content: [
             {
@@ -259,45 +249,44 @@ export function App() {
             },
           ],
         };
-        await noteService.updateNote(noteGrocery.id, { content: noteGrocery.content });
+        await noteService.updateNote(noteGroceries.id, { content: noteGroceries.content });
 
-        // Note 6: Ideas for the app
-        const noteIdeas = await noteService.createNote(ideasCol, "Ideas for the app");
-        noteIdeas.content = {
+        // Note 5: Study notes (matching Image 0)
+        const noteStudy = await noteService.createNote(projectsCol, "Study notes");
+        noteStudy.content = {
           type: "doc",
           content: [
             {
               type: "paragraph",
-              content: [{ type: "text", text: "Maybe add a distraction-free mode?" }],
+              content: [{ type: "text", text: "Data structures: trees,\ngraphs and heaps..." }],
             },
           ],
         };
-        await noteService.updateNote(noteIdeas.id, { content: noteIdeas.content });
+        await noteService.updateNote(noteStudy.id, { content: noteStudy.content });
 
-        // Note 7: Travel wishlist
-        const noteTravel = await noteService.createNote(travelCol, "Travel wishlist");
-        noteTravel.content = {
+        // Note 6: Later (matching Image 0)
+        const noteLater = await noteService.createNote(laterCol, "Later");
+        noteLater.content = {
           type: "doc",
           content: [
             {
               type: "paragraph",
-              content: [{ type: "text", text: "Japan, Iceland, New Zealand..." }],
+              content: [{ type: "text", text: "Check out the new Tauri features..." }],
             },
           ],
         };
-        await noteService.updateNote(noteTravel.id, { content: noteTravel.content });
+        await noteService.updateNote(noteLater.id, { content: noteLater.content });
 
         const allSeedNotes = [
-          noteRoadmap,
           noteWeekend,
-          noteBooks,
-          noteStudy,
-          noteGrocery,
           noteIdeas,
-          noteTravel,
+          notePoem,
+          noteGroceries,
+          noteStudy,
+          noteLater,
         ];
         setNotes(allSeedNotes);
-        setSelectedNoteId(noteRoadmap.id);
+        setSelectedNoteId(noteWeekend.id);
       } else {
         setNotes(loadedNotes);
         const active = loadedNotes.filter((n) => n.deleted_at === null);
