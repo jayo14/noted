@@ -38,6 +38,56 @@ export function formatDate(isoString: string): string {
   }
 }
 
+export function formatNoteDateTime(isoString?: string | null): string {
+  if (!isoString) {
+    const now = new Date();
+    return `Today, ${now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+  }
+
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) {
+      const now = new Date();
+      return `Today, ${now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+    }
+
+    const now = new Date();
+    const isToday =
+      date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear();
+
+    const timeStr = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+    if (isToday) {
+      return `Today, ${timeStr}`;
+    }
+
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday =
+      date.getDate() === yesterday.getDate() &&
+      date.getMonth() === yesterday.getMonth() &&
+      date.getFullYear() === yesterday.getFullYear();
+
+    if (isYesterday) {
+      return `Yesterday, ${timeStr}`;
+    }
+
+    const isThisYear = date.getFullYear() === now.getFullYear();
+    const dateStr = date.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+      ...(isThisYear ? {} : { year: "numeric" }),
+    });
+
+    return `${dateStr}, ${timeStr}`;
+  } catch {
+    const now = new Date();
+    return `Today, ${now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+  }
+}
+
 export function formatCompactRelativeTime(isoString: string): string {
   try {
     const date = new Date(isoString);
