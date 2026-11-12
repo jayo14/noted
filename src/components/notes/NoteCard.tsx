@@ -10,6 +10,7 @@ interface NoteCardProps {
   isSelected: boolean;
   collections: Collection[];
   searchSnippet?: string;
+  viewMode?: "list" | "grid";
   onClick: () => void;
 }
 
@@ -55,6 +56,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
   isSelected,
   collections,
   searchSnippet,
+  viewMode = "list",
   onClick,
 }) => {
   const collection = collections.find((c) => c.id === note.collection_id);
@@ -67,6 +69,98 @@ export const NoteCard: React.FC<NoteCardProps> = ({
   const iconMeta = classifyNoteIcon(note, collection?.name);
   const relativeTime = formatCompactRelativeTime(note.updated_at);
   const previewItems = extractStructuredPreview(note);
+
+  if (viewMode === "grid") {
+    return (
+      <div
+        onClick={onClick}
+        role="button"
+        tabIndex={0}
+        aria-label={`${note.title || "Untitled"}, ${iconMeta.accessibleLabel}`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        className={`group relative flex flex-col justify-between cursor-pointer rounded-xl transition-all select-none p-3 outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] min-h-[134px] border ${
+          isSelected
+            ? "bg-[var(--bg-card-active)] border-[var(--border-strong)] shadow-[0_2px_8px_rgba(0,0,0,0.06)] ring-1 ring-[var(--accent)]/20"
+            : "bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] border-[var(--border-subtle)] hover:border-[var(--border-strong)] shadow-2xs"
+        }`}
+      >
+        <div>
+          {/* Top row: Category icon and Pin */}
+          <div className="flex items-center justify-between">
+            <div
+              className={`flex h-6 w-6 items-center justify-center rounded-md transition-colors ${
+                isSelected
+                  ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)]"
+                  : "bg-black/5 dark:bg-white/5 text-[var(--text-muted)] group-hover:text-[var(--text-primary)]"
+              }`}
+              title={iconMeta.categoryName}
+            >
+              <Icon name={iconMeta.icon} size={15} />
+            </div>
+            {note.is_pinned && (
+              <Icon
+                name="keep"
+                size={13}
+                className={`rotate-45 ${
+                  isSelected ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+                }`}
+              />
+            )}
+          </div>
+
+          {/* Title */}
+          <h3 className="line-clamp-2 text-xs font-semibold text-[var(--text-primary)] leading-snug mt-2">
+            {note.title || "Untitled"}
+          </h3>
+
+          {/* Preview snippet or tasks */}
+          <div className="mt-1.5 flex flex-col gap-0.5">
+            {searchSnippet ? (
+              <p className="line-clamp-2 text-[10.5px] leading-relaxed text-[var(--text-muted)]">
+                <span className="font-medium text-[var(--text-primary)]">{searchSnippet}</span>
+              </p>
+            ) : previewItems.length > 0 ? (
+              previewItems.slice(0, 2).map((item, idx) => (
+                <p
+                  key={idx}
+                  className={`line-clamp-1 text-[10.5px] leading-tight ${
+                    isSelected ? "text-[var(--text-secondary)]" : "text-[var(--text-muted)]"
+                  }`}
+                >
+                  {item.type === "task"
+                    ? `${prefs.showChecklistPreview ? (item.checked ? "✔ " : "- ") : ""}${item.text}`
+                    : item.text}
+                </p>
+              ))
+            ) : (
+              <p className="text-[10.5px] text-[var(--text-subtle)] italic leading-tight">
+                No additional text
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom meta row: Collection tag and Relative timestamp */}
+        <div className="mt-2.5 flex items-center justify-between border-t border-[var(--border-subtle)]/60 pt-1.5 text-[9.5px]">
+          <span className="truncate max-w-[85px] text-[var(--text-muted)] font-medium">
+            {collection?.name || "Note"}
+          </span>
+          <span
+            className={`${
+              isSelected ? "text-[var(--text-secondary)] font-medium" : "text-[var(--text-muted)]"
+            }`}
+          >
+            {relativeTime}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
