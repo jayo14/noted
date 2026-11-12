@@ -80,7 +80,12 @@ export const NoteCard: React.FC<NoteCardProps> = ({
       }`}
     >
       {/* Intelligent Category Icon on left matching Image 1 */}
-      <div className="pt-0.5 flex-shrink-0 text-[var(--text-muted)]" title={iconMeta.categoryName}>
+      <div
+        className={`pt-0.5 flex-shrink-0 transition-colors ${
+          isSelected ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+        }`}
+        title={iconMeta.categoryName}
+      >
         <Icon name={iconMeta.icon} size={18} />
       </div>
 
@@ -92,11 +97,21 @@ export const NoteCard: React.FC<NoteCardProps> = ({
             {note.title || "Untitled"}
           </h3>
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="text-[10.5px] text-[var(--text-muted)] leading-none">
+            <span
+              className={`text-[10.5px] leading-none ${
+                isSelected ? "text-[var(--text-secondary)] font-medium" : "text-[var(--text-muted)]"
+              }`}
+            >
               {relativeTime}
             </span>
             {note.is_pinned && (
-              <Icon name="keep" size={13} className="text-[var(--text-muted)] rotate-45" />
+              <Icon
+                name="keep"
+                size={13}
+                className={`rotate-45 ${
+                  isSelected ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+                }`}
+              />
             )}
           </div>
         </div>
@@ -111,7 +126,9 @@ export const NoteCard: React.FC<NoteCardProps> = ({
             previewItems.map((item, idx) => (
               <p
                 key={idx}
-                className="truncate text-[11.5px] leading-snug text-[var(--text-muted)]"
+                className={`truncate text-[11.5px] leading-snug ${
+                  isSelected ? "text-[var(--text-secondary)]" : "text-[var(--text-muted)]"
+                }`}
               >
                 {item.type === "task"
                   ? `${item.checked ? "✔ " : "- "}${item.text}`
