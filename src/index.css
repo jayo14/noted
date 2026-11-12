@@ -216,8 +216,8 @@
 
 .tiptap ul[data-type="taskList"] li > label input[type="checkbox"] {
   appearance: none;
-  width: 17px;
-  height: 17px;
+  width: 16px;
+  height: 16px;
   border: 1.5px solid #a8a5a0;
   border-radius: 4px;
   background-color: transparent;
@@ -228,22 +228,32 @@
 }
 
 .tiptap ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
-  background-color: var(--accent);
-  border-color: var(--accent);
+  background-color: #141312;
+  border-color: #141312;
 }
 
 .tiptap ul[data-type="taskList"] li > label input[type="checkbox"]:checked::before {
   content: "";
-  width: 9px;
-  height: 5px;
-  border-left: 2px solid var(--accent-contrast);
-  border-bottom: 2px solid var(--accent-contrast);
-  transform: rotate(-45deg) translate(0.5px, -1px);
+  width: 8.5px;
+  height: 4.5px;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(-45deg) translate(0.5px, -0.8px);
+}
+
+.dark .tiptap ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
+  background-color: #f7f5f0;
+  border-color: #f7f5f0;
+}
+
+.dark .tiptap ul[data-type="taskList"] li > label input[type="checkbox"]:checked::before {
+  border-left-color: #141312;
+  border-bottom-color: #141312;
 }
 
 .tiptap ul[data-type="taskList"] li[data-checked="true"] > div > p {
   text-decoration: line-through;
-  color: var(--text-muted);
+  color: #8E8B85;
 }
 
 .tiptap ul[data-type="taskList"] li > div {
