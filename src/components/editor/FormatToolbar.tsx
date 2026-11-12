@@ -1,44 +1,15 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import type { Editor } from "@tiptap/core";
-import type { Collection } from "@/types";
-import { CollectionSelector } from "@/components/collections/CollectionSelector";
-import {
-  Bold,
-  Italic,
-  Underline as UnderlineIcon,
-  Strikethrough,
-  Code,
-  Highlighter,
-  CheckSquare,
-  List,
-  ListOrdered,
-  Quote,
-  Minus,
-  Undo2,
-  Redo2,
-  Heading1,
-  Heading2,
-  Heading3,
-  Pin,
-  Trash2,
-  Download,
-  Copy,
-  ArrowLeft,
-  Maximize2,
-  Minimize2,
-} from "lucide-react";
+import { Icon } from "@/components/ui/Icon";
 
 interface FormatToolbarProps {
   editor: Editor | null;
   isPinned?: boolean;
-  collectionId?: string | null;
-  collections?: Collection[];
-  onSelectCollection?: (colId: string | null) => void;
-  onCreateCollection?: (name: string) => Promise<void>;
   onTogglePin?: () => void;
   onDuplicate?: () => void;
   onDelete?: () => void;
   onExport?: () => void;
+  onShare?: () => void;
   onBack?: () => void;
   isMobile?: boolean;
   isZenMode?: boolean;
@@ -48,300 +19,374 @@ interface FormatToolbarProps {
 export const FormatToolbar: React.FC<FormatToolbarProps> = ({
   editor,
   isPinned = false,
-  collectionId = null,
-  collections = [],
-  onSelectCollection,
-  onCreateCollection,
   onTogglePin,
   onDuplicate,
   onDelete,
   onExport,
+  onShare,
   onBack,
   isMobile = false,
   isZenMode = false,
   onToggleZenMode,
 }) => {
+  const [isStyleMenuOpen, setIsStyleMenuOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [isLinkPromptOpen, setIsLinkPromptOpen] = useState(false);
+  const [linkHref, setLinkHref] = useState("");
+  const styleMenuRef = useRef<HTMLDivElement>(null);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (styleMenuRef.current && !styleMenuRef.current.contains(e.target as Node)) {
+        setIsStyleMenuOpen(false);
+      }
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setIsMoreMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   if (!editor) return null;
 
+  const getCurrentStyleLabel = () => {
+    if (editor.isActive("heading", { level: 1 })) return "Heading 1";
+    if (editor.isActive("heading", { level: 2 })) return "Heading 2";
+    if (editor.isActive("heading", { level: 3 })) return "Heading 3";
+    return "Normal";
+  };
+
+  const setStyle = (style: "paragraph" | 1 | 2 | 3) => {
+    if (style === "paragraph") {
+      editor.chain().focus().setParagraph().run();
+    } else {
+      editor.chain().focus().toggleHeading({ level: style }).run();
+    }
+    setIsStyleMenuOpen(false);
+  };
+
+  const handleLinkSet = () => {
+    if (linkHref.trim()) {
+      editor.chain().focus().extendMarkRange("link").setLink({ href: linkHref.trim() }).run();
+    } else {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+    }
+    setIsLinkPromptOpen(false);
+    setLinkHref("");
+  };
+
   return (
-    <div className="flex w-full items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-app)]/95 px-3 py-2 backdrop-blur-sm">
-      {/* Left controls */}
+    <div className="flex h-11 w-full items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-editor)] px-4 select-none">
+      {/* Left Formatting Tools matching Image 1 */}
       <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
         {isMobile && onBack && (
           <button
             onClick={onBack}
-            className="mr-1.5 flex items-center gap-1 rounded-md p-1.5 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-colors"
-            title="Back to notes list"
+            className="mr-2 flex items-center gap-1 rounded-md p-1 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+            title="Back to notes"
           >
-            <ArrowLeft size={16} />
+            <Icon name="arrow_back" size={16} />
           </button>
         )}
 
-        {/* Collection Selector */}
-        {onSelectCollection && (
-          <>
-            <CollectionSelector
-              collections={collections}
-              selectedCollectionId={collectionId}
-              onSelectCollection={onSelectCollection}
-              onCreateCollection={onCreateCollection}
-            />
-            <div className="mx-1 h-3.5 w-px bg-[var(--border-subtle)]" />
-          </>
-        )}
+        {/* Style Dropdown: Normal ⌵ */}
+        <div className="relative" ref={styleMenuRef}>
+          <button
+            onClick={() => setIsStyleMenuOpen((prev) => !prev)}
+            className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors cursor-pointer"
+          >
+            <span className="text-[12.5px]">{getCurrentStyleLabel()}</span>
+            <Icon name="expand_more" size={15} className="text-[var(--text-muted)]" />
+          </button>
 
-        {/* Undo / Redo */}
-        <button
-          onClick={() => editor.chain().focus().undo().run()}
-          disabled={!editor.can().undo()}
-          className="rounded p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] disabled:opacity-30 transition-colors"
-          title="Undo (Cmd+Z)"
-        >
-          <Undo2 size={15} />
-        </button>
+          {isStyleMenuOpen && (
+            <div className="absolute left-0 top-8 z-40 w-36 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-editor)] p-1 shadow-lg">
+              <button
+                onClick={() => setStyle("paragraph")}
+                className={`flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs ${
+                  editor.isActive("paragraph") ? "bg-[var(--bg-surface-active)] font-semibold" : "hover:bg-[var(--bg-surface)]"
+                }`}
+              >
+                Normal
+              </button>
+              <button
+                onClick={() => setStyle(1)}
+                className={`flex w-full items-center rounded-lg px-2.5 py-1.5 text-sm font-bold font-serif-title ${
+                  editor.isActive("heading", { level: 1 }) ? "bg-[var(--bg-surface-active)] font-semibold" : "hover:bg-[var(--bg-surface)]"
+                }`}
+              >
+                Heading 1
+              </button>
+              <button
+                onClick={() => setStyle(2)}
+                className={`flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold ${
+                  editor.isActive("heading", { level: 2 }) ? "bg-[var(--bg-surface-active)] font-semibold" : "hover:bg-[var(--bg-surface)]"
+                }`}
+              >
+                Heading 2
+              </button>
+              <button
+                onClick={() => setStyle(3)}
+                className={`flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium ${
+                  editor.isActive("heading", { level: 3 }) ? "bg-[var(--bg-surface-active)] font-semibold" : "hover:bg-[var(--bg-surface)]"
+                }`}
+              >
+                Heading 3
+              </button>
+            </div>
+          )}
+        </div>
 
-        <button
-          onClick={() => editor.chain().focus().redo().run()}
-          disabled={!editor.can().redo()}
-          className="rounded p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] disabled:opacity-30 transition-colors"
-          title="Redo (Cmd+Shift+Z)"
-        >
-          <Redo2 size={15} />
-        </button>
+        <div className="mx-1.5 h-3.5 w-px bg-[var(--border-subtle)]" />
 
-        <div className="mx-1 h-3.5 w-px bg-[var(--border-subtle)]" />
-
-        {/* Headings */}
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={`rounded p-1.5 transition-colors ${
-            editor.isActive("heading", { level: 1 })
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
-          }`}
-          title="Heading 1"
-        >
-          <Heading1 size={15} />
-        </button>
-
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`rounded p-1.5 transition-colors ${
-            editor.isActive("heading", { level: 2 })
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
-          }`}
-          title="Heading 2"
-        >
-          <Heading2 size={15} />
-        </button>
-
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={`rounded p-1.5 transition-colors ${
-            editor.isActive("heading", { level: 3 })
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
-          }`}
-          title="Heading 3"
-        >
-          <Heading3 size={15} />
-        </button>
-
-        <div className="mx-1 h-3.5 w-px bg-[var(--border-subtle)]" />
-
-        {/* Formatting */}
+        {/* Text marks: B I U S */}
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`rounded p-1.5 transition-colors ${
-            editor.isActive("bold")
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+          className={`flex h-7 w-7 items-center justify-center rounded-md font-bold text-xs transition-colors cursor-pointer ${
+            editor.isActive("bold") ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"
           }`}
           title="Bold (Cmd+B)"
         >
-          <Bold size={15} />
+          <span className="font-bold">B</span>
         </button>
 
         <button
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`rounded p-1.5 transition-colors ${
-            editor.isActive("italic")
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+          className={`flex h-7 w-7 items-center justify-center rounded-md text-xs italic transition-colors cursor-pointer ${
+            editor.isActive("italic") ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"
           }`}
           title="Italic (Cmd+I)"
         >
-          <Italic size={15} />
+          <span className="italic font-serif">I</span>
         </button>
 
         <button
           onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={`rounded p-1.5 transition-colors ${
-            editor.isActive("underline")
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+          className={`flex h-7 w-7 items-center justify-center rounded-md text-xs underline transition-colors cursor-pointer ${
+            editor.isActive("underline") ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"
           }`}
           title="Underline (Cmd+U)"
         >
-          <UnderlineIcon size={15} />
+          <span className="underline">U</span>
         </button>
 
         <button
           onClick={() => editor.chain().focus().toggleStrike().run()}
-          className={`rounded p-1.5 transition-colors ${
-            editor.isActive("strike")
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+          className={`flex h-7 w-7 items-center justify-center rounded-md text-xs line-through transition-colors cursor-pointer ${
+            editor.isActive("strike") ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"
           }`}
           title="Strikethrough"
         >
-          <Strikethrough size={15} />
+          <span className="line-through">S</span>
         </button>
 
-        <button
-          onClick={() => editor.chain().focus().toggleCode().run()}
-          className={`rounded p-1.5 transition-colors ${
-            editor.isActive("code")
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
-          }`}
-          title="Inline Code"
-        >
-          <Code size={15} />
-        </button>
+        <div className="mx-1.5 h-3.5 w-px bg-[var(--border-subtle)]" />
 
-        <button
-          onClick={() => editor.chain().focus().toggleHighlight().run()}
-          className={`rounded p-1.5 transition-colors ${
-            editor.isActive("highlight")
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
-          }`}
-          title="Highlight"
-        >
-          <Highlighter size={15} />
-        </button>
-
-        <div className="mx-1 h-3.5 w-px bg-[var(--border-subtle)]" />
-
-        {/* Lists */}
-        <button
-          onClick={() => editor.chain().focus().toggleTaskList().run()}
-          className={`rounded p-1.5 transition-colors ${
-            editor.isActive("taskList")
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
-          }`}
-          title="Checklist"
-        >
-          <CheckSquare size={15} />
-        </button>
-
+        {/* Lists: bullet, number, checklist */}
         <button
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`rounded p-1.5 transition-colors ${
-            editor.isActive("bulletList")
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+          className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors cursor-pointer ${
+            editor.isActive("bulletList") ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
           }`}
           title="Bullet List"
         >
-          <List size={15} />
+          <Icon name="format_list_bulleted" size={17} />
         </button>
 
         <button
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`rounded p-1.5 transition-colors ${
-            editor.isActive("orderedList")
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+          className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors cursor-pointer ${
+            editor.isActive("orderedList") ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
           }`}
           title="Numbered List"
         >
-          <ListOrdered size={15} />
+          <Icon name="format_list_numbered" size={17} />
+        </button>
+
+        <button
+          onClick={() => editor.chain().focus().toggleTaskList().run()}
+          className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors cursor-pointer ${
+            editor.isActive("taskList") ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+          }`}
+          title="Checklist"
+        >
+          <Icon name="check_box" size={16} />
+        </button>
+
+        <div className="mx-1.5 h-3.5 w-px bg-[var(--border-subtle)]" />
+
+        {/* Inlines & Blocks: link, code, quote, image, more */}
+        <button
+          onClick={() => setIsLinkPromptOpen((prev) => !prev)}
+          className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors cursor-pointer ${
+            editor.isActive("link") ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+          }`}
+          title="Add Link"
+        >
+          <Icon name="link" size={17} />
+        </button>
+
+        <button
+          onClick={() => editor.chain().focus().toggleCode().run()}
+          className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors cursor-pointer ${
+            editor.isActive("code") ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+          }`}
+          title="Inline Code"
+        >
+          <Icon name="code" size={16} />
         </button>
 
         <button
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`rounded p-1.5 transition-colors ${
-            editor.isActive("blockquote")
-              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-              : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+          className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors cursor-pointer ${
+            editor.isActive("blockquote") ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
           }`}
-          title="Quote"
+          title="Quote Block"
         >
-          <Quote size={15} />
+          <Icon name="format_quote" size={17} />
+        </button>
+
+        <button
+          onClick={() => {
+            const url = prompt("Enter image URL:");
+            if (url) {
+              (editor.chain().focus() as unknown as { setImage: (options: { src: string }) => { run: () => void } }).setImage({ src: url }).run();
+            }
+          }}
+          className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+          title="Insert image"
+        >
+          <Icon name="image" size={16} />
         </button>
 
         <button
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
-          className="rounded p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-colors"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
           title="Horizontal Divider"
         >
-          <Minus size={15} />
+          <Icon name="more_horiz" size={16} />
         </button>
       </div>
 
-      {/* Right controls */}
-      <div className="flex items-center gap-1 pl-2">
+      {/* Link Input Popover */}
+      {isLinkPromptOpen && (
+        <div className="absolute left-64 top-10 z-40 flex items-center gap-1 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-editor)] p-1.5 shadow-xl">
+          <input
+            type="url"
+            autoFocus
+            placeholder="https://..."
+            value={linkHref}
+            onChange={(e) => setLinkHref(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleLinkSet();
+              if (e.key === "Escape") setIsLinkPromptOpen(false);
+            }}
+            className="w-48 rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-2 py-1 text-xs outline-none"
+          />
+          <button
+            onClick={handleLinkSet}
+            className="rounded bg-[var(--accent)] px-2 py-1 text-xs font-medium text-[var(--accent-contrast)]"
+          >
+            Set
+          </button>
+        </div>
+      )}
+
+      {/* Right Controls matching Image 1: Pin, Share pill, More dots */}
+      <div className="flex items-center gap-2 flex-shrink-0">
         {onTogglePin && (
           <button
             onClick={onTogglePin}
-            className={`rounded p-1.5 transition-colors ${
+            className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors cursor-pointer ${
               isPinned
                 ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
                 : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
             }`}
             title={isPinned ? "Unpin note" : "Pin note"}
           >
-            <Pin size={15} />
+            <Icon name="keep" size={17} className={isPinned ? "rotate-45" : ""} />
           </button>
         )}
 
-        {onDuplicate && (
-          <button
-            onClick={onDuplicate}
-            className="rounded p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-colors"
-            title="Duplicate note"
-          >
-            <Copy size={15} />
-          </button>
-        )}
+        {/* Share Button Pill matching Image 1 */}
+        <button
+          onClick={onShare || onExport}
+          className="flex items-center gap-1.5 rounded-full bg-[#161514] dark:bg-[#f7f5f0] px-3.5 py-1 text-xs font-semibold text-white dark:text-[#161514] hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
+          title="Share note"
+        >
+          <span className="text-[12px]">Share</span>
+        </button>
 
-        {onExport && (
+        {/* Overflow Menu (Three vertical dots) */}
+        <div className="relative" ref={moreMenuRef}>
           <button
-            onClick={onExport}
-            className="rounded p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-colors"
-            title="Export note"
+            onClick={() => setIsMoreMenuOpen((prev) => !prev)}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+            title="More options"
           >
-            <Download size={15} />
+            <Icon name="more_vert" size={17} />
           </button>
-        )}
 
-        {onToggleZenMode && !isMobile && (
-          <button
-            onClick={onToggleZenMode}
-            className={`rounded p-1.5 transition-colors ${
-              isZenMode
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
-            }`}
-            title={isZenMode ? "Exit Zen Mode (Cmd+Shift+F)" : "Enter Zen Focus Mode (Cmd+Shift+F)"}
-          >
-            {isZenMode ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-          </button>
-        )}
+          {isMoreMenuOpen && (
+            <div className="absolute right-0 top-8 z-40 w-44 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-editor)] p-1 shadow-xl">
+              {onDuplicate && (
+                <button
+                  onClick={() => {
+                    onDuplicate();
+                    setIsMoreMenuOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"
+                >
+                  <Icon name="content_copy" size={15} />
+                  <span>Duplicate Note</span>
+                </button>
+              )}
 
-        {onDelete && (
-          <button
-            onClick={onDelete}
-            className="rounded p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-red-500 transition-colors"
-            title="Delete note"
-          >
-            <Trash2 size={15} />
-          </button>
-        )}
+              {onExport && (
+                <button
+                  onClick={() => {
+                    onExport();
+                    setIsMoreMenuOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"
+                >
+                  <Icon name="download" size={15} />
+                  <span>Export Markdown</span>
+                </button>
+              )}
+
+              {onToggleZenMode && !isMobile && (
+                <button
+                  onClick={() => {
+                    onToggleZenMode();
+                    setIsMoreMenuOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"
+                >
+                  <Icon name={isZenMode ? "fullscreen_exit" : "fullscreen"} size={15} />
+                  <span>{isZenMode ? "Exit Focus Mode" : "Focus Mode"}</span>
+                </button>
+              )}
+
+              {onDelete && (
+                <div className="border-t border-[var(--border-subtle)] mt-1 pt-1">
+                  <button
+                    onClick={() => {
+                      onDelete();
+                      setIsMoreMenuOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-red-500 hover:bg-red-500/10"
+                  >
+                    <Icon name="delete" size={15} />
+                    <span>Delete Note</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
