@@ -18,7 +18,7 @@ export class SearchService {
   }
 
   public filterNotes(notes: Note[], filter: FilterState): SearchResult[] {
-    const { section, collectionId, searchQuery } = filter;
+    const { section, collectionId, searchQuery, sortBy = "updated", onlyChecklists = false } = filter;
 
     // 1. Filter by section / collection
     let scopedNotes: Note[] = [];
@@ -40,18 +40,39 @@ export class SearchService {
       }
     }
 
-    // 2. If no search query, return sorted by pinned status and updated_at
+    // Optional checklist filter
+    if (onlyChecklists) {
+      scopedNotes = scopedNotes.filter((n) => {
+        const raw = JSON.stringify(n.content);
+        return raw.includes('"type":"taskList"') || raw.includes('"type":"taskItem"');
+      });
+    }
+
+    // Comparator function for notes based on sortBy option
+    const compareNotes = (a: Note, b: Note): number => {
+      if (section !== "trash") {
+        if (a.is_pinned !== b.is_pinned) {
+          return a.is_pinned ? -1 : 1;
+        }
+      }
+
+      if (sortBy === "title") {
+        return a.title.localeCompare(b.title);
+      }
+
+      if (sortBy === "created") {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+
+      // Default: updated
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    };
+
+    // 2. If no search query, return sorted
     const trimmedQuery = searchQuery.trim().toLowerCase();
     if (!trimmedQuery) {
       return scopedNotes
-        .sort((a, b) => {
-          if (section !== "trash") {
-            if (a.is_pinned !== b.is_pinned) {
-              return a.is_pinned ? -1 : 1;
-            }
-          }
-          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-        })
+        .sort(compareNotes)
         .map((note) => ({ note, matchScore: 0 }));
     }
 

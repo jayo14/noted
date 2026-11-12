@@ -1,8 +1,8 @@
 import React, { useRef } from "react";
-import type { Note, Collection, FilterState } from "@/types";
+import type { Note, Collection, FilterState, SortOption } from "@/types";
 import { NoteCard } from "./NoteCard";
 import { searchService } from "@/services/searchService";
-import { Search, Plus, X, FileText, Trash2 } from "lucide-react";
+import { Search, Plus, X, FileText, Trash2, ArrowUpDown, CheckSquare } from "lucide-react";
 
 interface NotesPanelProps {
   notes: Note[];
@@ -12,6 +12,8 @@ interface NotesPanelProps {
   onSelectNote: (id: string) => void;
   onCreateNote: () => void;
   onSearchChange: (query: string) => void;
+  onSortChange?: (sortBy: SortOption) => void;
+  onToggleChecklistFilter?: () => void;
   onEmptyTrash?: () => void;
   searchInputRef?: React.RefObject<HTMLInputElement | null>;
 }
@@ -24,6 +26,8 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
   onSelectNote,
   onCreateNote,
   onSearchChange,
+  onSortChange,
+  onToggleChecklistFilter,
   onEmptyTrash,
   searchInputRef: externalSearchRef,
 }) => {
@@ -105,6 +109,39 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
               className="absolute right-2 text-[var(--text-subtle)] hover:text-[var(--text-primary)]"
             >
               <X size={13} />
+            </button>
+          )}
+        </div>
+
+        {/* Sort & Quick Filter Pill Controls */}
+        <div className="mt-2 flex items-center justify-between text-[11px] text-[var(--text-muted)]">
+          <div className="flex items-center gap-1">
+            <span className="flex items-center gap-1 text-[var(--text-subtle)]">
+              <ArrowUpDown size={11} />
+            </span>
+            <select
+              value={filter.sortBy || "updated"}
+              onChange={(e) => onSortChange?.(e.target.value as SortOption)}
+              className="bg-transparent text-[11px] text-[var(--text-muted)] outline-none hover:text-[var(--text-primary)] cursor-pointer"
+            >
+              <option value="updated" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Updated</option>
+              <option value="created" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Created</option>
+              <option value="title" className="bg-[var(--bg-surface)] text-[var(--text-primary)]">Title (A-Z)</option>
+            </select>
+          </div>
+
+          {onToggleChecklistFilter && (
+            <button
+              onClick={onToggleChecklistFilter}
+              className={`flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors ${
+                filter.onlyChecklists
+                  ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                  : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+              }`}
+              title="Filter notes with checklists"
+            >
+              <CheckSquare size={11} />
+              <span>Tasks</span>
             </button>
           )}
         </div>

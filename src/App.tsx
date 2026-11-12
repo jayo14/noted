@@ -456,6 +456,10 @@ export function App() {
                 onSelectNote={handleSelectNote}
                 onCreateNote={handleCreateNote}
                 onSearchChange={(searchQuery) => setFilter((prev) => ({ ...prev, searchQuery }))}
+                onSortChange={(sortBy) => setFilter((prev) => ({ ...prev, sortBy }))}
+                onToggleChecklistFilter={() =>
+                  setFilter((prev) => ({ ...prev, onlyChecklists: !prev.onlyChecklists }))
+                }
                 onEmptyTrash={handleEmptyTrash}
                 searchInputRef={searchInputRef}
               />
@@ -553,6 +557,10 @@ export function App() {
                   onSelectNote={handleSelectNote}
                   onCreateNote={handleCreateNote}
                   onSearchChange={(searchQuery) => setFilter((prev) => ({ ...prev, searchQuery }))}
+                  onSortChange={(sortBy) => setFilter((prev) => ({ ...prev, sortBy }))}
+                  onToggleChecklistFilter={() =>
+                    setFilter((prev) => ({ ...prev, onlyChecklists: !prev.onlyChecklists }))
+                  }
                   onEmptyTrash={handleEmptyTrash}
                   searchInputRef={searchInputRef}
                 />

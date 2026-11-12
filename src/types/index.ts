@@ -52,10 +52,14 @@ export type ThemePreference = "light" | "dark" | "system";
 
 export type NavSection = "all" | "pinned" | "collection" | "trash" | "settings";
 
+export type SortOption = "updated" | "created" | "title";
+
 export interface FilterState {
   section: NavSection;
   collectionId: CollectionId | null;
   searchQuery: string;
+  sortBy?: SortOption;
+  onlyChecklists?: boolean;
 }
 
 export interface NoteStats {

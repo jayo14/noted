@@ -134,4 +134,29 @@ describe("SearchService", () => {
     expect(results.length).toBe(1);
     expect(results[0].note.id).toBe("note-3");
   });
+
+  it("filters notes containing task lists when onlyChecklists is enabled", () => {
+    const results = searchService.filterNotes(mockNotes, {
+      section: "all",
+      collectionId: null,
+      searchQuery: "",
+      onlyChecklists: true,
+    });
+
+    expect(results.length).toBe(1);
+    expect(results[0].note.title).toBe("Grocery Checklist");
+  });
+
+  it("sorts notes alphabetically by title when sortBy is 'title'", () => {
+    const results = searchService.filterNotes(mockNotes, {
+      section: "all",
+      collectionId: null,
+      searchQuery: "",
+      sortBy: "title",
+    });
+
+    // Pinned note still gets priority, but unpinned are sorted
+    expect(results[0].note.id).toBe("note-1"); // pinned
+    expect(results[1].note.title).toBe("Grocery Checklist");
+  });
 });
