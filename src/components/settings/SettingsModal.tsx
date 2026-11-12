@@ -16,6 +16,7 @@ import {
   UserPlus,
   ShieldCheck,
   AlertCircle,
+  Upload,
 } from "lucide-react";
 
 interface SettingsModalProps {
@@ -30,6 +31,7 @@ interface SettingsModalProps {
   supabaseUrl: string;
   supabaseKey: string;
   onSaveSupabaseConfig: (url: string, key: string) => Promise<void>;
+  onImportFile?: (file: File) => Promise<void>;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -44,6 +46,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   supabaseUrl,
   supabaseKey,
   onSaveSupabaseConfig,
+  onImportFile,
 }) => {
   const [activeTab, setActiveTab] = useState<"appearance" | "account" | "sync" | "shortcuts">("appearance");
   const [url, setUrl] = useState(supabaseUrl);
@@ -244,25 +247,44 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
 
               <div className="border-t border-[var(--border-subtle)] pt-4">
-                <label className="text-xs font-semibold text-[var(--text-primary)]">Export Library</label>
+                <label className="text-xs font-semibold text-[var(--text-primary)]">Library & Backup</label>
                 <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">
-                  Save all your notes locally in standard formats.
+                  Export your notes or import existing Markdown and text files.
                 </p>
-                <div className="mt-3 flex gap-2">
+                <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     onClick={() => onExportAll("markdown")}
                     className="flex items-center gap-1.5 rounded-md border border-[var(--border-strong)] px-3 py-1.5 font-medium hover:bg-[var(--bg-surface)] transition-colors"
                   >
                     <Download size={13} />
-                    <span>Export as Markdown</span>
+                    <span>Export Markdown</span>
                   </button>
                   <button
                     onClick={() => onExportAll("json")}
                     className="flex items-center gap-1.5 rounded-md border border-[var(--border-strong)] px-3 py-1.5 font-medium hover:bg-[var(--bg-surface)] transition-colors"
                   >
                     <Database size={13} />
-                    <span>Export as JSON</span>
+                    <span>Export JSON</span>
                   </button>
+                  {onImportFile && (
+                    <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-[var(--border-strong)] px-3 py-1.5 font-medium hover:bg-[var(--bg-surface)] transition-colors">
+                      <Upload size={13} />
+                      <span>Import Note File</span>
+                      <input
+                        type="file"
+                        accept=".md,.markdown,.txt,.json"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            onImportFile(file);
+                            onClose();
+                          }
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  )}
                 </div>
               </div>
             </div>

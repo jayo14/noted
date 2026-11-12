@@ -11,7 +11,7 @@ import { NotesPanel } from "@/components/notes/NotesPanel";
 import { Editor } from "@/components/editor/Editor";
 import { SettingsModal } from "@/components/settings/SettingsModal";
 import { extractTextFromJSONContent } from "@/lib/utils";
-import { exportNoteAsFile, jsonContentToMarkdown } from "@/lib/export";
+import { exportNoteAsFile, jsonContentToMarkdown, parseImportFile } from "@/lib/export";
 import { Menu } from "lucide-react";
 
 export function App() {
@@ -345,6 +345,27 @@ export function App() {
     }
   };
 
+  const handleImportFile = async (file: File) => {
+    try {
+      const { title, content } = await parseImportFile(file);
+      const targetCollectionId = filter.section === "collection" ? filter.collectionId : null;
+      const newNote = await noteService.createNote(targetCollectionId, title);
+      const updated = await noteService.updateNote(newNote.id, { content });
+      if (updated) {
+        setNotes((prev) => [updated, ...prev]);
+        setSelectedNoteId(updated.id);
+      } else {
+        setNotes((prev) => [newNote, ...prev]);
+        setSelectedNoteId(newNote.id);
+      }
+      if (isMobile) {
+        setMobileScreen("editor");
+      }
+    } catch (err) {
+      console.error("Failed to import file:", err);
+    }
+  };
+
   // Keyboard shortcut listeners
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -384,6 +405,7 @@ export function App() {
             onRenameCollection={handleRenameCollection}
             onDeleteCollection={handleDeleteCollection}
             onOpenSettings={() => setIsSettingsOpen(true)}
+            onImportFile={handleImportFile}
           />
 
           {/* Pane 2: Notes List Panel */}
@@ -566,6 +588,7 @@ export function App() {
           await syncEngine.configureSupabase(url, key);
           await authService.configureClient(url, key);
         }}
+        onImportFile={handleImportFile}
       />
     </div>
   );

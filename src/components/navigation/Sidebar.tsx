@@ -14,6 +14,7 @@ import {
   Check,
   X,
   User,
+  Upload,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -26,6 +27,7 @@ interface SidebarProps {
   onRenameCollection: (id: string, name: string) => Promise<void>;
   onDeleteCollection: (id: string) => Promise<void>;
   onOpenSettings: () => void;
+  onImportFile?: (file: File) => Promise<void>;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -38,6 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onRenameCollection,
   onDeleteCollection,
   onOpenSettings,
+  onImportFile,
 }) => {
   const [isCollectionsOpen, setIsCollectionsOpen] = useState(true);
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
@@ -85,6 +88,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <span className="text-sm font-semibold tracking-tight">Noted</span>
           </div>
+
+          {onImportFile && (
+            <label className="cursor-pointer rounded p-1 text-[var(--text-subtle)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] transition-colors" title="Import Markdown or Text note">
+              <Upload size={13} />
+              <input
+                type="file"
+                accept=".md,.markdown,.txt,.json"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file && onImportFile) {
+                    onImportFile(file);
+                  }
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          )}
         </div>
 
         {/* Primary Sections */}
