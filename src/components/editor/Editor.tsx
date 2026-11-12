@@ -203,11 +203,11 @@ export const Editor: React.FC<EditorProps> = ({
           </div>
 
           {/* Sub-row / Metadata row matching Image 0: "Today, 2:47 PM | 📁 Personal ⌵" */}
-          <div className="mb-6 flex items-center gap-2.5 text-xs text-[var(--text-muted)] select-none">
+          <div className="mb-6 flex items-center gap-2.5 text-xs text-[var(--text-secondary)] select-none">
             {/* Date info */}
             <div className="flex items-center gap-1.5">
               <Icon name="calendar_today" size={14} className="text-[var(--text-muted)]" />
-              <span className="text-[12px]">{formattedDateTime}</span>
+              <span className="text-[12px] font-medium text-[var(--text-secondary)]">{formattedDateTime}</span>
             </div>
 
             <span className="h-3 w-px bg-[var(--border-subtle)]" />
@@ -224,17 +224,17 @@ export const Editor: React.FC<EditorProps> = ({
               </button>
 
               {isCollectionPickerOpen && (
-                <div className="absolute left-0 top-7 z-40 w-48 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-editor)] p-1 shadow-xl">
+                <div className="absolute left-0 top-7 z-40 w-48 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-editor)] p-1 shadow-xl text-[var(--text-primary)]">
                   <button
                     onClick={() => {
                       onSelectCollection?.(null);
                       setIsCollectionPickerOpen(false);
                     }}
                     className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs ${
-                      !collectionId ? "bg-[var(--bg-surface-active)] font-semibold" : "hover:bg-[var(--bg-surface)]"
+                      !collectionId ? "bg-[var(--bg-surface-active)] font-semibold text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
                     }`}
                   >
-                    <Icon name="folder_off" size={14} />
+                    <Icon name="folder_off" size={14} className="text-[var(--text-muted)]" />
                     <span>No Collection</span>
                   </button>
 
@@ -248,10 +248,10 @@ export const Editor: React.FC<EditorProps> = ({
                         setIsCollectionPickerOpen(false);
                       }}
                       className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs truncate ${
-                        collectionId === c.id ? "bg-[var(--bg-surface-active)] font-semibold" : "hover:bg-[var(--bg-surface)]"
+                        collectionId === c.id ? "bg-[var(--bg-surface-active)] font-semibold text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
                       }`}
                     >
-                      <Icon name="folder" size={14} />
+                      <Icon name="folder" size={14} className="text-[var(--text-muted)]" />
                       <span className="truncate">{c.name}</span>
                     </button>
                   ))}
@@ -308,7 +308,7 @@ export const Editor: React.FC<EditorProps> = ({
         {/* Floating Action Button (Black circular arrow-up button matching Image 0) */}
         <button
           onClick={scrollToTop}
-          className="fixed bottom-12 right-8 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-[#161514] dark:bg-[#f7f5f0] text-white dark:text-[#161514] shadow-lg hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+          className="fixed bottom-12 right-8 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] shadow-lg hover:opacity-90 active:scale-95 transition-all cursor-pointer"
           title="Scroll to top"
         >
           <Icon name="arrow_upward" size={18} />
@@ -316,17 +316,17 @@ export const Editor: React.FC<EditorProps> = ({
       </div>
 
       {/* Bottom Status Bar matching Image 0: Aa, word count, undo, redo, export */}
-      <div className="flex h-9 items-center justify-between border-t border-[var(--border-subtle)] bg-[var(--bg-editor)] px-4 text-xs text-[var(--text-muted)] select-none">
+      <div className="flex h-9 items-center justify-between border-t border-[var(--border-subtle)] bg-[var(--bg-editor)] px-4 text-xs text-[var(--text-secondary)] select-none">
         {/* Left: Aa typography toggle + word count */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setTypographyMode((prev) => (prev === "serif" ? "sans" : "serif"))}
-            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] transition-colors cursor-pointer"
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-bold text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors cursor-pointer"
             title={`Title font: ${typographyMode === "serif" ? "Serif" : "Sans"}. Click to switch.`}
           >
             <span>Aa</span>
           </button>
-          <span className="text-[11.5px] text-[var(--text-muted)]">{stats.words || 147} words</span>
+          <span className="text-[11.5px] font-medium text-[var(--text-secondary)]">{stats.words || 147} words</span>
         </div>
 
         {/* Right: Undo, Redo, Export / Actions icons matching Image 0 */}
