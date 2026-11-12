@@ -9,6 +9,12 @@ export class IndexedDBAdapter implements DatabaseAdapter {
   private db: IDBDatabase | null = null;
   private isInitialized = false;
 
+  // In-memory fallback for SSR, Vitest, or environments where IDB is unavailable
+  private memNotes = new Map<string, Note>();
+  private memCollections = new Map<string, Collection>();
+  private memSyncQueue = new Map<string, SyncQueueItem>();
+  private memSettings = new Map<string, unknown>();
+
   public async init(): Promise<void> {
     if (this.isInitialized && this.db) return;
 
@@ -73,7 +79,12 @@ export class IndexedDBAdapter implements DatabaseAdapter {
 
   public async getNotes(includeDeleted = false): Promise<Note[]> {
     await this.init();
-    if (!this.db) return [];
+    if (!this.db) {
+      const all = Array.from(this.memNotes.values());
+      const filtered = includeDeleted ? all : all.filter((n) => !n.deleted_at);
+      filtered.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+      return filtered;
+    }
 
     return new Promise((resolve) => {
       const store = this.getStore("notes", "readonly");
@@ -96,7 +107,9 @@ export class IndexedDBAdapter implements DatabaseAdapter {
 
   public async getNoteById(id: string): Promise<Note | null> {
     await this.init();
-    if (!this.db) return null;
+    if (!this.db) {
+      return this.memNotes.get(id) || null;
+    }
 
     return new Promise((resolve) => {
       const store = this.getStore("notes", "readonly");
@@ -112,7 +125,10 @@ export class IndexedDBAdapter implements DatabaseAdapter {
 
   public async saveNote(note: Note): Promise<void> {
     await this.init();
-    if (!this.db) return;
+    if (!this.db) {
+      this.memNotes.set(note.id, { ...note });
+      return;
+    }
 
     return new Promise((resolve, reject) => {
       const store = this.getStore("notes", "readwrite");
@@ -128,7 +144,19 @@ export class IndexedDBAdapter implements DatabaseAdapter {
 
   public async deleteNote(id: string, hard = false): Promise<void> {
     await this.init();
-    if (!this.db) return;
+    if (!this.db) {
+      if (hard) {
+        this.memNotes.delete(id);
+      } else {
+        const note = this.memNotes.get(id);
+        if (note) {
+          note.deleted_at = nowISO();
+          note.updated_at = nowISO();
+          note.revision = (note.revision || 0) + 1;
+        }
+      }
+      return;
+    }
 
     if (hard) {
       return new Promise((resolve, reject) => {
@@ -151,7 +179,11 @@ export class IndexedDBAdapter implements DatabaseAdapter {
 
   public async getCollections(): Promise<Collection[]> {
     await this.init();
-    if (!this.db) return [];
+    if (!this.db) {
+      const cols = Array.from(this.memCollections.values());
+      cols.sort((a, b) => a.name.localeCompare(b.name));
+      return cols;
+    }
 
     return new Promise((resolve) => {
       const store = this.getStore("collections", "readonly");
@@ -168,7 +200,10 @@ export class IndexedDBAdapter implements DatabaseAdapter {
 
   public async saveCollection(collection: Collection): Promise<void> {
     await this.init();
-    if (!this.db) return;
+    if (!this.db) {
+      this.memCollections.set(collection.id, { ...collection });
+      return;
+    }
 
     return new Promise((resolve, reject) => {
       const store = this.getStore("collections", "readwrite");
@@ -181,7 +216,10 @@ export class IndexedDBAdapter implements DatabaseAdapter {
 
   public async deleteCollection(id: string): Promise<void> {
     await this.init();
-    if (!this.db) return;
+    if (!this.db) {
+      this.memCollections.delete(id);
+      return;
+    }
 
     return new Promise((resolve, reject) => {
       const store = this.getStore("collections", "readwrite");
@@ -205,7 +243,10 @@ export class IndexedDBAdapter implements DatabaseAdapter {
       last_error: null,
     };
 
-    if (!this.db) return fullItem;
+    if (!this.db) {
+      this.memSyncQueue.set(fullItem.id, fullItem);
+      return fullItem;
+    }
 
     return new Promise((resolve, reject) => {
       const store = this.getStore("sync_queue", "readwrite");
@@ -218,7 +259,12 @@ export class IndexedDBAdapter implements DatabaseAdapter {
 
   public async getPendingSyncQueue(): Promise<SyncQueueItem[]> {
     await this.init();
-    if (!this.db) return [];
+    if (!this.db) {
+      const items = Array.from(this.memSyncQueue.values());
+      const pending = items.filter((i) => i.status === "pending" || i.status === "failed");
+      pending.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      return pending;
+    }
 
     return new Promise((resolve) => {
       const store = this.getStore("sync_queue", "readonly");
@@ -236,7 +282,17 @@ export class IndexedDBAdapter implements DatabaseAdapter {
 
   public async updateSyncQueueItem(id: string, status: SyncStatus, error?: string): Promise<void> {
     await this.init();
-    if (!this.db) return;
+    if (!this.db) {
+      const item = this.memSyncQueue.get(id);
+      if (item) {
+        item.status = status;
+        if (error) {
+          item.last_error = error;
+          item.retries = (item.retries || 0) + 1;
+        }
+      }
+      return;
+    }
 
     return new Promise((resolve, reject) => {
       const store = this.getStore("sync_queue", "readwrite");
@@ -260,7 +316,10 @@ export class IndexedDBAdapter implements DatabaseAdapter {
 
   public async removeSyncQueueItem(id: string): Promise<void> {
     await this.init();
-    if (!this.db) return;
+    if (!this.db) {
+      this.memSyncQueue.delete(id);
+      return;
+    }
 
     return new Promise((resolve, reject) => {
       const store = this.getStore("sync_queue", "readwrite");
@@ -324,6 +383,11 @@ export class IndexedDBAdapter implements DatabaseAdapter {
 
   public async clearAllData(): Promise<void> {
     await this.init();
+    this.memNotes.clear();
+    this.memCollections.clear();
+    this.memSyncQueue.clear();
+    this.memSettings.clear();
+
     if (!this.db) return;
 
     const stores = ["notes", "collections", "sync_queue", "settings"];
