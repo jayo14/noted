@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import type { Editor } from "@tiptap/core";
 import { Icon } from "@/components/ui/Icon";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 interface FormatToolbarProps {
   editor: Editor | null;
@@ -387,6 +388,48 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
             </div>
           )}
         </div>
+
+        {/* Windows Caption Controls matching Image top right */}
+        {!isMobile && (
+          <div className="flex items-center gap-0.5 ml-3 pl-3 border-l border-[var(--border-subtle)]">
+            <button
+              onClick={async () => {
+                try {
+                  const appWindow = getCurrentWindow();
+                  await appWindow.minimize();
+                } catch {}
+              }}
+              className="flex h-6 w-6 items-center justify-center rounded text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+              title="Minimize"
+            >
+              <span className="text-[12px] font-normal leading-none">─</span>
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  const appWindow = getCurrentWindow();
+                  await appWindow.toggleMaximize();
+                } catch {}
+              }}
+              className="flex h-6 w-6 items-center justify-center rounded text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+              title="Maximize"
+            >
+              <span className="text-[10px] font-normal leading-none">▢</span>
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  const appWindow = getCurrentWindow();
+                  await appWindow.close();
+                } catch {}
+              }}
+              className="flex h-6 w-6 items-center justify-center rounded text-[var(--text-muted)] hover:bg-red-500 hover:text-white transition-colors cursor-pointer"
+              title="Close"
+            >
+              <span className="text-[11px] font-normal leading-none">✕</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
