@@ -185,7 +185,7 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
 
         <div className="mx-1.5 h-3.5 w-px bg-[var(--border-subtle)]" />
 
-        {/* Lists: bullet, number, checklist */}
+        {/* Lists: bullet, number, checklist matching Image 0 */}
         <button
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors cursor-pointer ${
@@ -218,7 +218,7 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
 
         <div className="mx-1.5 h-3.5 w-px bg-[var(--border-subtle)]" />
 
-        {/* Inlines & Blocks: link, code, quote, image, more */}
+        {/* Inlines & Blocks: link, code, quote, image, more matching Image 0 */}
         <button
           onClick={() => setIsLinkPromptOpen((prev) => !prev)}
           className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors cursor-pointer ${
@@ -244,7 +244,7 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
           className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors cursor-pointer ${
             editor.isActive("blockquote") ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
           }`}
-          title="Quote Block"
+          title="Quote / Callout Block"
         >
           <Icon name="format_quote" size={17} />
         </button>
