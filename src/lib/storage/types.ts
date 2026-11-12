@@ -16,4 +16,5 @@ export interface DatabaseAdapter {
   getSetting<T>(key: string, defaultValue: T): Promise<T>;
   setSetting<T>(key: string, value: T): Promise<void>;
   clearAllData(): Promise<void>;
+  searchNotesFTS?(query: string): Promise<Note[]>;
 }

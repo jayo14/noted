@@ -65,6 +65,28 @@ export class TauriSqlAdapter implements DatabaseAdapter {
           key TEXT PRIMARY KEY,
           value TEXT NOT NULL
         );
+
+        -- SQLite FTS5 Full-Text Search Virtual Table
+        CREATE VIRTUAL TABLE IF NOT EXISTS notes_fts USING fts5(
+          id UNINDEXED,
+          title,
+          content_text,
+          tokenize = 'porter unicode61'
+        );
+
+        -- Synchronization Triggers for FTS5
+        CREATE TRIGGER IF NOT EXISTS notes_ai AFTER INSERT ON notes BEGIN
+          INSERT INTO notes_fts(id, title, content_text)
+          VALUES (new.id, new.title, new.content);
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS notes_au AFTER UPDATE ON notes BEGIN
+          UPDATE notes_fts SET title = new.title, content_text = new.content WHERE id = new.id;
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS notes_ad AFTER DELETE ON notes BEGIN
+          DELETE FROM notes_fts WHERE id = old.id;
+        END;
       `);
 
       this.isInitialized = true;
@@ -313,6 +335,45 @@ export class TauriSqlAdapter implements DatabaseAdapter {
     await this.init();
     if (!this.db) return;
 
-    await this.db.execute("DELETE FROM notes; DELETE FROM collections; DELETE FROM sync_queue; DELETE FROM settings;");
+    await this.db.execute("DELETE FROM notes; DELETE FROM collections; DELETE FROM sync_queue; DELETE FROM settings; DELETE FROM notes_fts;");
+  }
+
+  public async searchNotesFTS(query: string): Promise<Note[]> {
+    await this.init();
+    if (!this.db || !query.trim()) return [];
+
+    const sanitizedQuery = query.replace(/[^a-zA-Z0-9_\s]/g, "").trim();
+    if (!sanitizedQuery) return [];
+
+    const ftsQuery = `
+      SELECT n.* FROM notes n
+      JOIN notes_fts f ON n.id = f.id
+      WHERE notes_fts MATCH $1 AND n.deleted_at IS NULL
+      ORDER BY bm25(notes_fts), n.updated_at DESC
+    `;
+
+    try {
+      const rows = await this.db.select<Array<{
+        id: string;
+        user_id: string;
+        title: string;
+        content: string;
+        collection_id: string | null;
+        is_pinned: number;
+        created_at: string;
+        updated_at: string;
+        deleted_at: string | null;
+        revision: number;
+      }>>(ftsQuery, [`${sanitizedQuery}*`]);
+
+      return rows.map((r) => ({
+        ...r,
+        is_pinned: Boolean(r.is_pinned),
+        content: typeof r.content === "string" ? JSON.parse(r.content) : r.content,
+      }));
+    } catch (e) {
+      console.warn("[TauriSqlAdapter] FTS search fallback:", e);
+      return [];
+    }
   }
 }
