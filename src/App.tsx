@@ -356,10 +356,8 @@ export function App() {
   };
 
   const handleSaveNote = useCallback(
-    async (newTitle: string, newContent: Note["content"], _stats: NoteStats) => {
-      if (!selectedNoteId) return;
-
-      const updated = await noteService.updateNote(selectedNoteId, {
+    async (targetNoteId: string, newTitle: string, newContent: Note["content"], _stats: NoteStats) => {
+      const updated = await noteService.updateNote(targetNoteId, {
         title: newTitle,
         content: newContent,
       });
@@ -368,7 +366,7 @@ export function App() {
         setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
       }
     },
-    [selectedNoteId],
+    [],
   );
 
   const handleTogglePin = async () => {
@@ -616,9 +614,11 @@ export function App() {
                   </div>
                   <div className="flex-1">
                     <Editor
+                      key={currentNote.id}
                       noteId={currentNote.id}
                       initialTitle={currentNote.title}
                       initialContent={currentNote.content}
+                      updatedAt={currentNote.updated_at}
                       isPinned={currentNote.is_pinned}
                       onSave={handleSaveNote}
                       isReadOnly={true}
@@ -627,9 +627,11 @@ export function App() {
                 </div>
               ) : (
                 <Editor
+                  key={currentNote.id}
                   noteId={currentNote.id}
                   initialTitle={currentNote.title}
                   initialContent={currentNote.content}
+                  updatedAt={currentNote.updated_at}
                   isPinned={currentNote.is_pinned}
                   collectionId={currentNote.collection_id}
                   collections={collections}
@@ -705,9 +707,11 @@ export function App() {
             <div className="flex h-full w-full flex-col">
               {currentNote && (
                 <Editor
+                  key={currentNote.id}
                   noteId={currentNote.id}
                   initialTitle={currentNote.title}
                   initialContent={currentNote.content}
+                  updatedAt={currentNote.updated_at}
                   isPinned={currentNote.is_pinned}
                   collectionId={currentNote.collection_id}
                   collections={collections}
