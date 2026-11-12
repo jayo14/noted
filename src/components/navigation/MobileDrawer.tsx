@@ -72,11 +72,22 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
         <div>
           <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-[#141312] text-white">
-                <span className="text-xs font-bold leading-none">N</span>
+              <div className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-[var(--accent)] text-[var(--accent-contrast)] shadow-xs">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                </svg>
               </div>
-              <span className="text-[15px] font-semibold tracking-tight text-[var(--text-primary)]">
-                Notes
+              <span className="text-[14.5px] font-bold tracking-tight text-[var(--text-primary)]">
+                noted.
               </span>
             </div>
             <button
@@ -113,7 +124,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <Icon name="push_pin" size={17} className={activeSection === "pinned" ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
+                <Icon name="keep" size={17} className={activeSection === "pinned" ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
                 <span className="text-[13px]">Pinned</span>
               </div>
               {pinnedCount > 0 && (
@@ -179,7 +190,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                         setIsCreatingCol(false);
                       }
                     }}
-                    className="flex-1 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-2 py-1 text-xs outline-none"
+                    className="flex-1 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-2 py-1 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent)]"
                   />
                   <button
                     onClick={async () => {
