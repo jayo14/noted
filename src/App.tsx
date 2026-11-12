@@ -223,6 +223,23 @@ export function App() {
     }
   };
 
+  const handleDuplicateNote = async () => {
+    if (!selectedNoteId) return;
+    const duplicated = await noteService.duplicateNote(selectedNoteId);
+    if (duplicated) {
+      setNotes((prev) => [duplicated, ...prev]);
+      setSelectedNoteId(duplicated.id);
+    }
+  };
+
+  const handleMoveCurrentNoteToCollection = async (collectionId: string | null) => {
+    if (!selectedNoteId) return;
+    const updated = await noteService.moveToCollection(selectedNoteId, collectionId);
+    if (updated) {
+      setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+    }
+  };
+
   const handleRestoreCurrentNote = async () => {
     if (!selectedNoteId) return;
     const restored = await noteService.restoreNote(selectedNoteId);
@@ -386,8 +403,13 @@ export function App() {
                   initialTitle={currentNote.title}
                   initialContent={currentNote.content}
                   isPinned={currentNote.is_pinned}
+                  collectionId={currentNote.collection_id}
+                  collections={collections}
+                  onSelectCollection={handleMoveCurrentNoteToCollection}
+                  onCreateCollection={handleCreateCollection}
                   onSave={handleSaveNote}
                   onTogglePin={handleTogglePin}
+                  onDuplicate={handleDuplicateNote}
                   onDelete={handleDeleteCurrentNote}
                   onExport={handleExportNote}
                   isMobile={false}
@@ -442,8 +464,13 @@ export function App() {
                   initialTitle={currentNote.title}
                   initialContent={currentNote.content}
                   isPinned={currentNote.is_pinned}
+                  collectionId={currentNote.collection_id}
+                  collections={collections}
+                  onSelectCollection={handleMoveCurrentNoteToCollection}
+                  onCreateCollection={handleCreateCollection}
                   onSave={handleSaveNote}
                   onTogglePin={handleTogglePin}
+                  onDuplicate={handleDuplicateNote}
                   onDelete={handleDeleteCurrentNote}
                   onExport={handleExportNote}
                   onBack={() => setMobileScreen("notes")}

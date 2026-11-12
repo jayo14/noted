@@ -5,15 +5,20 @@ import { getEditorExtensions } from "./extensions";
 import { EditorBubbleMenu } from "./EditorBubbleMenu";
 import { FormatToolbar } from "./FormatToolbar";
 import { calculateNoteStats, extractTitleAndPreview } from "@/lib/utils";
-import type { NoteStats } from "@/types";
+import type { NoteStats, Collection } from "@/types";
 
 interface EditorProps {
   noteId: string;
   initialTitle: string;
   initialContent: JSONContent;
   isPinned?: boolean;
+  collectionId?: string | null;
+  collections?: Collection[];
+  onSelectCollection?: (colId: string | null) => void;
+  onCreateCollection?: (name: string) => Promise<void>;
   onSave: (title: string, content: JSONContent, stats: NoteStats) => void;
   onTogglePin?: () => void;
+  onDuplicate?: () => void;
   onDelete?: () => void;
   onExport?: () => void;
   onBack?: () => void;
@@ -26,8 +31,13 @@ export const Editor: React.FC<EditorProps> = ({
   initialTitle,
   initialContent,
   isPinned = false,
+  collectionId = null,
+  collections = [],
+  onSelectCollection,
+  onCreateCollection,
   onSave,
   onTogglePin,
+  onDuplicate,
   onDelete,
   onExport,
   onBack,
@@ -127,7 +137,12 @@ export const Editor: React.FC<EditorProps> = ({
       <FormatToolbar
         editor={editor}
         isPinned={isPinned}
+        collectionId={collectionId}
+        collections={collections}
+        onSelectCollection={onSelectCollection}
+        onCreateCollection={onCreateCollection}
         onTogglePin={onTogglePin}
+        onDuplicate={onDuplicate}
         onDelete={onDelete}
         onExport={onExport}
         onBack={onBack}

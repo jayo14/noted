@@ -1,5 +1,7 @@
 import React from "react";
 import type { Editor } from "@tiptap/core";
+import type { Collection } from "@/types";
+import { CollectionSelector } from "@/components/collections/CollectionSelector";
 import {
   Bold,
   Italic,
@@ -20,13 +22,19 @@ import {
   Pin,
   Trash2,
   Download,
+  Copy,
   ArrowLeft,
 } from "lucide-react";
 
 interface FormatToolbarProps {
   editor: Editor | null;
   isPinned?: boolean;
+  collectionId?: string | null;
+  collections?: Collection[];
+  onSelectCollection?: (colId: string | null) => void;
+  onCreateCollection?: (name: string) => Promise<void>;
   onTogglePin?: () => void;
+  onDuplicate?: () => void;
   onDelete?: () => void;
   onExport?: () => void;
   onBack?: () => void;
@@ -36,7 +44,12 @@ interface FormatToolbarProps {
 export const FormatToolbar: React.FC<FormatToolbarProps> = ({
   editor,
   isPinned = false,
+  collectionId = null,
+  collections = [],
+  onSelectCollection,
+  onCreateCollection,
   onTogglePin,
+  onDuplicate,
   onDelete,
   onExport,
   onBack,
@@ -56,6 +69,19 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
           >
             <ArrowLeft size={16} />
           </button>
+        )}
+
+        {/* Collection Selector */}
+        {onSelectCollection && (
+          <>
+            <CollectionSelector
+              collections={collections}
+              selectedCollectionId={collectionId}
+              onSelectCollection={onSelectCollection}
+              onCreateCollection={onCreateCollection}
+            />
+            <div className="mx-1 h-3.5 w-px bg-[var(--border-subtle)]" />
+          </>
         )}
 
         {/* Undo / Redo */}
@@ -264,6 +290,16 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
             title={isPinned ? "Unpin note" : "Pin note"}
           >
             <Pin size={15} />
+          </button>
+        )}
+
+        {onDuplicate && (
+          <button
+            onClick={onDuplicate}
+            className="rounded p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-colors"
+            title="Duplicate note"
+          >
+            <Copy size={15} />
           </button>
         )}
 
