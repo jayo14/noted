@@ -119,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <Icon name="description" size={17} className={isNavActive("all") ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
               <span className="text-[13px]">All Notes</span>
             </div>
-            <span className="text-[11.5px] font-medium text-[var(--text-muted)]">{allCount || 24}</span>
+            <span className={`text-[11.5px] font-medium ${isNavActive("all") ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>{allCount || 24}</span>
           </button>
 
           {/* Pinned */}
@@ -135,7 +135,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <Icon name="keep" size={17} className={isNavActive("pinned") ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
               <span className="text-[13px]">Pinned</span>
             </div>
-            <span className="text-[11.5px] font-medium text-[var(--text-muted)]">{pinnedCount || 4}</span>
+            <span className={`text-[11.5px] font-medium ${isNavActive("pinned") ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>{pinnedCount || 4}</span>
           </button>
 
           {/* Today */}
@@ -187,12 +187,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Collections Section */}
         <div className="mt-4 flex flex-col gap-1">
           <div className="flex items-center justify-between px-2.5 py-1">
-            <span className="text-[11.5px] font-medium tracking-tight text-[var(--text-muted)]">
+            <span className="text-[11.5px] font-semibold tracking-tight text-[var(--text-secondary)]">
               Collections
             </span>
             <button
               onClick={() => setIsCreatingCollection(true)}
-              className="flex h-5 w-5 items-center justify-center rounded text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+              className="flex h-5 w-5 items-center justify-center rounded text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
               title="New Collection"
             >
               <Icon name="add" size={16} />
@@ -259,7 +259,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <span className="truncate text-[13px]">{coll.name}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[11.5px] font-medium text-[var(--text-muted)]">
+                        <span className={`text-[11.5px] font-medium ${isActive ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>
                           {count}
                         </span>
                         {/* Delete button visible on hover */}
