@@ -1,6 +1,7 @@
 import React from "react";
 import type { Note, Collection } from "@/types";
 import { extractTextFromJSONContent, formatCompactRelativeTime } from "@/lib/utils";
+import { classifyNoteIcon } from "@/lib/noteClassifier";
 import { Icon } from "@/components/ui/Icon";
 
 interface NoteCardProps {
@@ -51,67 +52,78 @@ function extractStructuredPreview(note: Note): PreviewItem[] {
 export const NoteCard: React.FC<NoteCardProps> = ({
   note,
   isSelected,
+  collections,
   searchSnippet,
   onClick,
 }) => {
+  const collection = collections.find((c) => c.id === note.collection_id);
+  const iconMeta = classifyNoteIcon(note, collection?.name);
   const relativeTime = formatCompactRelativeTime(note.updated_at);
   const previewItems = extractStructuredPreview(note);
 
   return (
     <div
       onClick={onClick}
-      className={`group relative flex cursor-pointer flex-col rounded-xl px-3.5 py-2.5 transition-all select-none mx-2 mb-1 ${
+      role="button"
+      tabIndex={0}
+      aria-label={`${note.title || "Untitled"}, ${iconMeta.accessibleLabel}`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className={`group relative flex cursor-pointer gap-2.5 rounded-xl p-3 transition-all select-none mb-1 mx-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
         isSelected
-          ? "bg-[#eae5d9] dark:bg-[#2b2824] shadow-2xs"
-          : "bg-transparent hover:bg-[var(--bg-surface-hover)]"
+          ? "bg-white dark:bg-[#232321] border border-[var(--border-subtle)] shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+          : "bg-transparent hover:bg-[var(--bg-surface-hover)] border border-transparent"
       }`}
     >
-      {/* Title & Time row */}
-      <div className="flex items-baseline justify-between gap-2">
-        <h3 className="truncate text-[13.5px] font-semibold text-[var(--text-primary)] tracking-tight">
-          {note.title || "Untitled"}
-        </h3>
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          <span className="text-[11px] font-normal text-[var(--text-muted)]">
-            {relativeTime}
-          </span>
-          {note.is_pinned && (
-            <Icon name="push_pin" size={12} className="text-[var(--text-primary)] opacity-80" />
-          )}
-        </div>
+      {/* Intelligent Category Icon on left matching Image 1 */}
+      <div className="pt-0.5 flex-shrink-0 text-[var(--text-muted)]" title={iconMeta.categoryName}>
+        <Icon name={iconMeta.icon} size={18} />
       </div>
 
-      {/* Preview text or task items */}
-      <div className="mt-1 flex flex-col gap-0.5">
-        {searchSnippet ? (
-          <p className="line-clamp-2 text-[12px] leading-snug text-[var(--text-muted)]">
-            <span className="font-medium text-[var(--text-primary)]">{searchSnippet}</span>
-          </p>
-        ) : previewItems.length > 0 ? (
-          previewItems.map((item, idx) => (
-            <div
-              key={idx}
-              className="flex items-center gap-1.5 text-[12px] leading-snug text-[var(--text-muted)] truncate"
-            >
-              {item.type === "task" ? (
-                <>
-                  <span className="text-[11px] text-[var(--text-muted)] flex-shrink-0">
-                    {item.checked ? "✔" : "○"}
-                  </span>
-                  <span className={`truncate ${item.checked ? "line-through opacity-70" : ""}`}>
-                    {item.text}
-                  </span>
-                </>
-              ) : (
-                <span className="truncate">{item.text}</span>
-              )}
-            </div>
-          ))
-        ) : (
-          <p className="text-[12px] text-[var(--text-subtle)] italic leading-snug">
-            No additional text
-          </p>
-        )}
+      {/* Main card body */}
+      <div className="flex flex-1 flex-col min-w-0">
+        {/* Title & Time row */}
+        <div className="flex items-baseline justify-between gap-1.5">
+          <h3 className="truncate text-[13px] font-semibold text-[var(--text-primary)] leading-snug">
+            {note.title || "Untitled"}
+          </h3>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="text-[10.5px] text-[var(--text-muted)] leading-none">
+              {relativeTime}
+            </span>
+            {note.is_pinned && (
+              <Icon name="keep" size={13} className="text-[var(--text-muted)] rotate-45" />
+            )}
+          </div>
+        </div>
+
+        {/* Preview text or task items */}
+        <div className="mt-1 flex flex-col gap-0.5">
+          {searchSnippet ? (
+            <p className="line-clamp-2 text-[11.5px] leading-relaxed text-[var(--text-muted)]">
+              <span className="font-medium text-[var(--text-primary)]">{searchSnippet}</span>
+            </p>
+          ) : previewItems.length > 0 ? (
+            previewItems.map((item, idx) => (
+              <p
+                key={idx}
+                className="truncate text-[11.5px] leading-snug text-[var(--text-muted)]"
+              >
+                {item.type === "task"
+                  ? `${item.checked ? "✔ " : "- "}${item.text}`
+                  : item.text}
+              </p>
+            ))
+          ) : (
+            <p className="text-[11.5px] text-[var(--text-subtle)] italic leading-snug">
+              No additional text
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
