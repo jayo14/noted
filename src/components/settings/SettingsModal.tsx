@@ -142,13 +142,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-      <div className="flex h-[480px] w-full max-w-lg flex-col rounded-xl border border-[var(--border-strong)] bg-[var(--bg-app)] shadow-2xl overflow-hidden">
+      <div className="flex h-[480px] w-full max-w-lg flex-col rounded-xl border border-[var(--border-strong)] bg-[var(--bg-editor)] shadow-2xl overflow-hidden">
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-5 py-3.5">
           <h2 className="text-sm font-semibold tracking-tight text-[var(--text-primary)]">Settings</h2>
           <button
             onClick={onClose}
-            className="rounded p-1 text-[var(--text-subtle)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+            className="rounded p-1 text-[var(--text-subtle)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -158,40 +158,40 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="flex border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] px-5 pt-1">
           <button
             onClick={() => setActiveTab("appearance")}
-            className={`border-b-2 px-3 py-2 text-xs font-medium transition-colors ${
+            className={`border-b-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer ${
               activeTab === "appearance"
-                ? "border-[var(--text-primary)] text-[var(--text-primary)]"
-                : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                ? "border-[var(--text-primary)] text-[var(--text-primary)] font-semibold"
+                : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
             Appearance
           </button>
           <button
             onClick={() => setActiveTab("account")}
-            className={`border-b-2 px-3 py-2 text-xs font-medium transition-colors ${
+            className={`border-b-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer ${
               activeTab === "account"
-                ? "border-[var(--text-primary)] text-[var(--text-primary)]"
-                : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                ? "border-[var(--text-primary)] text-[var(--text-primary)] font-semibold"
+                : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
             Account
           </button>
           <button
             onClick={() => setActiveTab("sync")}
-            className={`border-b-2 px-3 py-2 text-xs font-medium transition-colors ${
+            className={`border-b-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer ${
               activeTab === "sync"
-                ? "border-[var(--text-primary)] text-[var(--text-primary)]"
-                : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                ? "border-[var(--text-primary)] text-[var(--text-primary)] font-semibold"
+                : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
             Synchronisation
           </button>
           <button
             onClick={() => setActiveTab("shortcuts")}
-            className={`border-b-2 px-3 py-2 text-xs font-medium transition-colors ${
+            className={`border-b-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer ${
               activeTab === "shortcuts"
-                ? "border-[var(--text-primary)] text-[var(--text-primary)]"
-                : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                ? "border-[var(--text-primary)] text-[var(--text-primary)] font-semibold"
+                : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
             Shortcuts
@@ -357,8 +357,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           }}
                           className={`flex-1 py-1 text-center font-medium rounded transition-colors ${
                             authMode === "signin"
-                              ? "bg-[var(--bg-app)] text-[var(--text-primary)] shadow-xs"
-                              : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                              ? "bg-[var(--bg-editor)] text-[var(--text-primary)] shadow-xs font-semibold"
+                              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                           }`}
                         >
                           Sign In
@@ -371,8 +371,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           }}
                           className={`flex-1 py-1 text-center font-medium rounded transition-colors ${
                             authMode === "signup"
-                              ? "bg-[var(--bg-app)] text-[var(--text-primary)] shadow-xs"
-                              : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                              ? "bg-[var(--bg-editor)] text-[var(--text-primary)] shadow-xs font-semibold"
+                              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                           }`}
                         >
                           Create Account
@@ -381,26 +381,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                       <form onSubmit={handleAuthSubmit} className="flex flex-col gap-3">
                         <div>
-                          <label className="text-[11px] font-medium text-[var(--text-muted)]">Email</label>
+                          <label className="text-[11px] font-medium text-[var(--text-secondary)]">Email</label>
                           <input
                             type="email"
                             required
                             placeholder="you@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="mt-1 w-full rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-2.5 py-1.5 text-xs outline-none focus:border-[var(--border-strong)]"
+                            className="mt-1 w-full rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent)]"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[11px] font-medium text-[var(--text-muted)]">Password</label>
+                          <label className="text-[11px] font-medium text-[var(--text-secondary)]">Password</label>
                           <input
                             type="password"
                             required
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="mt-1 w-full rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-2.5 py-1.5 text-xs outline-none focus:border-[var(--border-strong)]"
+                            className="mt-1 w-full rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--accent)]"
                           />
                         </div>
 
@@ -516,38 +516,38 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {activeTab === "shortcuts" && (
             <div className="flex flex-col gap-2">
               <div className="flex justify-between py-1.5 border-b border-[var(--border-subtle)]">
-                <span className="text-[var(--text-muted)]">New note</span>
-                <kbd className="rounded bg-[var(--bg-surface)] px-1.5 py-0.5 font-mono text-[10px] border border-[var(--border-subtle)]">
+                <span className="text-[var(--text-primary)] font-medium">New note</span>
+                <kbd className="rounded bg-white dark:bg-[var(--bg-surface)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--text-secondary)] border border-[var(--border-subtle)] shadow-2xs">
                   Cmd/Ctrl + N
                 </kbd>
               </div>
               <div className="flex justify-between py-1.5 border-b border-[var(--border-subtle)]">
-                <span className="text-[var(--text-muted)]">Search notes</span>
-                <kbd className="rounded bg-[var(--bg-surface)] px-1.5 py-0.5 font-mono text-[10px] border border-[var(--border-subtle)]">
+                <span className="text-[var(--text-primary)] font-medium">Search notes</span>
+                <kbd className="rounded bg-white dark:bg-[var(--bg-surface)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--text-secondary)] border border-[var(--border-subtle)] shadow-2xs">
                   Cmd/Ctrl + F
                 </kbd>
               </div>
               <div className="flex justify-between py-1.5 border-b border-[var(--border-subtle)]">
-                <span className="text-[var(--text-muted)]">Pin / Unpin note</span>
-                <kbd className="rounded bg-[var(--bg-surface)] px-1.5 py-0.5 font-mono text-[10px] border border-[var(--border-subtle)]">
+                <span className="text-[var(--text-primary)] font-medium">Pin / Unpin note</span>
+                <kbd className="rounded bg-white dark:bg-[var(--bg-surface)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--text-secondary)] border border-[var(--border-subtle)] shadow-2xs">
                   Cmd/Ctrl + P
                 </kbd>
               </div>
               <div className="flex justify-between py-1.5 border-b border-[var(--border-subtle)]">
-                <span className="text-[var(--text-muted)]">Delete note</span>
-                <kbd className="rounded bg-[var(--bg-surface)] px-1.5 py-0.5 font-mono text-[10px] border border-[var(--border-subtle)]">
+                <span className="text-[var(--text-primary)] font-medium">Delete note</span>
+                <kbd className="rounded bg-white dark:bg-[var(--bg-surface)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--text-secondary)] border border-[var(--border-subtle)] shadow-2xs">
                   Cmd/Ctrl + Shift + D
                 </kbd>
               </div>
               <div className="flex justify-between py-1.5 border-b border-[var(--border-subtle)]">
-                <span className="text-[var(--text-muted)]">Bold / Italic / Underline</span>
-                <kbd className="rounded bg-[var(--bg-surface)] px-1.5 py-0.5 font-mono text-[10px] border border-[var(--border-subtle)]">
+                <span className="text-[var(--text-primary)] font-medium">Bold / Italic / Underline</span>
+                <kbd className="rounded bg-white dark:bg-[var(--bg-surface)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--text-secondary)] border border-[var(--border-subtle)] shadow-2xs">
                   Cmd/Ctrl + B / I / U
                 </kbd>
               </div>
               <div className="flex justify-between py-1.5 border-b border-[var(--border-subtle)]">
-                <span className="text-[var(--text-muted)]">Undo / Redo</span>
-                <kbd className="rounded bg-[var(--bg-surface)] px-1.5 py-0.5 font-mono text-[10px] border border-[var(--border-subtle)]">
+                <span className="text-[var(--text-primary)] font-medium">Undo / Redo</span>
+                <kbd className="rounded bg-white dark:bg-[var(--bg-surface)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--text-secondary)] border border-[var(--border-subtle)] shadow-2xs">
                   Cmd/Ctrl + Z / Shift + Z
                 </kbd>
               </div>
