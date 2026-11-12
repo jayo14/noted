@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import type { NavSection, Collection, Note, ThemePreference } from "@/types";
+import { authService, type AuthUser } from "@/services/authService";
 import {
   FileText,
   Pin,
@@ -8,6 +9,7 @@ import {
   Settings,
   X,
   Plus,
+  Check,
   Sun,
   Moon,
   Monitor,
@@ -40,6 +42,17 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   onCreateCollection,
   onOpenSettings,
 }) => {
+  const [isCreatingCol, setIsCreatingCol] = useState(false);
+  const [newColName, setNewColName] = useState("");
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    const unsub = authService.subscribe((state) => {
+      setCurrentUser(state.user);
+    });
+    return unsub;
+  }, []);
+
   if (!isOpen) return null;
 
   const activeNotes = notes.filter((n) => n.deleted_at === null);
@@ -111,17 +124,47 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
               <div className="flex items-center justify-between px-3 py-1 text-[11px] font-semibold text-[var(--text-subtle)] tracking-wider">
                 <span>COLLECTIONS</span>
                 <button
-                  onClick={async () => {
-                    const name = prompt("Enter collection name:");
-                    if (name && name.trim()) {
-                      await onCreateCollection(name.trim());
-                    }
-                  }}
+                  onClick={() => setIsCreatingCol((prev) => !prev)}
                   className="rounded p-0.5 hover:text-[var(--text-primary)]"
+                  title="New Collection"
                 >
                   <Plus size={13} />
                 </button>
               </div>
+
+              {isCreatingCol && (
+                <div className="flex items-center gap-1 px-3 py-1.5">
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder="Collection name..."
+                    value={newColName}
+                    onChange={(e) => setNewColName(e.target.value)}
+                    onKeyDown={async (e) => {
+                      if (e.key === "Enter" && newColName.trim()) {
+                        await onCreateCollection(newColName.trim());
+                        setNewColName("");
+                        setIsCreatingCol(false);
+                      } else if (e.key === "Escape") {
+                        setIsCreatingCol(false);
+                      }
+                    }}
+                    className="flex-1 rounded border border-[var(--border-strong)] bg-[var(--bg-app)] px-2 py-1 text-xs outline-none"
+                  />
+                  <button
+                    onClick={async () => {
+                      if (newColName.trim()) {
+                        await onCreateCollection(newColName.trim());
+                        setNewColName("");
+                        setIsCreatingCol(false);
+                      }
+                    }}
+                    className="rounded p-1 text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)]"
+                  >
+                    <Check size={13} />
+                  </button>
+                </div>
+              )}
 
               <div className="mt-1 flex flex-col gap-0.5 max-h-48 overflow-y-auto">
                 {collections.map((col) => {
@@ -209,6 +252,28 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                 <Monitor size={13} />
               </button>
             </div>
+          </div>
+
+          <div
+            onClick={() => {
+              onClose();
+              onOpenSettings();
+            }}
+            className="flex cursor-pointer items-center justify-between rounded-md px-2.5 py-1 text-[11px] text-[var(--text-muted)] bg-[var(--bg-app)] border border-[var(--border-subtle)]"
+          >
+            <div className="flex items-center gap-1.5 truncate">
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  currentUser ? "bg-green-500" : "bg-[var(--text-subtle)]"
+                }`}
+              />
+              <span className="truncate">
+                {currentUser?.email ? currentUser.email.split("@")[0] : "Local Storage"}
+              </span>
+            </div>
+            <span className="text-[10px] text-[var(--text-subtle)]">
+              {currentUser ? "Cloud Sync" : "Offline"}
+            </span>
           </div>
 
           <button
