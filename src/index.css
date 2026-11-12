@@ -2,39 +2,39 @@
 
 @layer base {
   :root {
-    --bg-window: #fbf9f5;
-    --bg-app: #fbf9f5;
-    --bg-sidebar: #f7f5f0;
-    --bg-notes-panel: #fbf9f5;
-    --bg-editor: #ffffff;
-    --bg-surface: #f0ece4;
-    --bg-surface-hover: #ebe7df;
-    --bg-surface-active: #e4dfd6;
-    --bg-card-active: #ffffff;
-    --bg-callout: #f5f2eb;
-    --border-subtle: #ebe7e0;
-    --border-strong: #dcd7ce;
+    --bg-window: #faf6f2;
+    --bg-app: #faf6f2;
+    --bg-sidebar: #f5f0eb;
+    --bg-notes-panel: #faf6f2;
+    --bg-editor: #fbf8f5;
+    --bg-surface: #eae5e0;
+    --bg-surface-hover: #e4ded9;
+    --bg-surface-active: #dfd8d2;
+    --bg-card-active: #eae5e2;
+    --bg-callout: #eae5e2;
+    --border-subtle: #ded8d2;
+    --border-strong: #cac4bd;
     --text-primary: #141312;
-    --text-secondary: #4a4742;
-    --text-muted: #787570;
-    --text-subtle: #a8a5a0;
-    --accent: #161514;
+    --text-secondary: #423f3b;
+    --text-muted: #736f69;
+    --text-subtle: #99948d;
+    --accent: #141312;
     --accent-contrast: #ffffff;
-    --selection-bg: #e8e3d8;
+    --selection-bg: #e2dcce;
   }
 
   .dark {
     --bg-window: #141413;
     --bg-app: #141413;
-    --bg-sidebar: #1a1a19;
-    --bg-notes-panel: #171716;
-    --bg-editor: #1c1c1b;
-    --bg-surface: #262624;
-    --bg-surface-hover: #2e2e2b;
-    --bg-surface-active: #383834;
+    --bg-sidebar: #161615;
+    --bg-notes-panel: #141413;
+    --bg-editor: #191918;
+    --bg-surface: #222220;
+    --bg-surface-hover: #2a2a27;
+    --bg-surface-active: #32322e;
     --bg-card-active: #242422;
-    --bg-callout: #232320;
-    --border-subtle: #2b2b28;
+    --bg-callout: #222220;
+    --border-subtle: #292926;
     --border-strong: #3d3d38;
     --text-primary: #f7f5f0;
     --text-secondary: #c8c5be;
