@@ -15,6 +15,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
       items: [
         { label: "New note", shortcut: "Cmd/Ctrl + N" },
         { label: "Search notes", shortcut: "Cmd/Ctrl + F" },
+        { label: "Toggle list / grid layout", shortcut: "Cmd/Ctrl + Shift + L" },
         { label: "View All Notes", shortcut: "Cmd/Ctrl + 1" },
         { label: "View Pinned Notes", shortcut: "Cmd/Ctrl + 2" },
         { label: "View Trash", shortcut: "Cmd/Ctrl + 3" },

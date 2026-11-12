@@ -14,6 +14,7 @@ import { SettingsModal } from "@/components/settings/SettingsModal";
 import { extractTextFromJSONContent } from "@/lib/utils";
 import { exportNoteAsFile, jsonContentToMarkdown, parseImportFile } from "@/lib/export";
 import { ShareModal } from "@/components/editor/ShareModal";
+import { settingsService, type NotesViewMode } from "@/services/settingsService";
 import { Menu } from "lucide-react";
 
 export function App() {
@@ -40,6 +41,15 @@ export function App() {
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth < 768);
   const [mobileScreen, setMobileScreen] = useState<"notes" | "editor">("notes");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [notesViewMode, setNotesViewMode] = useState<NotesViewMode>(
+    () => settingsService.getPreferences().notesViewMode || "list",
+  );
+
+  useEffect(() => {
+    return settingsService.subscribe((prefs) => {
+      setNotesViewMode(prefs.notesViewMode || "list");
+    });
+  }, []);
 
   // Track window resize for responsive layout
   useEffect(() => {
@@ -570,6 +580,11 @@ export function App() {
       } else if (isCmdOrCtrl && e.shiftKey && e.key.toLowerCase() === "m") {
         e.preventDefault();
         handleExportNote();
+      } else if (isCmdOrCtrl && e.shiftKey && e.key.toLowerCase() === "l") {
+        e.preventDefault();
+        const nextMode: NotesViewMode = notesViewMode === "grid" ? "list" : "grid";
+        setNotesViewMode(nextMode);
+        settingsService.updatePreferences({ notesViewMode: nextMode });
       } else if (isCmdOrCtrl && e.shiftKey && e.key.toLowerCase() === "f") {
         e.preventDefault();
         setIsZenMode((prev) => !prev);
@@ -620,7 +635,11 @@ export function App() {
 
           {/* Pane 2: Notes List Panel */}
           {!isZenMode && (
-            <div className="w-72 flex-shrink-0">
+            <div
+              className={`${
+                notesViewMode === "grid" ? "w-[350px]" : "w-72"
+              } flex-shrink-0 transition-all duration-200`}
+            >
               <NotesPanel
                 notes={notes}
                 collections={collections}

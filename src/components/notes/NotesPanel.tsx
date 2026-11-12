@@ -1,9 +1,10 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import type { Note, Collection, FilterState } from "@/types";
 import { NoteCard } from "./NoteCard";
 import { searchService } from "@/services/searchService";
 import { formatCompactRelativeTime } from "@/lib/utils";
 import { Icon } from "@/components/ui/Icon";
+import { settingsService, type NotesViewMode } from "@/services/settingsService";
 
 interface NotesPanelProps {
   notes: Note[];
@@ -31,8 +32,23 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
 }) => {
   const internalSearchRef = useRef<HTMLInputElement>(null);
   const searchInputRef = externalSearchRef || internalSearchRef;
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<NotesViewMode>(
+    () => settingsService.getPreferences().notesViewMode || "list",
+  );
   const [isNewMenuOpen, setIsNewMenuOpen] = useState(false);
+
+  useEffect(() => {
+    return settingsService.subscribe((prefs) => {
+      if (prefs.notesViewMode && prefs.notesViewMode !== viewMode) {
+        setViewMode(prefs.notesViewMode);
+      }
+    });
+  }, [viewMode]);
+
+  const handleSetViewMode = (mode: NotesViewMode) => {
+    setViewMode(mode);
+    settingsService.updatePreferences({ notesViewMode: mode });
+  };
 
   const searchResults = searchService.filterNotes(notes, filter);
 
@@ -49,7 +65,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
     : "2m ago";
 
   return (
-    <div className="flex h-full w-[295px] flex-shrink-0 flex-col border-r border-[var(--border-subtle)] bg-[var(--bg-notes-panel)] select-none">
+    <div className="flex h-full w-full flex-shrink-0 flex-col border-r border-[var(--border-subtle)] bg-[var(--bg-notes-panel)] select-none">
       {/* Search Bar matching Image 0 with Ctrl K badge */}
       <div className="p-3 pb-2 pt-2.5">
         <div className="relative flex items-center">
@@ -99,25 +115,25 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
         {/* View toggles: List vs Grid */}
         <div className="flex items-center gap-1">
           <button
-            onClick={() => setViewMode("list")}
+            onClick={() => handleSetViewMode("list")}
             className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors cursor-pointer ${
               viewMode === "list"
                 ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)] font-bold shadow-2xs"
                 : "text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
             }`}
-            title="List view"
+            title="List view (Ctrl+Shift+L)"
           >
             <Icon name="segment" size={16} />
           </button>
 
           <button
-            onClick={() => setViewMode("grid")}
+            onClick={() => handleSetViewMode("grid")}
             className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors cursor-pointer ${
               viewMode === "grid"
                 ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)] font-bold shadow-2xs"
                 : "text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
             }`}
-            title="Grid view"
+            title="Grid view (Ctrl+Shift+L)"
           >
             <Icon name="grid_view" size={16} />
           </button>
@@ -125,9 +141,19 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
       </div>
 
       {/* Note List Scrollable Area */}
-      <div className="flex-1 overflow-y-auto pt-1 pb-2">
+      <div
+        className={`flex-1 overflow-y-auto ${
+          viewMode === "grid"
+            ? "grid grid-cols-2 gap-2.5 p-3 content-start"
+            : "flex flex-col pt-1 pb-2"
+        }`}
+      >
         {searchResults.length === 0 ? (
-          <div className="p-6 text-center text-xs text-[var(--text-muted)]">
+          <div
+            className={`${
+              viewMode === "grid" ? "col-span-2" : ""
+            } p-6 text-center text-xs text-[var(--text-muted)]`}
+          >
             {filter.searchQuery ? "No matching notes found." : "No notes in this view."}
           </div>
         ) : (
@@ -138,6 +164,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
               isSelected={result.note.id === selectedNoteId}
               collections={collections}
               searchSnippet={result.snippet}
+              viewMode={viewMode}
               onClick={() => onSelectNote(result.note.id)}
             />
           ))
