@@ -3,6 +3,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import type { JSONContent } from "@tiptap/core";
 import { getEditorExtensions } from "./extensions";
 import { EditorBubbleMenu } from "./EditorBubbleMenu";
+import { FormatToolbar } from "./FormatToolbar";
 import { calculateNoteStats, extractTitleAndPreview } from "@/lib/utils";
 import type { NoteStats } from "@/types";
 
@@ -10,7 +11,13 @@ interface EditorProps {
   noteId: string;
   initialTitle: string;
   initialContent: JSONContent;
+  isPinned?: boolean;
   onSave: (title: string, content: JSONContent, stats: NoteStats) => void;
+  onTogglePin?: () => void;
+  onDelete?: () => void;
+  onExport?: () => void;
+  onBack?: () => void;
+  isMobile?: boolean;
   isReadOnly?: boolean;
 }
 
@@ -18,7 +25,13 @@ export const Editor: React.FC<EditorProps> = ({
   noteId,
   initialTitle,
   initialContent,
+  isPinned = false,
   onSave,
+  onTogglePin,
+  onDelete,
+  onExport,
+  onBack,
+  isMobile = false,
   isReadOnly = false,
 }) => {
   const [title, setTitle] = useState(initialTitle);
@@ -109,42 +122,56 @@ export const Editor: React.FC<EditorProps> = ({
   };
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-y-auto bg-[var(--bg-app)] px-4 py-8 md:px-12 lg:px-20 selection:bg-[var(--selection-bg)]">
-      <div className="mx-auto w-full max-w-3xl flex-1 flex flex-col">
-        {/* Title Input */}
-        <div className="mb-4">
-          <input
-            ref={titleInputRef}
-            type="text"
-            value={title === "Untitled" && !isTitleExplicit ? "" : title}
-            placeholder="Untitled"
-            onChange={handleTitleChange}
-            onKeyDown={handleTitleKeyDown}
-            className="w-full bg-transparent text-3xl md:text-4xl font-bold tracking-tight text-[var(--text-primary)] placeholder-[var(--text-subtle)] outline-none transition-colors border-none p-0 focus:ring-0"
-            disabled={isReadOnly}
-          />
-        </div>
+    <div className="flex h-full w-full flex-col overflow-hidden bg-[var(--bg-app)]">
+      {/* Top formatting toolbar */}
+      <FormatToolbar
+        editor={editor}
+        isPinned={isPinned}
+        onTogglePin={onTogglePin}
+        onDelete={onDelete}
+        onExport={onExport}
+        onBack={onBack}
+        isMobile={isMobile}
+      />
 
-        {/* Floating Bubble Menu */}
-        <EditorBubbleMenu editor={editor} />
-
-        {/* Tiptap Canvas */}
-        <div className="flex-1 pb-16">
-          <EditorContent editor={editor} className="tiptap-container" />
-        </div>
-
-        {/* Quiet Bottom Metadata Indicator */}
-        <div className="sticky bottom-0 z-10 flex items-center justify-between border-t border-[var(--border-subtle)] bg-[var(--bg-app)]/90 py-2.5 text-xs text-[var(--text-muted)] backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <span>{stats.words} words</span>
-            <span>·</span>
-            <span>{stats.characters} chars</span>
-            <span>·</span>
-            <span>{stats.readingTimeMinutes} min read</span>
+      {/* Writing canvas */}
+      <div className="relative flex flex-1 flex-col overflow-y-auto px-4 py-8 md:px-12 lg:px-20 selection:bg-[var(--selection-bg)]">
+        <div className="mx-auto w-full max-w-3xl flex-1 flex flex-col">
+          {/* Title Input */}
+          <div className="mb-4">
+            <input
+              ref={titleInputRef}
+              type="text"
+              value={title === "Untitled" && !isTitleExplicit ? "" : title}
+              placeholder="Untitled"
+              onChange={handleTitleChange}
+              onKeyDown={handleTitleKeyDown}
+              className="w-full bg-transparent text-3xl md:text-4xl font-bold tracking-tight text-[var(--text-primary)] placeholder-[var(--text-subtle)] outline-none transition-colors border-none p-0 focus:ring-0"
+              disabled={isReadOnly}
+            />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--text-subtle)]" />
-            <span>Saved locally</span>
+
+          {/* Floating Bubble Menu */}
+          <EditorBubbleMenu editor={editor} />
+
+          {/* Tiptap Canvas */}
+          <div className="flex-1 pb-16">
+            <EditorContent editor={editor} className="tiptap-container" />
+          </div>
+
+          {/* Quiet Bottom Metadata Indicator */}
+          <div className="sticky bottom-0 z-10 flex items-center justify-between border-t border-[var(--border-subtle)] bg-[var(--bg-app)]/90 py-2.5 text-xs text-[var(--text-muted)] backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <span>{stats.words} words</span>
+              <span>·</span>
+              <span>{stats.characters} chars</span>
+              <span>·</span>
+              <span>{stats.readingTimeMinutes} min read</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--text-subtle)]" />
+              <span>Saved locally</span>
+            </div>
           </div>
         </div>
       </div>
