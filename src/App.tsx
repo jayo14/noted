@@ -3,10 +3,12 @@ import type { Note, Collection, NavSection, FilterState, ThemePreference, NoteSt
 import { noteService } from "@/services/noteService";
 import { collectionService } from "@/services/collectionService";
 import { Sidebar } from "@/components/navigation/Sidebar";
+import { MobileDrawer } from "@/components/navigation/MobileDrawer";
 import { NotesPanel } from "@/components/notes/NotesPanel";
 import { Editor } from "@/components/editor/Editor";
 import { SettingsModal } from "@/components/settings/SettingsModal";
 import { extractTextFromJSONContent } from "@/lib/utils";
+import { Menu } from "lucide-react";
 
 export function App() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -27,6 +29,7 @@ export function App() {
 
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth < 768);
   const [mobileScreen, setMobileScreen] = useState<"notes" | "editor">("notes");
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   // Track window resize for responsive layout
   useEffect(() => {
@@ -433,12 +436,21 @@ export function App() {
         <div className="flex h-full w-full">
           {mobileScreen === "notes" ? (
             <div className="flex h-full w-full flex-col">
-              {/* Mobile Header with Settings and Collections */}
+              {/* Mobile Header with Drawer Trigger, Brand, and Settings */}
               <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-2.5 bg-[var(--bg-surface)]">
-                <span className="text-sm font-semibold tracking-tight">Noted</span>
+                <div className="flex items-center gap-2.5">
+                  <button
+                    onClick={() => setIsMobileDrawerOpen(true)}
+                    className="rounded p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    title="Menu"
+                  >
+                    <Menu size={18} />
+                  </button>
+                  <span className="text-sm font-semibold tracking-tight">Noted</span>
+                </div>
                 <button
                   onClick={() => setIsSettingsOpen(true)}
-                  className="rounded p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  className="rounded p-1 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 >
                   Settings
                 </button>
@@ -482,6 +494,23 @@ export function App() {
           )}
         </div>
       )}
+
+      {/* Mobile Navigation Drawer */}
+      <MobileDrawer
+        isOpen={isMobileDrawerOpen}
+        onClose={() => setIsMobileDrawerOpen(false)}
+        activeSection={filter.section}
+        activeCollectionId={filter.collectionId}
+        notes={notes}
+        collections={collections}
+        theme={theme}
+        onThemeChange={setTheme}
+        onSelectSection={(section, collectionId = null) => {
+          setFilter((prev) => ({ ...prev, section, collectionId }));
+        }}
+        onCreateCollection={handleCreateCollection}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
 
       {/* Settings Modal */}
       <SettingsModal
