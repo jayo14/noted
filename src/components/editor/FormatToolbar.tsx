@@ -103,11 +103,11 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
           </button>
 
           {isStyleMenuOpen && (
-            <div className="absolute left-0 top-8 z-40 w-36 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-editor)] p-1 shadow-lg">
+            <div className="absolute left-0 top-8 z-40 w-36 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-editor)] p-1 shadow-lg text-[var(--text-primary)]">
               <button
                 onClick={() => setStyle("paragraph")}
                 className={`flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs ${
-                  editor.isActive("paragraph") ? "bg-[var(--bg-surface-active)] font-semibold" : "hover:bg-[var(--bg-surface)]"
+                  editor.isActive("paragraph") ? "bg-[var(--bg-surface-active)] font-semibold text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 Normal
@@ -115,7 +115,7 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
               <button
                 onClick={() => setStyle(1)}
                 className={`flex w-full items-center rounded-lg px-2.5 py-1.5 text-sm font-bold font-serif-title ${
-                  editor.isActive("heading", { level: 1 }) ? "bg-[var(--bg-surface-active)] font-semibold" : "hover:bg-[var(--bg-surface)]"
+                  editor.isActive("heading", { level: 1 }) ? "bg-[var(--bg-surface-active)] font-semibold text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 Heading 1
@@ -123,7 +123,7 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
               <button
                 onClick={() => setStyle(2)}
                 className={`flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold ${
-                  editor.isActive("heading", { level: 2 }) ? "bg-[var(--bg-surface-active)] font-semibold" : "hover:bg-[var(--bg-surface)]"
+                  editor.isActive("heading", { level: 2 }) ? "bg-[var(--bg-surface-active)] font-semibold text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 Heading 2
@@ -131,7 +131,7 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
               <button
                 onClick={() => setStyle(3)}
                 className={`flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium ${
-                  editor.isActive("heading", { level: 3 }) ? "bg-[var(--bg-surface-active)] font-semibold" : "hover:bg-[var(--bg-surface)]"
+                  editor.isActive("heading", { level: 3 }) ? "bg-[var(--bg-surface-active)] font-semibold text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 Heading 3
@@ -314,7 +314,7 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
         {/* Share Button Pill matching Image 1 */}
         <button
           onClick={onShare || onExport}
-          className="flex items-center gap-1.5 rounded-full bg-[#161514] dark:bg-[#f7f5f0] px-3.5 py-1 text-xs font-semibold text-white dark:text-[#161514] hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
+          className="flex items-center gap-1.5 rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] px-3.5 py-1 text-xs font-semibold hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
           title="Share note"
         >
           <span className="text-[12px]">Share</span>
