@@ -32,14 +32,14 @@
     --bg-surface: #262624;
     --bg-surface-hover: #2e2e2b;
     --bg-surface-active: #383834;
-    --bg-card-active: #232321;
-    --bg-callout: #222220;
+    --bg-card-active: #242422;
+    --bg-callout: #232320;
     --border-subtle: #2b2b28;
     --border-strong: #3d3d38;
     --text-primary: #f7f5f0;
     --text-secondary: #c8c5be;
-    --text-muted: #8c8983;
-    --text-subtle: #63615c;
+    --text-muted: #95928b;
+    --text-subtle: #73706a;
     --accent: #f7f5f0;
     --accent-contrast: #141312;
     --selection-bg: #383834;
@@ -218,7 +218,7 @@
   appearance: none;
   width: 16px;
   height: 16px;
-  border: 1.5px solid #a8a5a0;
+  border: 1.5px solid var(--text-subtle);
   border-radius: 4px;
   background-color: transparent;
   cursor: pointer;
@@ -228,32 +228,22 @@
 }
 
 .tiptap ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
-  background-color: #141312;
-  border-color: #141312;
+  background-color: var(--accent);
+  border-color: var(--accent);
 }
 
 .tiptap ul[data-type="taskList"] li > label input[type="checkbox"]:checked::before {
   content: "";
   width: 8.5px;
   height: 4.5px;
-  border-left: 2px solid #ffffff;
-  border-bottom: 2px solid #ffffff;
+  border-left: 2px solid var(--accent-contrast);
+  border-bottom: 2px solid var(--accent-contrast);
   transform: rotate(-45deg) translate(0.5px, -0.8px);
-}
-
-.dark .tiptap ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
-  background-color: #f7f5f0;
-  border-color: #f7f5f0;
-}
-
-.dark .tiptap ul[data-type="taskList"] li > label input[type="checkbox"]:checked::before {
-  border-left-color: #141312;
-  border-bottom-color: #141312;
 }
 
 .tiptap ul[data-type="taskList"] li[data-checked="true"] > div > p {
   text-decoration: line-through;
-  color: #8E8B85;
+  color: var(--text-muted);
 }
 
 .tiptap ul[data-type="taskList"] li > div {
