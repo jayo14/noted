@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { Note, Collection, NavSection, FilterState, ThemePreference, NoteStats } from "@/types";
 import { noteService } from "@/services/noteService";
 import { collectionService } from "@/services/collectionService";
+import { syncEngine } from "@/services/syncEngine";
+import { getStorageAdapter } from "@/lib/storage";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { MobileDrawer } from "@/components/navigation/MobileDrawer";
 import { NotesPanel } from "@/components/notes/NotesPanel";
@@ -159,6 +161,33 @@ export function App() {
 
   useEffect(() => {
     loadInitialData();
+
+    // Initialize sync engine & settings
+    (async () => {
+      const storage = await getStorageAdapter();
+      const savedTheme = await storage.getSetting<ThemePreference>("theme", "system");
+      setTheme(savedTheme);
+
+      const savedUrl = await storage.getSetting<string>("supabase_url", "");
+      const savedKey = await storage.getSetting<string>("supabase_key", "");
+      setSupabaseUrl(savedUrl);
+      setSupabaseKey(savedKey);
+
+      await syncEngine.init(savedUrl, savedKey);
+      const queue = await storage.getPendingSyncQueue();
+      setPendingSyncCount(queue.length);
+    })();
+
+    const unsubSync = syncEngine.subscribe((status) => {
+      setLastSyncedAt(status.lastSyncedAt);
+    });
+
+    const stopSync = syncEngine.startPeriodicSync(30000);
+
+    return () => {
+      unsubSync();
+      stopSync();
+    };
   }, [loadInitialData]);
 
   // Currently selected note
@@ -517,11 +546,20 @@ export function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         theme={theme}
-        onThemeChange={setTheme}
+        onThemeChange={async (t) => {
+          setTheme(t);
+          const storage = await getStorageAdapter();
+          await storage.setSetting("theme", t);
+        }}
         pendingSyncCount={pendingSyncCount}
         lastSyncedAt={lastSyncedAt}
         onTriggerSync={async () => {
-          // Manual sync trigger
+          await syncEngine.syncNow();
+          const storage = await getStorageAdapter();
+          const q = await storage.getPendingSyncQueue();
+          setPendingSyncCount(q.length);
+          const updatedNotes = await noteService.getAllNotes(true);
+          setNotes(updatedNotes);
         }}
         onExportAll={handleExportAll}
         supabaseUrl={supabaseUrl}
@@ -529,6 +567,7 @@ export function App() {
         onSaveSupabaseConfig={async (url, key) => {
           setSupabaseUrl(url);
           setSupabaseKey(key);
+          await syncEngine.configureSupabase(url, key);
         }}
       />
     </div>
