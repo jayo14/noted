@@ -101,6 +101,20 @@ class SettingsService {
     return this.prefs;
   }
 
+  async resetToDefaults(): Promise<AppPreferences> {
+    this.prefs = { ...DEFAULT_PREFERENCES };
+    this.notify();
+
+    try {
+      const storage = await getStorageAdapter();
+      await storage.setSetting("app_preferences", this.prefs);
+    } catch (e) {
+      console.error("[SettingsService] Failed to reset settings:", e);
+    }
+
+    return this.prefs;
+  }
+
   subscribe(listener: SettingsListener): () => void {
     this.listeners.add(listener);
     listener(this.prefs);
