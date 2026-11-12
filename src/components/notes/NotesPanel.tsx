@@ -67,7 +67,7 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
             className="w-full rounded-xl bg-[var(--bg-surface)] py-2 pl-9 pr-14 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none border border-[var(--border-subtle)] focus:border-[var(--border-strong)] transition-all"
           />
           <div className="absolute right-2.5 flex items-center gap-1 pointer-events-none">
-            <kbd className="rounded-md border border-[var(--border-strong)] bg-[var(--bg-editor)] px-1.5 py-0.5 font-mono text-[9.5px] font-medium text-[var(--text-muted)]">
+            <kbd className="rounded-md border border-[var(--border-subtle)] bg-white dark:bg-[var(--bg-surface-active)] px-1.5 py-0.5 font-mono text-[9.5px] font-medium text-[var(--text-secondary)] shadow-2xs">
               Ctrl K
             </kbd>
           </div>
