@@ -24,6 +24,8 @@ interface EditorProps {
   onBack?: () => void;
   isMobile?: boolean;
   isReadOnly?: boolean;
+  isZenMode?: boolean;
+  onToggleZenMode?: () => void;
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -43,6 +45,8 @@ export const Editor: React.FC<EditorProps> = ({
   onBack,
   isMobile = false,
   isReadOnly = false,
+  isZenMode = false,
+  onToggleZenMode,
 }) => {
   const [title, setTitle] = useState(initialTitle);
   const [isTitleExplicit, setIsTitleExplicit] = useState(
@@ -147,6 +151,8 @@ export const Editor: React.FC<EditorProps> = ({
         onExport={onExport}
         onBack={onBack}
         isMobile={isMobile}
+        isZenMode={isZenMode}
+        onToggleZenMode={onToggleZenMode}
       />
 
       {/* Writing canvas */}

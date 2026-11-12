@@ -28,6 +28,7 @@ export function App() {
   const [theme, setTheme] = useState<ThemePreference>("system");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isZenMode, setIsZenMode] = useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
@@ -396,6 +397,9 @@ export function App() {
       } else if (isCmdOrCtrl && e.shiftKey && e.key.toLowerCase() === "m") {
         e.preventDefault();
         handleExportNote();
+      } else if (isCmdOrCtrl && e.shiftKey && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        setIsZenMode((prev) => !prev);
       } else if (isCmdOrCtrl && (e.key === "," || (e.shiftKey && e.key.toLowerCase() === "s"))) {
         e.preventDefault();
         setIsSettingsOpen((prev) => !prev);
@@ -424,35 +428,39 @@ export function App() {
       {!isMobile ? (
         <div className="flex h-full w-full">
           {/* Pane 1: Navigation Sidebar */}
-          <Sidebar
-            activeSection={filter.section}
-            activeCollectionId={filter.collectionId}
-            notes={notes}
-            collections={collections}
-            onSelectSection={(section, collectionId = null) =>
-              setFilter((prev) => ({ ...prev, section, collectionId }))
-            }
-            onCreateCollection={handleCreateCollection}
-            onRenameCollection={handleRenameCollection}
-            onDeleteCollection={handleDeleteCollection}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            onImportFile={handleImportFile}
-          />
-
-          {/* Pane 2: Notes List Panel */}
-          <div className="w-72 flex-shrink-0">
-            <NotesPanel
+          {!isZenMode && (
+            <Sidebar
+              activeSection={filter.section}
+              activeCollectionId={filter.collectionId}
               notes={notes}
               collections={collections}
-              filter={filter}
-              selectedNoteId={selectedNoteId}
-              onSelectNote={handleSelectNote}
-              onCreateNote={handleCreateNote}
-              onSearchChange={(searchQuery) => setFilter((prev) => ({ ...prev, searchQuery }))}
-              onEmptyTrash={handleEmptyTrash}
-              searchInputRef={searchInputRef}
+              onSelectSection={(section, collectionId = null) =>
+                setFilter((prev) => ({ ...prev, section, collectionId }))
+              }
+              onCreateCollection={handleCreateCollection}
+              onRenameCollection={handleRenameCollection}
+              onDeleteCollection={handleDeleteCollection}
+              onOpenSettings={() => setIsSettingsOpen(true)}
+              onImportFile={handleImportFile}
             />
-          </div>
+          )}
+
+          {/* Pane 2: Notes List Panel */}
+          {!isZenMode && (
+            <div className="w-72 flex-shrink-0">
+              <NotesPanel
+                notes={notes}
+                collections={collections}
+                filter={filter}
+                selectedNoteId={selectedNoteId}
+                onSelectNote={handleSelectNote}
+                onCreateNote={handleCreateNote}
+                onSearchChange={(searchQuery) => setFilter((prev) => ({ ...prev, searchQuery }))}
+                onEmptyTrash={handleEmptyTrash}
+                searchInputRef={searchInputRef}
+              />
+            </div>
+          )}
 
           {/* Pane 3: Writing Canvas */}
           <main className="flex-1 h-full">
@@ -495,6 +503,8 @@ export function App() {
                   onDelete={handleDeleteCurrentNote}
                   onExport={handleExportNote}
                   isMobile={false}
+                  isZenMode={isZenMode}
+                  onToggleZenMode={() => setIsZenMode((prev) => !prev)}
                 />
               )
             ) : (

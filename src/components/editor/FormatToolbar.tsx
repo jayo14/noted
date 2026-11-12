@@ -24,6 +24,8 @@ import {
   Download,
   Copy,
   ArrowLeft,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 
 interface FormatToolbarProps {
@@ -39,6 +41,8 @@ interface FormatToolbarProps {
   onExport?: () => void;
   onBack?: () => void;
   isMobile?: boolean;
+  isZenMode?: boolean;
+  onToggleZenMode?: () => void;
 }
 
 export const FormatToolbar: React.FC<FormatToolbarProps> = ({
@@ -54,6 +58,8 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
   onExport,
   onBack,
   isMobile = false,
+  isZenMode = false,
+  onToggleZenMode,
 }) => {
   if (!editor) return null;
 
@@ -310,6 +316,20 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
             title="Export note"
           >
             <Download size={15} />
+          </button>
+        )}
+
+        {onToggleZenMode && !isMobile && (
+          <button
+            onClick={onToggleZenMode}
+            className={`rounded p-1.5 transition-colors ${
+              isZenMode
+                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                : "text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+            }`}
+            title={isZenMode ? "Exit Zen Mode (Cmd+Shift+F)" : "Enter Zen Focus Mode (Cmd+Shift+F)"}
+          >
+            {isZenMode ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
           </button>
         )}
 
