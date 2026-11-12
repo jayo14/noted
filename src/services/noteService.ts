@@ -1,8 +1,7 @@
 import type { Note, NoteId, CollectionId, UserId } from "@/types";
 import { getStorageAdapter } from "@/lib/storage";
 import { createEmptyDoc, generateUUID, nowISO } from "@/lib/utils";
-
-const DEFAULT_USER_ID: UserId = "local-user";
+import { authService } from "./authService";
 
 export class NoteService {
   private static instance: NoteService;
@@ -29,7 +28,7 @@ export class NoteService {
     const now = nowISO();
     const newNote: Note = {
       id: generateUUID(),
-      user_id: DEFAULT_USER_ID,
+      user_id: authService.getCurrentUserId(),
       title,
       content: createEmptyDoc(),
       collection_id: collectionId,

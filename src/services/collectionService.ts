@@ -1,8 +1,7 @@
 import type { Collection, CollectionId, UserId } from "@/types";
 import { getStorageAdapter } from "@/lib/storage";
 import { generateUUID, nowISO } from "@/lib/utils";
-
-const DEFAULT_USER_ID: UserId = "local-user";
+import { authService } from "./authService";
 
 export class CollectionService {
   private static instance: CollectionService;
@@ -24,7 +23,7 @@ export class CollectionService {
     const now = nowISO();
     const collection: Collection = {
       id: generateUUID(),
-      user_id: DEFAULT_USER_ID,
+      user_id: authService.getCurrentUserId(),
       name: name.trim() || "New Collection",
       created_at: now,
       updated_at: now,
