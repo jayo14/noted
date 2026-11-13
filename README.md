@@ -30,3 +30,17 @@
 **Noted** is a modern, privacy-focused note-taking workspace designed for speed, fluidity, and absolute data ownership. Whether running as a native desktop application via Tauri v2 or inside any web browser, Noted provides a distraction-free environment for organizing thoughts, technical documentation, meeting summaries, task checklists, and creative writing.
 
 Built on an **offline-first storage foundation**, your notes are saved locally instantly with zero latency—utilizing SQLite on desktop and IndexedDB on the web. When connected, an incremental cloud synchronization engine backed by Supabase keeps all your devices continuously in sync with revision-based conflict resolution.
+
+## Key Features
+
+- **⚡ Blazing Fast & Offline-First**: Zero loading delays. Writes immediately commit to local storage (SQLite on desktop, IndexedDB on web) with background sync.
+- **✍️ Powerful Hybrid Editor**: Built on [TipTap v3](https://tiptap.dev/) with full Markdown shortcuts, slash command menu (`/`), floating bubble formatting bar, task lists, code blocks, and callouts.
+- **📋 Intelligent Markdown Paste & Image Handling**: Automatically detects pasted raw Markdown or HTML and translates it into native blocks. Supports drag-and-drop and clipboard paste for images.
+- **🔄 Incremental Cloud Sync**: Powered by Supabase. Offline edits are queued in an append-only mutation log and synchronized seamlessly with revision-based conflict resolution.
+- **🗂️ Flexible Collections & Organization**: Group notes into custom collections with custom icons, pin critical notes to the top, archive completed items, and recover deleted notes from Trash.
+- **🏷️ Automated Note Classification**: Intelligently classifies notes into categories (Checklists, Code Snippets, Meeting Notes, Journals, Reading Notes) based on structural heuristics.
+- **🔍 Instant Search & Quick Switcher**: Sub-millisecond full-text search across titles, note content, and tags with hit highlighting (`Cmd/Ctrl + K`).
+- **🎛️ Dual View Modes**: Switch between compact **List View** and card-based **Grid View** to match your preferred workflow.
+- **🎨 Modern Aesthetic & Theming**: Polished interface with Tailwind CSS v4, supporting dynamic Light, Dark, and System appearance modes.
+- **📊 Real-Time Writing Metrics**: Instant word count, character count, and estimated reading time.
+- **📤 Versatile Exporting**: Export any note as Markdown (`.md`), HTML (`.html`), or plain text (`.txt`) at any time.
