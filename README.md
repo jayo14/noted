@@ -44,3 +44,44 @@ Built on an **offline-first storage foundation**, your notes are saved locally i
 - **🎨 Modern Aesthetic & Theming**: Polished interface with Tailwind CSS v4, supporting dynamic Light, Dark, and System appearance modes.
 - **📊 Real-Time Writing Metrics**: Instant word count, character count, and estimated reading time.
 - **📤 Versatile Exporting**: Export any note as Markdown (`.md`), HTML (`.html`), or plain text (`.txt`) at any time.
+
+## System Architecture
+
+Noted is built with an **offline-first, multi-target architecture**. The application runs both as a cross-platform desktop binary via Tauri v2 and as a high-performance web application, sharing a unified React TypeScript codebase.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Noted Client Application                        │
+│               (React 19 + TypeScript + Vite + Tailwind v4)              │
+├───────────────────────────────────┬────────────────────────────────────┤
+│           Desktop Mode            │              Web Mode              │
+│       (Tauri v2 + Rust Core)      │        (Standard Web Browser)      │
+├───────────────────────────────────┼────────────────────────────────────┤
+│     TauriSqlAdapter (SQLite)      │      IndexedDBAdapter (IDB)        │
+│    Local persistent database      │      In-browser transactional DB   │
+└─────────────────┬─────────────────┴──────────────────┬─────────────────┘
+                  │                                    │
+                  └─────────────────┬──────────────────┘
+                                    ▼
+                      ┌───────────────────────────┐
+                      │    StorageAdapter API     │
+                      │   (Unified CRUD & Queue)  │
+                      └─────────────┬─────────────┘
+                                    │
+                                    ▼
+                      ┌───────────────────────────┐
+                      │    SyncEngine (Worker)    │
+                      │  Queues & Retry Mechanics │
+                      └─────────────┬─────────────┘
+                                    │ (HTTPS / WebSockets)
+                                    ▼
+                      ┌───────────────────────────┐
+                      │   Supabase Cloud Backend  │
+                      │  PostgreSQL + Auth + RLS  │
+                      └───────────────────────────┘
+```
+
+### Storage Adapter Pattern
+- **Dynamic Adapter Resolution**: The storage factory evaluates the runtime context via `window.__TAURI_INTERNALS__`. If running inside Tauri's webview, it instantiates the native SQLite adapter; otherwise, it gracefully mounts IndexedDB.
+- **Transactional Consistency**: Both adapters expose identical async signatures for fetching, inserting, updating, soft-deleting, and batching records.
+- **Zero-Latency UI**: All user mutations commit to the local database immediately and update React state optimistically before pushing to the cloud sync queue.
