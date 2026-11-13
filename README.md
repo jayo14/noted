@@ -134,3 +134,42 @@ Highlight any portion of text to reveal the contextual bubble menu for instant s
 ### Smart Paste & Image Handling
 - **Markdown Conversion**: When pasting text containing Markdown syntax (e.g., `# Header`, `- [ ] todo`, ` ```code ``` `), Noted parses and embeds native blocks automatically.
 - **Image Drag-and-Drop & Clipboard**: Paste or drag images directly into the editor; they are embedded seamlessly and persisted with the note document.
+
+## Keyboard Shortcuts
+
+Noted is engineered for full keyboard-driven navigation. Press `Cmd/Ctrl + /` at any time inside the app to bring up the interactive cheat sheet:
+
+### General & Navigation
+| Action | macOS Shortcut | Windows / Linux Shortcut |
+| :--- | :--- | :--- |
+| **New Note** | `Cmd + N` | `Ctrl + N` |
+| **Search Notes** | `Cmd + F` | `Ctrl + F` |
+| **Toggle Grid / List View** | `Cmd + Shift + L` | `Ctrl + Shift + L` |
+| **View All Notes** | `Cmd + 1` | `Ctrl + 1` |
+| **View Pinned Notes** | `Cmd + 2` | `Ctrl + 2` |
+| **View Trash** | `Cmd + 3` | `Ctrl + 3` |
+| **Open Settings** | `Cmd + ,` | `Ctrl + ,` |
+| **Shortcuts Cheat Sheet** | `Cmd + /` | `Ctrl + /` |
+| **Dismiss Modal / Blur** | `Escape` | `Escape` |
+
+### Writing & Markdown Formatting
+| Formatting | Hotkey / Markdown Trigger |
+| :--- | :--- |
+| **Bold** | `Cmd/Ctrl + B` |
+| **Italic** | `Cmd/Ctrl + I` |
+| **Underline** | `Cmd/Ctrl + U` |
+| **Strikethrough** | `Cmd/Ctrl + Shift + X` |
+| **Inline Code** | `Cmd/Ctrl + E` |
+| **Heading 1 / 2 / 3** | `# ` / `## ` / `### ` + `Space` |
+| **Checklist Item** | `[] ` or `- [ ] ` + `Space` |
+| **Bullet List** | `- ` or `* ` + `Space` |
+| **Numbered List** | `1. ` + `Space` |
+| **Blockquote** | `> ` + `Space` |
+| **Undo / Redo** | `Cmd/Ctrl + Z` / `Cmd/Ctrl + Shift + Z` |
+
+### Organization & Export
+| Action | macOS Shortcut | Windows / Linux Shortcut |
+| :--- | :--- | :--- |
+| **Pin / Unpin Active Note** | `Cmd + P` | `Ctrl + P` |
+| **Move Note to Trash** | `Cmd + Shift + D` | `Ctrl + Shift + D` |
+| **Export Note to Markdown** | `Cmd + Shift + M` | `Ctrl + Shift + M` |
