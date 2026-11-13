@@ -262,18 +262,43 @@ Launches the native desktop window with live frontend reload and native SQLite b
 pnpm tauri dev
 ```
 
-### 4. Build for Production
-- **Web Production Assets**:
-  ```bash
-  pnpm build
-  ```
-  Generates optimized static output in `./dist`.
+### 4. Build & Package for Linux and Windows
 
-- **Desktop Release Binaries**:
-  ```bash
-  pnpm tauri build
-  ```
-  Bundles native installers (AppImage, `.deb`, `.dmg`, or `.msi` depending on OS) in `src-tauri/target/release/bundle`.
+Noted is pre-configured with dedicated scripts for packaging production desktop binaries across platforms:
+
+#### Linux Packaging (`.deb`, `.AppImage`)
+```bash
+# Package both Debian (.deb) and portable AppImage (.AppImage)
+pnpm package:linux
+
+# Package Debian package only
+pnpm package:deb
+
+# Package AppImage only
+pnpm package:appimage
+```
+*Outputs are saved to `src-tauri/target/release/bundle/deb/` and `src-tauri/target/release/bundle/appimage/`.*
+
+#### Windows Packaging (`.exe`, `.msi`)
+```powershell
+# Package both NSIS (.exe) and WiX (.msi) installers
+pnpm package:windows
+
+# Package NSIS setup wizard only (.exe)
+pnpm package:nsis
+
+# Package WiX MSI installer only (.msi)
+pnpm package:msi
+```
+*Outputs are saved to `src-tauri/target/release/bundle/nsis/` and `src-tauri/target/release/bundle/msi/`.*
+
+#### Web Production Bundle
+```bash
+pnpm build
+```
+*Generates optimized web static assets in `./dist`.*
+
+For complete system requirements, dependencies, and automated GitHub Actions release instructions, see the [Desktop Packaging Guide](docs/packaging.md).
 
 ## Supabase Backend & Database Setup
 
