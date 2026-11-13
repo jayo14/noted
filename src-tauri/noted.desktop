@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=Noted
+GenericName=Notes Application
+Comment=A fast, elegant, offline-first notes application
+Exec=noted %U
+Icon=noted
+Terminal=false
+Type=Application
+Categories=Office;Utility;TextEditor;
+MimeType=text/plain;text/markdown;application/json;
+Keywords=notes;markdown;editor;todo;sync;offline;
+StartupNotify=true
+StartupWMClass=noted
+X-GNOME-UsesNotifications=true
