@@ -380,3 +380,15 @@ We welcome community contributions, feature suggestions, and bug reports.
    pnpm build
    ```
 5. Push to your branch and submit a Pull Request.
+
+## License & Acknowledgments
+
+This project is open-source and available under the [MIT License](LICENSE).
+
+### Acknowledgments
+Noted stands on the shoulders of remarkable open-source projects:
+- [Tauri](https://tauri.app/) — For enabling lightweight, secure native desktop binaries.
+- [TipTap](https://tiptap.dev/) & [ProseMirror](https://prosemirror.net/) — For the world-class extensible text editing engine.
+- [Supabase](https://supabase.com/) — For the resilient Postgres and Auth platform.
+- [Tailwind CSS](https://tailwindcss.com/) — For the modern utility-first design framework.
+- [Lucide Icons](https://lucide.dev/) — For beautiful, consistent vector iconography.
