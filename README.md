@@ -85,3 +85,19 @@ Noted is built with an **offline-first, multi-target architecture**. The applica
 - **Dynamic Adapter Resolution**: The storage factory evaluates the runtime context via `window.__TAURI_INTERNALS__`. If running inside Tauri's webview, it instantiates the native SQLite adapter; otherwise, it gracefully mounts IndexedDB.
 - **Transactional Consistency**: Both adapters expose identical async signatures for fetching, inserting, updating, soft-deleting, and batching records.
 - **Zero-Latency UI**: All user mutations commit to the local database immediately and update React state optimistically before pushing to the cloud sync queue.
+
+## Cloud Synchronization & Conflict Resolution
+
+Noted incorporates an incremental synchronization engine (`SyncEngine`) designed to function seamlessly under unstable network conditions or prolonged offline periods.
+
+### How Synchronization Works
+1. **Local Mutation Queuing**: Every note modification (create, update, archive, pin, delete) is written to a persistent local sync queue (`sync_queue`) with an incremented revision counter.
+2. **Network Detection & Periodic Polling**: The engine listens to browser online/offline events (`window.addEventListener('online')`) and conducts background sync passes every 20 seconds.
+3. **Exponential Backoff**: Transient errors automatically trigger exponential backoff delays (`min(60s, 1s * 2^retries)`), preventing API thrashing and rate limits.
+4. **Bidirectional Reconciliation**:
+   - **Outbound**: Local queue items are pushed to Supabase using upsert transactions. Once confirmed, items are purged from the local queue.
+   - **Inbound**: Remote changes are pulled by querying items updated since `last_synced_at`.
+5. **Conflict Resolution Strategy**:
+   - **Revision Precedence**: Each note maintains a monotonic `revision` integer. Remote updates with higher revisions supersede local state if no local uncommitted changes exist.
+   - **Timestamp Fallback**: When equal revisions conflict, ISO 8601 timestamps (`updated_at`) arbitrate the winning state.
+   - **Non-Destructive Soft Deletes**: Deleted notes are flagged with `deleted_at` timestamps rather than immediate drops, allowing restoration across all connected devices.
