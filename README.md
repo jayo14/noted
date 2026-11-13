@@ -173,3 +173,56 @@ Noted is engineered for full keyboard-driven navigation. Press `Cmd/Ctrl + /` at
 | **Pin / Unpin Active Note** | `Cmd + P` | `Ctrl + P` |
 | **Move Note to Trash** | `Cmd + Shift + D` | `Ctrl + Shift + D` |
 | **Export Note to Markdown** | `Cmd + Shift + M` | `Ctrl + Shift + M` |
+
+## Tech Stack & Project Structure
+
+### Core Technologies
+- **Desktop Runtime**: [Tauri v2](https://tauri.app/) (Rust core, low memory footprint, native SQLite via `@tauri-apps/plugin-sql`)
+- **Frontend Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **Bundler & Tooling**: [Vite 8](https://vitejs.dev/) with `@vitejs/plugin-react`
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) with native CSS variables and dark-mode adaptation
+- **Rich-Text Engine**: [TipTap v3](https://tiptap.dev/) + ProseMirror ecosystem
+- **Cloud Backend**: [Supabase](https://supabase.com/) (PostgreSQL, Row-Level Security, Supabase Auth)
+- **Icons**: [Lucide React](https://lucide.dev/) + Google Material Symbols
+- **Testing**: [Vitest](https://vitest.dev/) (unit & integration testing)
+
+### Directory Structure
+```
+noted/
+├── index.html                  # HTML entry point with system fonts & styles
+├── package.json                # Project dependencies, scripts, and engine specs
+├── vite.config.ts              # Vite bundler configuration & Tailwind integration
+├── tsconfig.json               # TypeScript compiler configuration
+├── src/
+│   ├── main.tsx                # React application entry point
+│   ├── App.tsx                 # Main layout coordinator & keyboard listeners
+│   ├── index.css               # Theme definitions & Tailwind root rules
+│   ├── types/                  # TypeScript interfaces (Note, Collection, SyncQueueItem)
+│   ├── components/
+│   │   ├── editor/             # TipTap canvas, toolbar, bubble menu, slash command palette
+│   │   ├── notes/              # Notes list/grid panel, note card, search bar
+│   │   ├── collections/        # Folder/collection dialogs and selectors
+│   │   ├── navigation/         # Sidebar, window header, mobile drawer, shortcuts modal
+│   │   ├── settings/           # Preferences dialog (theme, view mode, sync, auth)
+│   │   └── ui/                 # Shared iconography and base components
+│   ├── lib/
+│   │   ├── storage/            # Dual-adapter offline storage (SQLite + IndexedDB)
+│   │   ├── export.ts           # Exporters for Markdown, HTML, and Plain Text
+│   │   ├── markdownPaste.ts    # Smart clipboard parser converting Markdown to blocks
+│   │   ├── noteClassifier.ts   # Structural heuristic classifier for notes
+│   │   └── utils.ts            # Formatting helpers, word counters, UUID generators
+│   └── services/
+│       ├── noteService.ts      # Note lifecycle, mutations, and revision tracking
+│       ├── collectionService.ts# Collection CRUD and relationship mappings
+│       ├── searchService.ts    # Client-side full-text search with highlighting
+│       ├── syncEngine.ts       # Offline queue coordinator & Supabase synchronizer
+│       ├── authService.ts      # User sessions & authentication state
+│       └── settingsService.ts  # Local preferences persistence
+├── src-tauri/
+│   ├── tauri.conf.json         # Tauri v2 bundle, window, and security permissions
+│   ├── Cargo.toml              # Rust crate dependencies and plugins
+│   └── src/main.rs             # Tauri application entry point
+├── supabase/
+│   └── migrations/             # SQL schema, tables, triggers, and RLS policies
+└── tests/                      # 11 comprehensive Vitest test suites (57+ tests)
+```
