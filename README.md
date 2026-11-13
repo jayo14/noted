@@ -101,3 +101,36 @@ Noted incorporates an incremental synchronization engine (`SyncEngine`) designed
    - **Revision Precedence**: Each note maintains a monotonic `revision` integer. Remote updates with higher revisions supersede local state if no local uncommitted changes exist.
    - **Timestamp Fallback**: When equal revisions conflict, ISO 8601 timestamps (`updated_at`) arbitrate the winning state.
    - **Non-Destructive Soft Deletes**: Deleted notes are flagged with `deleted_at` timestamps rather than immediate drops, allowing restoration across all connected devices.
+
+## Editor Capabilities & Markdown Support
+
+Noted features a distraction-free, rich-text WYSIWYG editor backed by **TipTap v3** and ProseMirror, marrying the fluid experience of Notion with the speed and portability of raw Markdown.
+
+### Slash Commands (`/`)
+Type `/` on any blank line to invoke the quick-insert block menu:
+| Command | Action | Description |
+| :--- | :--- | :--- |
+| `/text` | Paragraph | Regular paragraph body text |
+| `/heading1` or `/h1` | Heading 1 | Large document section heading |
+| `/heading2` or `/h2` | Heading 2 | Medium subsection heading |
+| `/heading3` or `/h3` | Heading 3 | Small subsection heading |
+| `/checklist` or `/todo` | Task List | Interactive checkboxes for actionable tasks |
+| `/bulletList` or `/list` | Bullet List | Unordered bulleted ideas |
+| `/orderedList` | Numbered List | Sequential enumerated list |
+| `/quote` | Blockquote | Styled callout for citations and key takeaways |
+| `/codeBlock` or `/code` | Code Block | Monospace syntax container |
+| `/divider` or `/hr` | Horizontal Rule | Subtle section separator |
+
+### Inline Bubble Formatting
+Highlight any portion of text to reveal the contextual bubble menu for instant styling:
+- **Bold** (`Cmd/Ctrl + B`)
+- *Italic* (`Cmd/Ctrl + I`)
+- <u>Underline</u> (`Cmd/Ctrl + U`)
+- ~~Strikethrough~~ (`Cmd/Ctrl + Shift + X`)
+- `Inline Code` (`` ` ``)
+- ==Highlight== (Yellow accent background)
+- [Hyperlinks](https://example.com) (`Cmd/Ctrl + K` in selection)
+
+### Smart Paste & Image Handling
+- **Markdown Conversion**: When pasting text containing Markdown syntax (e.g., `# Header`, `- [ ] todo`, ` ```code ``` `), Noted parses and embeds native blocks automatically.
+- **Image Drag-and-Drop & Clipboard**: Paste or drag images directly into the editor; they are embedded seamlessly and persisted with the note document.
