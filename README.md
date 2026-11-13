@@ -226,3 +226,51 @@ noted/
 │   └── migrations/             # SQL schema, tables, triggers, and RLS policies
 └── tests/                      # 11 comprehensive Vitest test suites (57+ tests)
 ```
+
+## Getting Started
+
+### Prerequisites
+- **Node.js**: v18.0.0 or later (v20+ recommended)
+- **Package Manager**: [pnpm](https://pnpm.io/) (preferred), `npm`, or `yarn`
+- **Rust Toolchain** *(only required for desktop builds)*:
+  - Install Rust via [rustup](https://rustup.rs/):
+    ```bash
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    ```
+  - Platform-specific Tauri prerequisites (C compiler, webkit2gtk on Linux):
+    - Ubuntu / Debian:
+      ```bash
+      sudo apt update && sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      ```
+
+### 1. Clone & Install Dependencies
+```bash
+git clone https://github.com/jayo14/noted.git
+cd noted
+pnpm install
+```
+
+### 2. Run in Web Development Mode
+Starts the Vite dev server with Hot Module Replacement (HMR) at `http://localhost:1420`:
+```bash
+pnpm dev
+```
+
+### 3. Run as Native Desktop Application (Tauri v2)
+Launches the native desktop window with live frontend reload and native SQLite bindings:
+```bash
+pnpm tauri dev
+```
+
+### 4. Build for Production
+- **Web Production Assets**:
+  ```bash
+  pnpm build
+  ```
+  Generates optimized static output in `./dist`.
+
+- **Desktop Release Binaries**:
+  ```bash
+  pnpm tauri build
+  ```
+  Bundles native installers (AppImage, `.deb`, `.dmg`, or `.msi` depending on OS) in `src-tauri/target/release/bundle`.
