@@ -53,6 +53,19 @@
       "appimage": {
         "bundleMediaFramework": false
       }
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "both",
+        "languages": ["English"],
+        "displayLanguageSelector": false
+      },
+      "wix": {
+        "language": "en-US"
+      },
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      }
     }
   }
 }
