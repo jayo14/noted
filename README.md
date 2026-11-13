@@ -335,3 +335,23 @@ pnpm build
 - `tests/theme.test.ts` — System, dark, and light theme resolution and CSS variable bindings.
 - `tests/settings.test.ts` — Default fallback configurations and key-value persistence.
 - `tests/datetime.test.ts` — Localized timestamps, relative date labels ("Today", "Yesterday"), and ISO formatting.
+
+## Data Privacy, Import & Export Workflows
+
+Noted adheres strictly to the **Local-First software manifesto**: your data belongs to you, lives on your physical device by default, and remains accessible indefinitely without an internet connection or subscription.
+
+### Import Capabilities
+Import existing documents directly into your workspace:
+- **Markdown (`.md`, `.markdown`)**: Automatically parses frontmatter, headers, task lists, bullet points, and code fences into rich interactive blocks.
+- **JSON Documents (`.json`)**: Imports native TipTap schema structures preserving complex markups and node attributes.
+- **Plain Text (`.txt`)**: Translates plain text into clean, structured paragraphs.
+
+### Export Capabilities
+Export individual notes or entire collections at any time with zero vendor lock-in:
+- **Markdown (`.md`)**: Exports clean GitHub-flavored markdown with full task item syntax (`- [x]`) and code blocks. Hotkey: `Cmd/Ctrl + Shift + M`.
+- **Plain Text (`.txt`)**: Strips formatting tags to produce raw readable text.
+
+### Privacy Guarantees
+- **No Analytics or Trackers**: Noted contains zero third-party telemetry, behavioral analytics, or advertising SDKs.
+- **Local Data Isolation**: On desktop, your data is contained in a local SQLite file. In the browser, data resides in an isolated IndexedDB store.
+- **End-to-End Ownership**: When syncing with Supabase, your database is governed by Row Level Security (RLS) linked exclusively to your authenticated user ID.
