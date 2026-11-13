@@ -12,7 +12,8 @@ on:
         default: "v0.1.0"
 
 jobs:
-  release:
+  release-desktop:
+    name: Desktop Release (${{ matrix.target_os }})
     permissions:
       contents: write
     strategy:
@@ -82,7 +83,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name || inputs.release_tag }}
           releaseName: "Noted ${{ github.ref_name || inputs.release_tag }}"
-          releaseBody: "Automated desktop release of Noted for Linux (.deb, .AppImage) and Windows (.exe, .msi)."
+          releaseBody: "Automated release of Noted for Linux (.deb, .AppImage), Windows (.exe, .msi), and Android (.apk)."
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
