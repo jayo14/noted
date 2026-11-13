@@ -35,6 +35,24 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "category": "Productivity",
+    "shortDescription": "A fast, offline-first notes application",
+    "longDescription": "Noted is a fast, elegant, offline-first notes application built for high-productivity writing, local privacy, and seamless cloud synchronization.",
+    "copyright": "Copyright © 2026 jayo14",
+    "linux": {
+      "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libssl3 | libssl1.1",
+          "libayatana-appindicator3-1"
+        ],
+        "section": "utils",
+        "priority": "optional"
+      },
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    }
   }
 }
