@@ -307,3 +307,31 @@ Open **Settings** (`Cmd/Ctrl + ,`) inside Noted, navigate to the **Sync & Accoun
 - **Supabase Anon / Public Key**
 
 Credentials are stored securely in your local database adapter, enabling instant session persistence and token auto-refresh.
+
+## Testing & Quality Assurance
+
+Noted maintains high test coverage with **Vitest**, ensuring reliability across storage transactions, sync logic, editor conversions, and UI state.
+
+```bash
+# Run all unit and integration test suites
+pnpm test
+
+# Run tests in watch mode
+pnpm vitest
+
+# Run TypeScript typecheck and production build verification
+pnpm build
+```
+
+### Test Suites (11 Modules, 57+ Tests)
+- `tests/notes.test.ts` — Note creation, revision increments, collection associations, and soft deletion.
+- `tests/titleIsolation.test.ts` — Verifies note title updates remain isolated without clobbering concurrent note states.
+- `tests/viewMode.test.ts` — View mode switching (list vs. grid) and preferences persistence across restarts.
+- `tests/search.test.ts` — Substring filtering, tag queries, checklist isolation, and sorting.
+- `tests/sync.test.ts` — Outbound queue mutations, retry exponential backoff, and processing states.
+- `tests/classifier.test.ts` — Heuristic classification of checklists, code snippets, journals, and meetings.
+- `tests/markdownPaste.test.ts` — Clipboard parsing, markdown syntax detection, and ProseMirror node translation.
+- `tests/export.test.ts` — Validates formatting fidelity for Markdown, HTML, and plain-text file outputs.
+- `tests/theme.test.ts` — System, dark, and light theme resolution and CSS variable bindings.
+- `tests/settings.test.ts` — Default fallback configurations and key-value persistence.
+- `tests/datetime.test.ts` — Localized timestamps, relative date labels ("Today", "Yesterday"), and ISO formatting.
