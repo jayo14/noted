@@ -12,8 +12,8 @@ This guide covers building, bundling, and distributing **Noted** as native packa
 | **Linux** | AppImage | `.AppImage` | Universal portable binary across all Linux distros |
 | **Windows** | NSIS Installer | `-setup.exe` | Standard Windows graphical setup wizard |
 | **Windows** | WiX Installer | `.msi` | Enterprise managed deployments & Active Directory GPO |
-| **Android** | Android Package | `.apk` | Direct installation and testing on Android devices |
-| **Android** | Android App Bundle | `.aab` | Google Play distribution |
+| **Android** | Universal APK | `.apk` | Sideloading, GitHub Releases, Android devices |
+| **Android** | App Bundle | `.aab` | Google Play Store distribution |
 
 ---
 

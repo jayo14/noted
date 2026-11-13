@@ -264,7 +264,7 @@ pnpm tauri dev
 
 ### 4. Build & Package for Linux, Windows, and Android
 
-Noted is pre-configured with dedicated scripts for packaging production desktop and Android binaries:
+Noted is pre-configured with dedicated scripts for packaging production desktop and mobile binaries across platforms:
 
 #### Linux Packaging (`.deb`, `.AppImage`)
 ```bash
@@ -293,20 +293,16 @@ pnpm package:msi
 *Outputs are saved to `src-tauri/target/release/bundle/nsis/` and `src-tauri/target/release/bundle/msi/`.*
 
 #### Android Packaging (`.apk`, `.aab`)
-Initialize the Android project once after installing the Android SDK, NDK, and Java 17:
 ```bash
-pnpm tauri android init
-```
-
-```bash
-# Build APK and Google Play App Bundle
+# Package universal and per-architecture release APKs (.apk)
+pnpm package:apk
+# or build both APK and Google Play App Bundle (.aab)
 pnpm package:android
 
-# Build one format only
-pnpm package:android:apk
-pnpm package:android:aab
+# Package Google Play Android App Bundle (.aab)
+pnpm package:aab
 ```
-*Outputs are saved below `src-tauri/gen/android/app/build/outputs/`.*
+*Outputs are saved to `src-tauri/gen/android/app/build/outputs/apk/universal/` and `src-tauri/gen/android/app/build/outputs/bundle/`.*
 
 #### Web Production Bundle
 ```bash
@@ -314,7 +310,7 @@ pnpm build
 ```
 *Generates optimized web static assets in `./dist`.*
 
-For complete system requirements, dependencies, and automated GitHub Actions release instructions, see the [Packaging Guide](docs/packaging.md).
+For complete system requirements, dependencies, and automated GitHub Actions release instructions, see the [Packaging Guide](docs/packaging.md) and [Android Packaging Guide](docs/android-packaging.md).
 
 ## Supabase Backend & Database Setup
 
