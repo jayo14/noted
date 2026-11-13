@@ -274,3 +274,36 @@ pnpm tauri dev
   pnpm tauri build
   ```
   Bundles native installers (AppImage, `.deb`, `.dmg`, or `.msi` depending on OS) in `src-tauri/target/release/bundle`.
+
+## Supabase Backend & Database Setup
+
+Noted can be used 100% offline without any account or cloud dependency. When you are ready for cross-device synchronization, you can link any Supabase project in seconds.
+
+### 1. Database Schema Migration
+Run the initial migration against your Supabase PostgreSQL instance:
+- **Via Supabase Dashboard**:
+  Copy the contents of [`supabase/migrations/20261112000000_initial_schema.sql`](supabase/migrations/20261112000000_initial_schema.sql) and execute it in the **SQL Editor**.
+- **Via Supabase CLI**:
+  ```bash
+  supabase db reset
+  # or
+  supabase migration up
+  ```
+
+### Schema Overview
+The database migration provisions three tables secured with Row Level Security (RLS):
+1. **`public.collections`**:
+   - `id` (UUID), `user_id` (UUID FK to `auth.users`), `name` (TEXT), `created_at`, `updated_at`.
+   - Strict RLS ensuring users can only read, insert, update, and delete their own collections.
+2. **`public.notes`**:
+   - `id` (UUID), `user_id` (UUID FK), `collection_id` (UUID FK optional), `title` (TEXT), `content` (JSONB), `is_pinned` (BOOLEAN), `revision` (BIGINT), `deleted_at` (TIMESTAMPTZ soft-delete), `created_at`, `updated_at`.
+   - Automated triggers for `updated_at` timestamp management.
+3. **`public.devices`**:
+   - Tracks synced devices, device names, and `last_synced_at` heartbeats.
+
+### 2. Connect Your App
+Open **Settings** (`Cmd/Ctrl + ,`) inside Noted, navigate to the **Sync & Account** tab, and enter:
+- **Supabase Project URL** (e.g. `https://your-project.supabase.co`)
+- **Supabase Anon / Public Key**
+
+Credentials are stored securely in your local database adapter, enabling instant session persistence and token auto-refresh.
