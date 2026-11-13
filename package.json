@@ -18,7 +18,9 @@
     "package:msi": "tauri build --bundles msi",
     "package:android": "tauri android build --apk --aab",
     "package:android:apk": "tauri android build --apk",
-    "package:android:aab": "tauri android build --aab"
+    "package:android:aab": "tauri android build --aab",
+    "package:apk": "tauri android build --apk",
+    "package:aab": "tauri android build --aab"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
