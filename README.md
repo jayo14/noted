@@ -262,9 +262,9 @@ Launches the native desktop window with live frontend reload and native SQLite b
 pnpm tauri dev
 ```
 
-### 4. Build & Package for Linux and Windows
+### 4. Build & Package for Linux, Windows, and Android
 
-Noted is pre-configured with dedicated scripts for packaging production desktop binaries across platforms:
+Noted is pre-configured with dedicated scripts for packaging production desktop and Android binaries:
 
 #### Linux Packaging (`.deb`, `.AppImage`)
 ```bash
@@ -292,13 +292,29 @@ pnpm package:msi
 ```
 *Outputs are saved to `src-tauri/target/release/bundle/nsis/` and `src-tauri/target/release/bundle/msi/`.*
 
+#### Android Packaging (`.apk`, `.aab`)
+Initialize the Android project once after installing the Android SDK, NDK, and Java 17:
+```bash
+pnpm tauri android init
+```
+
+```bash
+# Build APK and Google Play App Bundle
+pnpm package:android
+
+# Build one format only
+pnpm package:android:apk
+pnpm package:android:aab
+```
+*Outputs are saved below `src-tauri/gen/android/app/build/outputs/`.*
+
 #### Web Production Bundle
 ```bash
 pnpm build
 ```
 *Generates optimized web static assets in `./dist`.*
 
-For complete system requirements, dependencies, and automated GitHub Actions release instructions, see the [Desktop Packaging Guide](docs/packaging.md).
+For complete system requirements, dependencies, and automated GitHub Actions release instructions, see the [Packaging Guide](docs/packaging.md).
 
 ## Supabase Backend & Database Setup
 
@@ -388,7 +404,7 @@ We welcome community contributions, feature suggestions, and bug reports.
 ### Upcoming Milestones
 - [ ] **End-to-End Encryption (E2EE)**: Client-side AES-GCM encryption for cloud sync payloads before leaving the device.
 - [ ] **Bi-directional Note Linking**: `[[wiki-style]]` backlinking and interactive note graph visualization.
-- [ ] **Mobile Companion Apps**: Native iOS and Android builds leveraging Tauri mobile.
+- [ ] **Mobile Enhancements**: Mobile-specific navigation, gestures, and responsive editor improvements.
 - [ ] **PDF & HTML Export**: Direct PDF generation with customizable print typography templates.
 - [ ] **Tag Autocomplete**: Instant `#tag` parsing with tag filter chips in the sidebar.
 

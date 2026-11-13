@@ -1,6 +1,6 @@
-# Desktop Packaging Guide for Linux & Windows
+# Packaging Guide for Desktop & Android
 
-This guide covers building, bundling, and distributing **Noted** as native packages for **Linux** (`.deb`, `.AppImage`) and **Windows** (`.exe` NSIS installer, `.msi` WiX installer) using Tauri v2.
+This guide covers building, bundling, and distributing **Noted** as native packages for **Linux**, **Windows**, and **Android** using Tauri v2.
 
 ---
 
@@ -12,6 +12,8 @@ This guide covers building, bundling, and distributing **Noted** as native packa
 | **Linux** | AppImage | `.AppImage` | Universal portable binary across all Linux distros |
 | **Windows** | NSIS Installer | `-setup.exe` | Standard Windows graphical setup wizard |
 | **Windows** | WiX Installer | `.msi` | Enterprise managed deployments & Active Directory GPO |
+| **Android** | Android Package | `.apk` | Direct installation and testing on Android devices |
+| **Android** | Android App Bundle | `.aab` | Google Play distribution |
 
 ---
 
@@ -107,7 +109,28 @@ This ensures Windows 10 and Windows 11 machines without an existing Evergreen We
 
 ## 3. Automated Multi-Platform CI/CD Packaging
 
-Noted includes an automated GitHub Actions release pipeline in [`.github/workflows/release.yml`](../.github/workflows/release.yml).
+### Packaging for Android
+
+Install the Android SDK, Android NDK, and Java 17, then initialize the native project once:
+```bash
+pnpm tauri android init
+```
+
+Build both Android release formats:
+```bash
+pnpm package:android
+```
+
+Or build one format:
+```bash
+pnpm package:android:apk
+pnpm package:android:aab
+```
+
+The Android artifacts are written below:
+`src-tauri/gen/android/app/build/outputs/`.
+
+Noted includes an automated GitHub Actions release pipeline in [`.github/workflows/release.yml`](../.github/workflows/release.yml). Android APK and AAB artifacts are built alongside the desktop packages and attached to tagged releases.
 
 ### Creating a Release
 To produce official signed packages for Linux and Windows simultaneously without local cross-compilation hassle:

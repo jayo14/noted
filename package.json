@@ -15,7 +15,10 @@
     "package:appimage": "tauri build --bundles appimage",
     "package:windows": "tauri build --bundles nsis,msi",
     "package:nsis": "tauri build --bundles nsis",
-    "package:msi": "tauri build --bundles msi"
+    "package:msi": "tauri build --bundles msi",
+    "package:android": "tauri android build --apk --aab",
+    "package:android:apk": "tauri android build --apk",
+    "package:android:aab": "tauri android build --aab"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
