@@ -355,3 +355,28 @@ Export individual notes or entire collections at any time with zero vendor lock-
 - **No Analytics or Trackers**: Noted contains zero third-party telemetry, behavioral analytics, or advertising SDKs.
 - **Local Data Isolation**: On desktop, your data is contained in a local SQLite file. In the browser, data resides in an isolated IndexedDB store.
 - **End-to-End Ownership**: When syncing with Supabase, your database is governed by Row Level Security (RLS) linked exclusively to your authenticated user ID.
+
+## Roadmap & Contributing
+
+We welcome community contributions, feature suggestions, and bug reports.
+
+### Upcoming Milestones
+- [ ] **End-to-End Encryption (E2EE)**: Client-side AES-GCM encryption for cloud sync payloads before leaving the device.
+- [ ] **Bi-directional Note Linking**: `[[wiki-style]]` backlinking and interactive note graph visualization.
+- [ ] **Mobile Companion Apps**: Native iOS and Android builds leveraging Tauri mobile.
+- [ ] **PDF & HTML Export**: Direct PDF generation with customizable print typography templates.
+- [ ] **Tag Autocomplete**: Instant `#tag` parsing with tag filter chips in the sidebar.
+
+### Contribution Guidelines
+1. Fork the repository on GitHub.
+2. Create a focused feature branch:
+   ```bash
+   git checkout -b feat/my-new-feature
+   ```
+3. Commit changes with clear, standardized commit conventions (`feat: ...`, `fix: ...`, `docs: ...`, `test: ...`).
+4. Ensure all tests and builds pass cleanly:
+   ```bash
+   pnpm test
+   pnpm build
+   ```
+5. Push to your branch and submit a Pull Request.
