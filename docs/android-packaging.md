@@ -120,5 +120,16 @@ apksigner verify noted-v0.1.0.apk
 ## 5. Automated Cloud APK Builds (GitHub Actions)
 
 Noted features automated CI/CD pipelines in:
-- [`.github/workflows/build-android.yml`](../.github/workflows/build-android.yml): Builds APKs on demand or pull requests, uploading `.apk` files as workflow artifacts.
+- [`.github/workflows/build-android.yml`](../.github/workflows/build-android.yml): Builds APKs on demand or pull requests, uploading `.apk` files as workflow artifacts and attaching them to designated GitHub Releases.
 - [`.github/workflows/release.yml`](../.github/workflows/release.yml): Packages and attaches Android APKs alongside Linux (`.deb`, `.AppImage`) and Windows (`.exe`, `.msi`) packages to official GitHub Releases.
+
+### Triggering Cloud APK Builds for Releases
+To build and attach release APKs directly to an existing GitHub Release (e.g. `v0.1.0`) via the GitHub CLI:
+```bash
+gh workflow run build-android.yml -f release_tag=v0.1.0
+```
+Or monitor workflow progress and download generated artifacts:
+```bash
+gh run list --workflow=build-android.yml
+gh run watch
+```
