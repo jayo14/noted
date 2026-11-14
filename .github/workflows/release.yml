@@ -125,8 +125,8 @@ jobs:
 
       - name: Install Android SDK packages
         run: |
-          sdkmanager "platform-tools" "platforms;android-35" \
-            "build-tools;35.0.0" "ndk;27.2.12479018"
+          sdkmanager "platform-tools" "platforms;android-36" \
+            "build-tools;36.0.0" "ndk;27.2.12479018"
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
