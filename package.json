@@ -19,8 +19,10 @@
     "package:android": "tauri android build --apk --aab",
     "package:android:apk": "tauri android build --apk",
     "package:android:aab": "tauri android build --aab",
+    "package:android:universal": "tauri android build --apk --split-per-abi false",
     "package:apk": "tauri android build --apk",
-    "package:aab": "tauri android build --aab"
+    "package:aab": "tauri android build --aab",
+    "android:init": "tauri android init"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
