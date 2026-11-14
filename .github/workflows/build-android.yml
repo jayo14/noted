@@ -35,9 +35,9 @@ jobs:
       - name: Install Android NDK & Build Tools
         run: |
           yes | sdkmanager --licenses
-          sdkmanager --install "ndk;26.1.10909125" "build-tools;34.0.0" "platforms;android-34"
+          sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
+          echo "NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> $GITHUB_ENV
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
