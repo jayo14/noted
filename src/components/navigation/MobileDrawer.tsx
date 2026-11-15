@@ -73,17 +73,20 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
           <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
             <div className="flex items-center gap-2.5">
               <div className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-[var(--accent)] text-[var(--accent-contrast)] shadow-xs">
+                {/* Monochromatic feather quill symbol from noted logo */}
                 <svg
                   width="13"
                   height="13"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="3.2"
+                  strokeWidth="2.3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                  <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
+                  <line x1="16" y1="8" x2="2" y2="22" />
+                  <line x1="17.5" y1="15" x2="9" y2="15" />
                 </svg>
               </div>
               <span className="text-[14.5px] font-bold tracking-tight text-[var(--text-primary)]">

@@ -109,7 +109,20 @@ export const WindowHeader: React.FC<WindowHeaderProps> = ({ title = "Notes" }) =
         {/* Brand squircle & title */}
         <div className="flex items-center gap-2">
           <div className="flex h-5 w-5 items-center justify-center rounded-[5px] bg-[#141312] text-white shadow-xs">
-            <span className="text-[10px] font-bold tracking-tighter leading-none">N</span>
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
+              <line x1="16" y1="8" x2="2" y2="22" />
+              <line x1="17.5" y1="15" x2="9" y2="15" />
+            </svg>
           </div>
           <span className="text-[13px] font-medium tracking-tight text-[var(--text-primary)]">
             {title}
