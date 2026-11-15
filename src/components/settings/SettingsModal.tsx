@@ -333,7 +333,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                           }`}
                         >
-                          {f === "serif" ? "Newsreader" : f === "sans" ? "Sans" : "Monospace"}
+                          {f === "serif" ? "Newsreader" : f === "sans" ? "Plus Jakarta Sans" : "Monospace"}
                         </button>
                       ))}
                     </div>

@@ -348,7 +348,7 @@ export const Editor: React.FC<EditorProps> = ({
               onChange={handleTitleChange}
               onKeyDown={handleTitleKeyDown}
               className={`w-full bg-transparent text-3xl md:text-[38px] font-bold tracking-tight text-[var(--text-primary)] placeholder-[var(--text-subtle)] outline-none border-none p-0 focus:ring-0 leading-tight ${
-                typographyMode === "serif" ? "font-serif-title" : ""
+                typographyMode === "serif" ? "font-serif-title" : "font-sans-title"
               }`}
               disabled={isReadOnly}
             />

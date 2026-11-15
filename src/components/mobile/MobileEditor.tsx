@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { MobileInsertSheet } from "./MobileInsertSheet";
 import type { Collection } from "@/types";
+import { settingsService } from "@/services/settingsService";
 
 interface MobileEditorProps {
   editor: Editor | null;
@@ -57,7 +58,12 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInsertSheetOpen, setIsInsertSheetOpen] = useState(false);
+  const [prefs, setPrefs] = useState(() => settingsService.getPreferences());
   const titleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return settingsService.subscribe(setPrefs);
+  }, []);
 
   // Auto-focus title if empty untitled note
   useEffect(() => {
@@ -192,7 +198,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
 
       {/* Writing Canvas Scrollable Area matching Image 1 */}
       <div className="flex-1 overflow-y-auto px-6 pt-5 pb-32 select-text no-scrollbar">
-        {/* Note Title matching Image 1: Editorial Serif with blinking cursor */}
+        {/* Note Title matching Image 1 */}
         <div className="mb-4">
           <input
             ref={titleInputRef}
@@ -201,12 +207,22 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
             placeholder="Ideas for Kova"
             onChange={(e) => onTitleChange(e.target.value)}
             disabled={isReadOnly}
-            className="w-full bg-transparent text-[30px] font-bold font-serif-title tracking-tight text-[var(--text-primary)] placeholder-[var(--text-subtle)] outline-none border-none p-0 focus:ring-0 leading-tight"
+            className={`w-full bg-transparent text-[30px] font-bold tracking-tight text-[var(--text-primary)] placeholder-[var(--text-subtle)] outline-none border-none p-0 focus:ring-0 leading-tight ${
+              prefs.fontFamily === "sans" ? "font-sans-title" : "font-serif-title"
+            }`}
           />
         </div>
 
         {/* Tiptap Editor Content matching Image 1 */}
-        <div className="text-[16px] leading-relaxed text-[var(--text-primary)]">
+        <div
+          className={`text-[16px] leading-relaxed text-[var(--text-primary)] ${
+            prefs.fontFamily === "sans"
+              ? "font-sans"
+              : prefs.fontFamily === "mono"
+              ? "font-mono"
+              : "font-serif"
+          }`}
+        >
           <EditorContent editor={editor} className="tiptap-container" />
         </div>
       </div>

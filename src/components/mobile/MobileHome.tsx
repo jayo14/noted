@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import type { Note, Collection, FilterState } from "@/types";
 import { MobileCard } from "./MobileCard";
+import { settingsService } from "@/services/settingsService";
 import {
   Search,
   MoreVertical,
@@ -42,6 +43,11 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [prefs, setPrefs] = useState(() => settingsService.getPreferences());
+
+  useEffect(() => {
+    return settingsService.subscribe(setPrefs);
+  }, []);
 
   // Time-of-day greeting matching Image 0
   const greeting = useMemo(() => {
@@ -193,7 +199,11 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
 
         {/* Greeting & Tagline matching Image 0 */}
         <section className="pt-1 pb-4">
-          <h1 className="text-[28px] font-bold font-serif-title tracking-tight text-[var(--text-primary)] leading-tight">
+          <h1
+            className={`text-[28px] font-bold tracking-tight text-[var(--text-primary)] leading-tight ${
+              prefs.fontFamily === "sans" ? "font-sans-title" : "font-serif-title"
+            }`}
+          >
             {greeting}
           </h1>
           <p className="text-[13.5px] text-[var(--text-muted)] mt-0.5 tracking-tight">
