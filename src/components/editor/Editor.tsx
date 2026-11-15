@@ -9,6 +9,7 @@ import { calculateNoteStats, extractTitleAndPreview, formatNoteDateTime } from "
 import { isMarkdownText, markdownToTipTapHtml } from "@/lib/markdownPaste";
 import type { NoteStats, Collection } from "@/types";
 import { Icon } from "@/components/ui/Icon";
+import { MobileEditor } from "@/components/mobile/MobileEditor";
 import { settingsService, type AppPreferences } from "@/services/settingsService";
 
 interface EditorProps {
@@ -267,6 +268,10 @@ export const Editor: React.FC<EditorProps> = ({
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
+    updateTitleDirectly(newTitle);
+  };
+
+  const updateTitleDirectly = (newTitle: string) => {
     setTitle(newTitle);
     titleRef.current = newTitle;
     setIsTitleExplicit(true);
@@ -288,6 +293,27 @@ export const Editor: React.FC<EditorProps> = ({
   const scrollToTop = () => {
     canvasScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  if (isMobile) {
+    return (
+      <MobileEditor
+        editor={editor}
+        title={title}
+        onTitleChange={updateTitleDirectly}
+        onBack={onBack || (() => {})}
+        isPinned={isPinned}
+        onTogglePin={onTogglePin}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        onShare={onShare}
+        onExport={onExport}
+        collections={collections}
+        collectionId={collectionId}
+        onSelectCollection={onSelectCollection}
+        isReadOnly={isReadOnly}
+      />
+    );
+  }
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-[var(--bg-editor)]">

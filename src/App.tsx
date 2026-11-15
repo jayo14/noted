@@ -7,6 +7,7 @@ import { authService } from "@/services/authService";
 import { getStorageAdapter } from "@/lib/storage";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { MobileDrawer } from "@/components/navigation/MobileDrawer";
+import { MobileHome } from "@/components/mobile/MobileHome";
 import { ShortcutsModal } from "@/components/navigation/ShortcutsModal";
 import { NotesPanel } from "@/components/notes/NotesPanel";
 import { Editor } from "@/components/editor/Editor";
@@ -40,6 +41,7 @@ export function App() {
 
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth < 768);
   const [mobileScreen, setMobileScreen] = useState<"notes" | "editor">("notes");
+  const [mobileTab, setMobileTab] = useState<"home" | "search" | "collections" | "settings">("home");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [notesViewMode, setNotesViewMode] = useState<NotesViewMode>(
     () => settingsService.getPreferences().notesViewMode || "list",
@@ -136,67 +138,18 @@ export function App() {
               content: [
                 {
                   type: "taskItem",
-                  attrs: { checked: true },
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Finish the Kova update" }] }],
-                },
-                {
-                  type: "taskItem",
-                  attrs: { checked: true },
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Read something good" }] }],
+                  attrs: { checked: false },
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Visit the museum" }] }],
                 },
                 {
                   type: "taskItem",
                   attrs: { checked: false },
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Work on Log2Def slides" }] }],
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Finish project draft" }] }],
                 },
                 {
                   type: "taskItem",
                   attrs: { checked: false },
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Go for a walk" }] }],
-                },
-                {
-                  type: "taskItem",
-                  attrs: { checked: false },
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Plan next week" }] }],
-                },
-              ],
-            },
-            {
-              type: "horizontalRule",
-            },
-            {
-              type: "heading",
-              attrs: { level: 2 },
-              content: [{ type: "text", text: "▾ Ideas" }],
-            },
-            {
-              type: "blockquote",
-              content: [
-                {
-                  type: "paragraph",
-                  content: [{ type: "text", text: "A calmer mind builds a better future." }],
-                },
-              ],
-            },
-            {
-              type: "heading",
-              attrs: { level: 2 },
-              content: [{ type: "text", text: "Notes:" }],
-            },
-            {
-              type: "bulletList",
-              content: [
-                {
-                  type: "listItem",
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Keep the interface minimal and focused" }] }],
-                },
-                {
-                  type: "listItem",
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Make formatting feel effortless" }] }],
-                },
-                {
-                  type: "listItem",
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Sync across all my devices" }] }],
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Read a book" }] }],
                 },
               ],
             },
@@ -204,8 +157,8 @@ export function App() {
         };
         await noteService.updateNote(noteWeekend.id, { content: noteWeekend.content, is_pinned: true });
 
-        // Note 2: Project ideas (matching Image 0)
-        const noteIdeas = await noteService.createNote(ideasCol, "Project ideas");
+        // Note 2: Ideas for Kova (matching Image 1 & 2)
+        const noteIdeas = await noteService.createNote(ideasCol, "Ideas for Kova");
         noteIdeas.created_at = new Date(nowMs - 60 * 60 * 1000).toISOString();
         noteIdeas.updated_at = new Date(nowMs - 60 * 60 * 1000).toISOString();
         noteIdeas.content = {
@@ -213,7 +166,45 @@ export function App() {
           content: [
             {
               type: "paragraph",
-              content: [{ type: "text", text: "A better way to track dev gigs in Nigeria. Maybe a platform..." }],
+              content: [{ type: "text", text: "A smarter QA agent for vibe coded apps." }],
+            },
+            {
+              type: "taskList",
+              content: [
+                {
+                  type: "taskItem",
+                  attrs: { checked: true },
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Improve exploration" }] }],
+                },
+                {
+                  type: "taskItem",
+                  attrs: { checked: true },
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Add better visuals" }] }],
+                },
+                {
+                  type: "taskItem",
+                  attrs: { checked: false },
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Support more platforms" }] }],
+                },
+                {
+                  type: "taskItem",
+                  attrs: { checked: false },
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Polish the docs" }] }],
+                },
+              ],
+            },
+            {
+              type: "blockquote",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Build for the people, not just the tech." }],
+                },
+              ],
+            },
+            {
+              type: "codeBlock",
+              content: [{ type: "text", text: "const idea = 'Kova';" }],
             },
           ],
         };
@@ -239,8 +230,8 @@ export function App() {
         };
         await noteService.updateNote(notePoem.id, { content: notePoem.content });
 
-        // Note 4: Groceries (matching Image 0)
-        const noteGroceries = await noteService.createNote(tasksCol, "Groceries");
+        // Note 4: Grocery list (matching Image 0)
+        const noteGroceries = await noteService.createNote(tasksCol, "Grocery list");
         noteGroceries.created_at = new Date(nowMs - 3 * 60 * 60 * 1000).toISOString();
         noteGroceries.updated_at = new Date(nowMs - 3 * 60 * 60 * 1000).toISOString();
         noteGroceries.content = {
@@ -251,12 +242,12 @@ export function App() {
               content: [
                 {
                   type: "taskItem",
-                  attrs: { checked: true },
+                  attrs: { checked: false },
                   content: [{ type: "paragraph", content: [{ type: "text", text: "Milk" }] }],
                 },
                 {
                   type: "taskItem",
-                  attrs: { checked: true },
+                  attrs: { checked: false },
                   content: [{ type: "paragraph", content: [{ type: "text", text: "Eggs" }] }],
                 },
                 {
@@ -722,47 +713,36 @@ export function App() {
           </main>
         </div>
       ) : (
-        /* Mobile 2-screen layout */
+        /* Pixel-perfect mobile experience matching image design */
         <div className="flex h-full w-full">
           {mobileScreen === "notes" ? (
-            <div className="flex h-full w-full flex-col">
-              {/* Mobile Header with Drawer Trigger, Brand, and Settings */}
-              <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-2.5 bg-[var(--bg-surface)]">
-                <div className="flex items-center gap-2.5">
-                  <button
-                    onClick={() => setIsMobileDrawerOpen(true)}
-                    className="rounded p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                    title="Menu"
-                  >
-                    <Menu size={18} />
-                  </button>
-                  <span className="text-sm font-semibold tracking-tight">Noted</span>
-                </div>
-                <button
-                  onClick={() => setIsSettingsOpen(true)}
-                  className="rounded p-1 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                >
-                  Settings
-                </button>
-              </div>
-              <div className="flex-1">
-                <NotesPanel
-                  notes={notes}
-                  collections={collections}
-                  filter={filter}
-                  selectedNoteId={selectedNoteId}
-                  onSelectNote={handleSelectNote}
-                  onCreateNote={handleCreateNote}
-                  onSearchChange={(searchQuery) => setFilter((prev) => ({ ...prev, searchQuery }))}
-                  onSortChange={(sortBy) => setFilter((prev) => ({ ...prev, sortBy }))}
-                  onToggleChecklistFilter={() =>
-                    setFilter((prev) => ({ ...prev, onlyChecklists: !prev.onlyChecklists }))
-                  }
-                  onEmptyTrash={handleEmptyTrash}
-                  searchInputRef={searchInputRef}
-                />
-              </div>
-            </div>
+            <MobileHome
+              notes={notes}
+              collections={collections}
+              filter={filter}
+              onSelectNote={handleSelectNote}
+              onCreateNote={handleCreateNote}
+              onFilterSection={(sec) => {
+                if (sec === "archive") {
+                  setFilter((prev) => ({ ...prev, section: "trash" }));
+                } else if (sec === "pinned") {
+                  setFilter((prev) => ({ ...prev, section: "pinned" }));
+                } else {
+                  setFilter((prev) => ({ ...prev, section: "all" }));
+                }
+              }}
+              onOpenSettings={() => setIsSettingsOpen(true)}
+              onOpenCollections={() => setIsMobileDrawerOpen(true)}
+              activeTab={mobileTab}
+              onChangeTab={(tab) => {
+                setMobileTab(tab);
+                if (tab === "settings") {
+                  setIsSettingsOpen(true);
+                } else if (tab === "collections") {
+                  setIsMobileDrawerOpen(true);
+                }
+              }}
+            />
           ) : (
             <div className="flex h-full w-full flex-col">
               {currentNote && (
