@@ -74,6 +74,15 @@
   font-family: "Newsreader", "Playfair Display", Georgia, Cambria, "Times New Roman", serif;
 }
 
+/* Material Symbols Local Offline Font */
+@font-face {
+  font-family: "Material Symbols Rounded";
+  font-style: normal;
+  font-weight: 100 700;
+  src: url("/fonts/material-symbols-rounded.woff2") format("woff2");
+  font-display: block;
+}
+
 /* Material Symbols configuration */
 .material-symbols-rounded {
   font-family: "Material Symbols Rounded";
