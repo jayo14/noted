@@ -12,10 +12,16 @@ import { ShortcutsModal } from "@/components/navigation/ShortcutsModal";
 import { NotesPanel } from "@/components/notes/NotesPanel";
 import { Editor } from "@/components/editor/Editor";
 import { SettingsModal } from "@/components/settings/SettingsModal";
+import { UpdateModal } from "@/components/updates/UpdateModal";
 import { extractTextFromJSONContent } from "@/lib/utils";
 import { exportNoteAsFile, jsonContentToMarkdown, parseImportFile } from "@/lib/export";
 import { ShareModal } from "@/components/editor/ShareModal";
 import { settingsService, type NotesViewMode } from "@/services/settingsService";
+import {
+  checkForUpdates,
+  isUpdateDismissed,
+  type UpdateInfo,
+} from "@/services/updater";
 import { Menu } from "lucide-react";
 
 export function App() {
@@ -32,6 +38,9 @@ export function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [availableUpdate, setAvailableUpdate] = useState<UpdateInfo | null>(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isManualUpdateCheck, setIsManualUpdateCheck] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
@@ -367,11 +376,34 @@ export function App() {
 
     const stopSync = syncEngine.startPeriodicSync(30000);
 
+    // Background OTA update check on startup (cached/debounced)
+    checkForUpdates().then((info) => {
+      if (info && info.available) {
+        setAvailableUpdate(info);
+        if (!isUpdateDismissed(info.tagName)) {
+          setIsUpdateModalOpen(true);
+        }
+      }
+    });
+
     return () => {
       unsubSync();
       stopSync();
     };
   }, [loadInitialData]);
+
+  const handleCheckForUpdates = useCallback(async (manual = true) => {
+    setIsManualUpdateCheck(manual);
+    try {
+      const info = await checkForUpdates({ force: manual });
+      if (info) {
+        setAvailableUpdate(info);
+        setIsUpdateModalOpen(true);
+      }
+    } catch (err) {
+      console.error("[App] Update check failed:", err);
+    }
+  }, []);
 
   // Currently selected note
   const currentNote = useMemo(() => {
@@ -742,6 +774,13 @@ export function App() {
                   setIsMobileDrawerOpen(true);
                 }
               }}
+              availableUpdate={availableUpdate}
+              onOpenUpdateModal={(info) => {
+                setAvailableUpdate(info);
+                setIsManualUpdateCheck(false);
+                setIsUpdateModalOpen(true);
+              }}
+              onCheckForUpdates={() => handleCheckForUpdates(true)}
             />
           ) : (
             <div className="flex h-full w-full flex-col">
@@ -828,6 +867,19 @@ export function App() {
           await authService.configureClient(url, key);
         }}
         onImportFile={handleImportFile}
+        onOpenUpdateModal={(info) => {
+          setAvailableUpdate(info);
+          setIsManualUpdateCheck(false);
+          setIsUpdateModalOpen(true);
+        }}
+      />
+
+      {/* OTA Update Prompt Modal */}
+      <UpdateModal
+        isOpen={isUpdateModalOpen}
+        updateInfo={availableUpdate}
+        onClose={() => setIsUpdateModalOpen(false)}
+        isManualCheck={isManualUpdateCheck}
       />
 
       {/* Keyboard Shortcuts Cheat Sheet */}

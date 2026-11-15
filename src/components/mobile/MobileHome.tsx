@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import type { Note, Collection, FilterState } from "@/types";
+import type { UpdateInfo } from "@/services/updater";
 import { MobileCard } from "./MobileCard";
 import { settingsService } from "@/services/settingsService";
 import {
@@ -12,6 +13,8 @@ import {
   X,
   Trash2,
   FolderPlus,
+  Download,
+  Sparkles,
 } from "lucide-react";
 
 interface MobileHomeProps {
@@ -25,6 +28,9 @@ interface MobileHomeProps {
   onOpenCollections: () => void;
   activeTab: "home" | "search" | "collections" | "settings";
   onChangeTab: (tab: "home" | "search" | "collections" | "settings") => void;
+  availableUpdate?: UpdateInfo | null;
+  onOpenUpdateModal?: (info: UpdateInfo) => void;
+  onCheckForUpdates?: () => void;
 }
 
 export const MobileHome: React.FC<MobileHomeProps> = ({
@@ -38,6 +44,9 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
   onOpenCollections,
   activeTab,
   onChangeTab,
+  availableUpdate,
+  onOpenUpdateModal,
+  onCheckForUpdates,
 }) => {
   const [filterPill, setFilterPill] = useState<"all" | "pinned" | "later" | "archive">("all");
   const [isSearchActive, setIsSearchActive] = useState(false);
@@ -156,6 +165,25 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
                       <Settings size={15} />
                       <span>Settings</span>
                     </button>
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        if (availableUpdate && onOpenUpdateModal) {
+                          onOpenUpdateModal(availableUpdate);
+                        } else if (onCheckForUpdates) {
+                          onCheckForUpdates();
+                        }
+                      }}
+                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--bg-surface)] cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Sparkles size={15} className={availableUpdate?.available ? "text-emerald-500" : "text-[var(--text-muted)]"} />
+                        <span>Check Updates</span>
+                      </div>
+                      {availableUpdate?.available && (
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                      )}
+                    </button>
                     <div className="my-1 border-t border-[var(--border-subtle)]" />
                     <button
                       onClick={() => {
@@ -251,6 +279,31 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
             );
           })}
         </div>
+
+        {/* OTA Update Banner */}
+        {availableUpdate && availableUpdate.available && (
+          <div className="mb-4 flex items-center justify-between rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2.5 text-xs">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-xs">
+                <Download size={14} />
+              </div>
+              <div className="min-w-0">
+                <div className="font-semibold text-[var(--text-primary)] truncate">
+                  Update {availableUpdate.tagName} Available
+                </div>
+                <div className="text-[11px] text-[var(--text-muted)] truncate">
+                  Tap to download and update Noted
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => onOpenUpdateModal && onOpenUpdateModal(availableUpdate)}
+              className="ml-2 flex-shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3 py-1 text-[11px] font-semibold text-white transition-colors cursor-pointer"
+            >
+              Update
+            </button>
+          </div>
+        )}
 
         {/* Note Cards List matching Image 0 */}
         <div className="space-y-3">

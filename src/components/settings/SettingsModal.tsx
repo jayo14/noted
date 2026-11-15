@@ -10,6 +10,12 @@ import {
   type NoteListDensity,
   type NotesViewMode,
 } from "@/services/settingsService";
+import {
+  checkForUpdates,
+  CURRENT_APP_VERSION,
+  detectPlatform,
+  type UpdateInfo,
+} from "@/services/updater";
 import { Icon } from "@/components/ui/Icon";
 
 export type SettingsTab =
@@ -19,7 +25,8 @@ export type SettingsTab =
   | "sync"
   | "account"
   | "backup"
-  | "shortcuts";
+  | "shortcuts"
+  | "about";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -34,6 +41,7 @@ interface SettingsModalProps {
   supabaseKey: string;
   onSaveSupabaseConfig: (url: string, key: string) => Promise<void>;
   onImportFile?: (file: File) => Promise<void>;
+  onOpenUpdateModal?: (info: UpdateInfo) => void;
 }
 
 // Reusable Setting Row
@@ -92,6 +100,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   supabaseKey,
   onSaveSupabaseConfig,
   onImportFile,
+  onOpenUpdateModal,
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("writing");
   const [prefs, setPrefs] = useState<AppPreferences>(settingsService.getPreferences());
@@ -110,6 +119,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+
+  // Updater state
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
+  const [detectedUpdate, setDetectedUpdate] = useState<UpdateInfo | null>(null);
 
   // Shortcuts search filter
   const [shortcutsSearch, setShortcutsSearch] = useState("");
@@ -202,6 +216,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
+  const handleCheckForUpdates = async () => {
+    setIsCheckingUpdate(true);
+    setUpdateStatus(null);
+    try {
+      const info = await checkForUpdates({ force: true });
+      if (info && info.available) {
+        setDetectedUpdate(info);
+        setUpdateStatus(`Update ${info.tagName} available!`);
+        if (onOpenUpdateModal) {
+          onOpenUpdateModal(info);
+        }
+      } else {
+        setDetectedUpdate(null);
+        setUpdateStatus(`You are using the latest version (v${CURRENT_APP_VERSION}).`);
+      }
+    } catch {
+      setUpdateStatus("Failed to check for updates. Please check your internet connection.");
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
   const navItems: { id: SettingsTab; label: string; icon: string }[] = [
     { id: "writing", label: "Writing & Fonts", icon: "edit_note" },
     { id: "editor", label: "Editor Behavior", icon: "tune" },
@@ -210,6 +246,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     { id: "account", label: "Account & Profile", icon: "person" },
     { id: "backup", label: "Data & Storage", icon: "database" },
     { id: "shortcuts", label: "Shortcuts", icon: "keyboard" },
+    { id: "about", label: "About & Updates", icon: "update" },
   ];
 
   const allShortcuts = [
@@ -291,8 +328,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* Bottom badge */}
           <div className="border-t border-[var(--border-subtle)] px-2 pt-3 text-[11px] text-[var(--text-muted)]">
-            <div className="font-semibold text-[var(--text-secondary)]">noted. v1.2.0</div>
-            <div className="text-[10px] text-[var(--text-muted)] mt-0.5">Local-first writing engine</div>
+            <button
+              onClick={() => setActiveTab("about")}
+              className="text-left w-full hover:opacity-80 transition-opacity cursor-pointer group"
+            >
+              <div className="font-semibold text-[var(--text-secondary)] group-hover:text-[var(--accent)] transition-colors">
+                noted. v{CURRENT_APP_VERSION}
+              </div>
+              <div className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                Local-first writing engine
+              </div>
+            </button>
           </div>
         </aside>
 
@@ -968,6 +1014,116 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       </div>
                     ))
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* 8. ABOUT & UPDATES */}
+            {activeTab === "about" && (
+              <div className="flex flex-col gap-5">
+                {/* Brand Hero Card */}
+                <div className="flex items-center gap-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]/40 p-5">
+                  <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--accent)] text-[var(--accent-contrast)] shadow-md">
+                    <svg
+                      width="28"
+                      height="28"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
+                      <line x1="16" y1="8" x2="2" y2="22" />
+                      <line x1="17.5" y1="15" x2="9" y2="15" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold tracking-tight text-[var(--text-primary)]">
+                        Noted
+                      </h3>
+                      <span className="rounded-full bg-[var(--bg-surface)] px-2 py-0.5 text-[11px] font-mono text-[var(--text-muted)] border border-[var(--border-subtle)]">
+                        v{CURRENT_APP_VERSION}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-[var(--text-secondary)] leading-relaxed">
+                      A fast, distraction-free, offline-first notes application with local privacy and multi-device sync.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Software Updates Section */}
+                <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]/20 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                        Software Updates (OTA)
+                      </h4>
+                      <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
+                        {updateStatus || `Installed version: v${CURRENT_APP_VERSION}`}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={handleCheckForUpdates}
+                      disabled={isCheckingUpdate}
+                      className="flex items-center gap-2 rounded-xl bg-[var(--accent)] hover:opacity-90 active:scale-98 text-[var(--accent-contrast)] px-3.5 py-1.5 text-xs font-medium shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <Icon
+                        name={isCheckingUpdate ? "progress_activity" : "sync"}
+                        size={15}
+                        className={isCheckingUpdate ? "animate-spin" : ""}
+                      />
+                      <span>{isCheckingUpdate ? "Checking..." : "Check for Updates"}</span>
+                    </button>
+                  </div>
+
+                  {detectedUpdate && detectedUpdate.available && (
+                    <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
+                      <div>
+                        <div className="text-xs font-semibold text-emerald-500">
+                          {detectedUpdate.tagName} is available
+                        </div>
+                        <div className="text-[11px] text-[var(--text-muted)]">
+                          {detectedUpdate.releaseName}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => onOpenUpdateModal && onOpenUpdateModal(detectedUpdate)}
+                        className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 text-xs font-semibold transition-colors cursor-pointer"
+                      >
+                        View & Install
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* System Specs */}
+                <div className="divide-y divide-[var(--border-subtle)]/60 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]/10 px-4">
+                  <div className="flex items-center justify-between py-2.5 text-xs">
+                    <span className="text-[var(--text-muted)]">Platform</span>
+                    <span className="font-mono text-[var(--text-secondary)] capitalize">
+                      {detectPlatform()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-2.5 text-xs">
+                    <span className="text-[var(--text-muted)]">Release Channel</span>
+                    <span className="text-[var(--text-secondary)]">Stable (GitHub Releases)</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2.5 text-xs">
+                    <span className="text-[var(--text-muted)]">Source Code</span>
+                    <a
+                      href="https://github.com/jayo14/noted"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[var(--accent)] hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>github.com/jayo14/noted</span>
+                      <Icon name="open_in_new" size={13} />
+                    </a>
+                  </div>
                 </div>
               </div>
             )}
