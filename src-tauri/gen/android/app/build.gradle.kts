@@ -25,6 +25,30 @@ android {
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "0.1.0")
     }
+    signingConfigs {
+        create("release") {
+            val keyStorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                ?: tauriProperties.getProperty("tauri.android.storePassword")
+                ?: "notedandroid2026"
+            val keyPasswordVal = System.getenv("ANDROID_KEY_PASSWORD")
+                ?: tauriProperties.getProperty("tauri.android.keyPassword")
+                ?: keyStorePassword
+            val keyAliasVal = System.getenv("ANDROID_KEY_ALIAS")
+                ?: tauriProperties.getProperty("tauri.android.keyAlias")
+                ?: "noted"
+            val keyStorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+                ?: tauriProperties.getProperty("tauri.android.keystorePath")
+                ?: "noted-release.jks"
+
+            val ksFile = file(keyStorePath)
+            if (ksFile.exists()) {
+                storeFile = ksFile
+                storePassword = keyStorePassword
+                keyAlias = keyAliasVal
+                keyPassword = keyPasswordVal
+            }
+        }
+    }
     buildTypes {
         getByName("debug") {
             manifestPlaceholders["usesCleartextTraffic"] = "true"
@@ -39,6 +63,12 @@ android {
             }
         }
         getByName("release") {
+            val releaseSigning = signingConfigs.getByName("release")
+            if (releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()) {
+                signingConfig = releaseSigning
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+            }
             optimization {
                enable = true
             }

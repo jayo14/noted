@@ -74,31 +74,23 @@ pnpm tauri android build --apk --target aarch64
 
 ## 3. Signing Release APKs for Distribution
 
-By default, Gradle outputs an unsigned APK. To sign the APK for installation on devices:
+Noted is configured to **automatically sign release APKs and bundles** during local and CI/CD builds via `src-tauri/gen/android/app/build.gradle.kts`.
 
-### A. Generate a Keystore (One-Time)
+### A. Keystore Configuration
+The project includes a release keystore located at:
+`src-tauri/gen/android/app/noted-release.jks`
+
+Build environment parameters (configured locally or via GitHub Secrets):
+- **Keystore Path**: `src-tauri/gen/android/app/noted-release.jks` (or `ANDROID_KEYSTORE_PATH`)
+- **Key Alias**: `noted` (or `ANDROID_KEY_ALIAS`)
+- **Store / Key Password**: `notedandroid2026` (or `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_PASSWORD`)
+
+When you run `pnpm package:android` or `pnpm tauri android build --apk`, Gradle automatically applies the release signing configuration and creates fully signed, aligned packages (`app-universal-release.apk`) ready for direct sideloading and user installation.
+
+### B. Verifying APK Signature
+To verify that an APK has valid v1 and v2/v3 signatures:
 ```bash
-keytool -genkey -v -keystore noted-release.jks \
-  -alias noted \
-  -keyalg RSA \
-  -keysize 2048 \
-  -validity 10000
-```
-
-### B. Align & Sign the APK
-```bash
-# 1. Align the unaligned APK
-zipalign -v -p 4 \
-  src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk \
-  noted-aligned.apk
-
-# 2. Sign with apksigner
-apksigner sign --ks noted-release.jks --ks-key-alias noted \
-  --out noted-v0.1.0.apk \
-  noted-aligned.apk
-
-# 3. Verify signature
-apksigner verify noted-v0.1.0.apk
+apksigner verify --verbose src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
 ```
 
 ---
