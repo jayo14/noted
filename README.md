@@ -9,7 +9,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8.svg?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![Vite](https://img.shields.io/badge/Vite-8.0-646cff.svg?logo=vite&logoColor=white)](https://vitejs.dev)
-[![Tests](https://img.shields.io/badge/Tests-57%20Passing-brightgreen.svg?logo=vitest&logoColor=white)](https://vitest.dev)
+[![Tests](https://img.shields.io/badge/Tests-66%20Passing-brightgreen.svg?logo=vitest&logoColor=white)](https://vitest.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <p align="center">
@@ -20,6 +20,10 @@
   <a href="#tech-stack">Tech Stack</a> •
   <a href="#contributing">Contributing</a>
 </p>
+
+<br />
+
+<img src="public/noted-interface.png" alt="Noted Interface" width="100%" />
 
 </div>
 
