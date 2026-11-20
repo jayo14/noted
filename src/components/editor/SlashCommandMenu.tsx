@@ -86,6 +86,22 @@ export const SlashCommandMenu: React.FC<SlashCommandMenuProps> = ({ editor }) =>
       action: (ed) => ed.chain().focus().toggleCodeBlock().run(),
     },
     {
+      id: "table",
+      title: "Table",
+      description: "Insert a 3x3 table with headers",
+      icon: "grid_on",
+      action: (ed) =>
+        (
+          ed.chain().focus() as unknown as {
+            insertTable: (options: { rows: number; cols: number; withHeaderRow: boolean }) => {
+              run: () => void;
+            };
+          }
+        )
+          .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+          .run(),
+    },
+    {
       id: "divider",
       title: "Divider",
       description: "Separate sections with a rule",

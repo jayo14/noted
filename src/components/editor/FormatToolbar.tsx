@@ -263,6 +263,28 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
         </button>
 
         <button
+          onClick={() =>
+            (
+              editor.chain().focus() as unknown as {
+                insertTable: (options: { rows: number; cols: number; withHeaderRow: boolean }) => {
+                  run: () => void;
+                };
+              }
+            )
+              .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+              .run()
+          }
+          className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors cursor-pointer ${
+            editor.isActive("table")
+              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+              : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+          }`}
+          title="Insert Table"
+        >
+          <Icon name="grid_on" size={16} />
+        </button>
+
+        <button
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
           className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
           title="Horizontal Divider"
