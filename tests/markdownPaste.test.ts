@@ -3,6 +3,7 @@ import {
   isMarkdownText,
   shouldRenderAsMarkdown,
   markdownToTipTapHtml,
+  sanitizeHtml,
 } from "@/lib/markdownPaste";
 
 describe("Markdown Paste Detection & Auto-formatting", () => {
@@ -140,6 +141,46 @@ describe("Markdown Paste Detection & Auto-formatting", () => {
       expect(html).toContain("<td><p>Done</p></td>");
       expect(html).toContain("<td><p>Build</p></td>");
       expect(html).toContain("<td><p>Pending</p></td>");
+    });
+
+    it("sanitizes dangerous script tags, iframes, and inline event handlers", () => {
+      const maliciousMd = `# Safe Heading
+<script>alert('pwned')</script>
+<iframe src="https://attacker.com"></iframe>
+<img src="x" onerror="evil()" />
+[Click me](javascript:alert(1))
+`;
+      const html = markdownToTipTapHtml(maliciousMd);
+
+      expect(html).toContain("<h1>Safe Heading</h1>");
+      expect(html).not.toContain("<script");
+      expect(html).not.toContain("alert('pwned')");
+      expect(html).not.toContain("<iframe");
+      expect(html).not.toContain("onerror");
+      expect(html).not.toContain("javascript:");
+    });
+  });
+
+  describe("sanitizeHtml", () => {
+    it("strips executable script and iframe tags", () => {
+      const input = "<p>Text</p><script>window.location='malicious'</script><iframe src='x'></iframe>";
+      const sanitized = sanitizeHtml(input);
+      expect(sanitized).toBe("<p>Text</p>");
+    });
+
+    it("removes inline DOM event handlers", () => {
+      const input = '<div onclick="steal()" onmouseover="track()" class="card">Safe text</div>';
+      const sanitized = sanitizeHtml(input);
+      expect(sanitized).not.toContain("onclick");
+      expect(sanitized).not.toContain("onmouseover");
+      expect(sanitized).toContain('class="card">Safe text</div>');
+    });
+
+    it("neutralizes javascript: URIs in link href and image src", () => {
+      const input = '<a href="javascript:void(0)">Link</a><img src="javascript:evil()">';
+      const sanitized = sanitizeHtml(input);
+      expect(sanitized).not.toContain("javascript:");
+      expect(sanitized).toContain('href="#"');
     });
   });
 });

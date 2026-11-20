@@ -199,26 +199,29 @@ export function sanitizeHtml(html: string): string {
 export function markdownToTipTapHtml(markdown: string): string {
   if (!markdown) return "";
 
-  // 1. Convert ==highlight== to <mark>highlight</mark> before marked parsing
-  let preprocessed = markdown.replace(/==(?!\s)(.+?)(?!\s)==/g, "<mark>$1</mark>");
+  // 1. Neutralize javascript: or vbscript: in markdown link syntax before parsing
+  let preprocessed = markdown.replace(/\[([^\]]+)\]\((?:javascript|vbscript):[^)]+\)/gi, "[$1](#)");
 
-  // 2. Configure marked for clean, synchronous GFM parsing
+  // 2. Convert ==highlight== to <mark>highlight</mark> before marked parsing
+  preprocessed = preprocessed.replace(/==(?!\s)(.+?)(?!\s)==/g, "<mark>$1</mark>");
+
+  // 3. Configure marked for clean, synchronous GFM parsing
   const rawHtml = marked.parse(preprocessed, {
     async: false,
     breaks: true,
     gfm: true,
   }) as string;
 
-  // 3. Sanitize raw HTML against script execution, iframes, and XSS
+  // 4. Sanitize raw HTML against script execution, iframes, and XSS
   let output = sanitizeHtml(rawHtml);
 
-  // 4. Normalize task lists for TipTap
+  // 5. Normalize task lists for TipTap
   output = normalizeTaskListsForTipTap(output);
 
-  // 5. Normalize headings for TipTap starter-kit levels (h1, h2, h3)
+  // 6. Normalize headings for TipTap starter-kit levels (h1, h2, h3)
   output = normalizeHeadingsForTipTap(output);
 
-  // 6. Normalize tables so they render cleanly in TipTap
+  // 7. Normalize tables so they render cleanly in TipTap
   output = normalizeTablesForTipTap(output);
 
   return output.trim();
