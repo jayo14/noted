@@ -129,15 +129,17 @@ describe("Markdown Paste Detection & Auto-formatting", () => {
       expect(html).toContain("Stay hungry, stay foolish.");
     });
 
-    it("converts markdown tables to clean structured blockquotes", () => {
+    it("converts markdown tables to clean structured TipTap tables", () => {
       const md = "| Task | Status |\n| --- | --- |\n| Design | Done |\n| Build | Pending |";
       const html = markdownToTipTapHtml(md);
 
-      expect(html).toContain("noted-blockquote");
-      expect(html).toContain("<strong>Task:</strong> Design");
-      expect(html).toContain("<strong>Status:</strong> Done");
-      expect(html).toContain("<strong>Task:</strong> Build");
-      expect(html).toContain("<strong>Status:</strong> Pending");
+      expect(html).toContain('class="noted-table"');
+      expect(html).toContain("<th><p>Task</p></th>");
+      expect(html).toContain("<th><p>Status</p></th>");
+      expect(html).toContain("<td><p>Design</p></td>");
+      expect(html).toContain("<td><p>Done</p></td>");
+      expect(html).toContain("<td><p>Build</p></td>");
+      expect(html).toContain("<td><p>Pending</p></td>");
     });
   });
 });

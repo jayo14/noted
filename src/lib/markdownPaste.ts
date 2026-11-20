@@ -143,58 +143,36 @@ function normalizeHeadingsForTipTap(html: string): string {
 }
 
 /**
- * Normalizes markdown tables into clean formatted structures for TipTap,
- * preserving table data readably even when the Table extension isn't loaded.
+ * Normalizes markdown tables into clean formatted structures for TipTap native Table extension.
+ * Wraps cell contents in paragraphs and attaches the noted-table styling class.
  */
 function normalizeTablesForTipTap(html: string): string {
   if (!html.includes("<table")) return html;
 
   return html.replace(/<table[^>]*>([\s\S]*?)<\/table>/gi, (_match, tableContent) => {
-    // Extract headers safely (use word boundary so <thead doesn't match <th)
-    const headers: string[] = [];
-    const headerRegex = /<th\b[^>]*>([\s\S]*?)<\/th>/gi;
-    let thMatch;
-    while ((thMatch = headerRegex.exec(tableContent)) !== null) {
-      headers.push(thMatch[1].trim());
-    }
+    let normalized = tableContent;
 
-    // Extract rows
-    const rows: string[][] = [];
-    const trRegex = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi;
-    let trMatch;
-    let isHeaderRow = true;
+    // Wrap <th> contents in <p> if not already wrapped
+    normalized = normalized.replace(
+      /<th\b([^>]*)>([\s\S]*?)<\/th>/gi,
+      (_m, attrs, content) => {
+        const trimmed = content.trim();
+        const inner = trimmed.startsWith("<p>") ? trimmed : `<p>${trimmed}</p>`;
+        return `<th${attrs}>${inner}</th>`;
+      },
+    );
 
-    while ((trMatch = trRegex.exec(tableContent)) !== null) {
-      const rowContent = trMatch[1];
-      if (isHeaderRow && rowContent.includes("<th")) {
-        isHeaderRow = false;
-        continue;
-      }
-      isHeaderRow = false;
+    // Wrap <td> contents in <p> if not already wrapped
+    normalized = normalized.replace(
+      /<td\b([^>]*)>([\s\S]*?)<\/td>/gi,
+      (_m, attrs, content) => {
+        const trimmed = content.trim();
+        const inner = trimmed.startsWith("<p>") ? trimmed : `<p>${trimmed}</p>`;
+        return `<td${attrs}>${inner}</td>`;
+      },
+    );
 
-      const cells: string[] = [];
-      const tdRegex = /<td\b[^>]*>([\s\S]*?)<\/td>/gi;
-      let tdMatch;
-      while ((tdMatch = tdRegex.exec(rowContent)) !== null) {
-        cells.push(tdMatch[1].trim());
-      }
-      if (cells.length > 0) {
-        rows.push(cells);
-      }
-    }
-
-    if (headers.length === 0 && rows.length === 0) return "";
-
-    // Build a clean, styled callout / list representation of the table
-    const formattedRows = rows.map((cells) => {
-      const parts = cells.map((cell, i) => {
-        const headerName = headers[i] || `Col ${i + 1}`;
-        return `<strong>${headerName}:</strong> ${cell}`;
-      });
-      return `<p>${parts.join(" &nbsp;|&nbsp; ")}</p>`;
-    });
-
-    return `<blockquote class="noted-blockquote">${formattedRows.join("")}</blockquote>`;
+    return `<table class="noted-table">${normalized}</table>`;
   });
 }
 
