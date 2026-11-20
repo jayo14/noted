@@ -220,7 +220,7 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
             {title}
           </h1>
           <p className="text-[13.5px] font-normal text-[var(--text-muted)] mt-0.5">
-            {filteredNotes.length} {filteredNotes.length === 1 ? "Note" : "Notes"}
+            {`${filteredNotes.length} ${filteredNotes.length === 1 ? "Note" : "Notes"}`}
           </p>
         </div>
       </div>
