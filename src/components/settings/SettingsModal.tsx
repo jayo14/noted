@@ -17,6 +17,7 @@ import {
   type UpdateInfo,
 } from "@/services/updater";
 import { Icon } from "@/components/ui/Icon";
+import { MobileSettings } from "@/components/mobile/MobileSettings";
 
 export type SettingsTab =
   | "writing"
@@ -147,7 +148,40 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     return unsub;
   }, []);
 
+  const [isMobileScreen, setIsMobileScreen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return detectPlatform() === "android" || window.innerWidth < 768;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileScreen(detectPlatform() === "android" || window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   if (!isOpen) return null;
+
+  if (isMobileScreen) {
+    return (
+      <MobileSettings
+        isOpen={isOpen}
+        onClose={onClose}
+        theme={theme}
+        onThemeChange={onThemeChange}
+        pendingSyncCount={pendingSyncCount}
+        lastSyncedAt={lastSyncedAt}
+        onTriggerSync={onTriggerSync}
+        onExportAll={onExportAll}
+        supabaseUrl={supabaseUrl}
+        supabaseKey={supabaseKey}
+        onSaveSupabaseConfig={onSaveSupabaseConfig}
+        onImportFile={onImportFile}
+        onOpenUpdateModal={onOpenUpdateModal}
+      />
+    );
+  }
 
   const updatePref = <K extends keyof AppPreferences>(key: K, value: AppPreferences[K]) => {
     settingsService.updatePreferences({ [key]: value });
