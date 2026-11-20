@@ -55,7 +55,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150 select-none">
         <div className="w-full max-w-sm rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-editor)] p-5 shadow-2xl">
           <div className="flex flex-col items-center text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500 mb-3 border border-amber-500/20">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black/5 dark:bg-white/10 text-[var(--text-primary)] mb-3 border border-[var(--border-subtle)]">
               <AlertCircle size={24} />
             </div>
             <h3 className="text-base font-semibold text-[var(--text-primary)]">

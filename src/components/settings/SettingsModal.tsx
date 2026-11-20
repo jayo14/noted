@@ -832,8 +832,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 ) : (
                   <div className="flex flex-col gap-4">
                     {!url.trim() || !key.trim() ? (
-                      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-[11px] text-[var(--text-muted)] flex flex-col gap-2">
-                        <div className="flex items-center gap-1.5 font-semibold text-amber-600 dark:text-amber-400">
+                      <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4 text-[11px] text-[var(--text-muted)] flex flex-col gap-2">
+                        <div className="flex items-center gap-1.5 font-semibold text-[var(--text-primary)]">
                           <Icon name="info" size={16} />
                           <span>Supabase Cloud Required</span>
                         </div>

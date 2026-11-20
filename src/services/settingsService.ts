@@ -1,7 +1,7 @@
 import type { ThemePreference } from "@/types";
 import { getStorageAdapter } from "@/lib/storage";
 
-export type AccentColor = "default" | "warm" | "slate" | "sage" | "amber";
+export type AccentColor = "default" | "warm" | "slate" | "sage";
 export type FontFamily = "serif" | "sans" | "mono";
 export type FontSize = "compact" | "normal" | "large";
 export type LineHeight = "tight" | "normal" | "relaxed";

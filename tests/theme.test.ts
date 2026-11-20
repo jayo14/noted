@@ -83,4 +83,8 @@ describe("Theme Variables & Contrast System", () => {
     expect(cssContent).toContain("border-color: var(--accent);");
     expect(cssContent).toContain("color: var(--text-muted);");
   });
+
+  it("configures Tailwind v4 class-based dark variant for mobile theme adaptivity", () => {
+    expect(cssContent).toContain("@custom-variant dark (&:where(.dark, .dark *));");
+  });
 });

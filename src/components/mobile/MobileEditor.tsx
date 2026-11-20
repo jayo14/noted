@@ -147,7 +147,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
           <ChevronLeft size={24} strokeWidth={2.4} />
         </button>
 
-        {/* Right: Pill container [Share, ...] + Golden Done button (✓) matching Image 1 */}
+        {/* Right: Pill container [Share, ...] + Done button (✓) */}
         <div className="flex items-center gap-2.5">
           {/* Pill action group with Share and More options */}
           <div className="flex items-center gap-3.5 rounded-full bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] shadow-xs px-3.5 py-1.5 h-11">
@@ -171,7 +171,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
             </button>
           </div>
 
-          {/* Golden Done Button (✓) matching Image 1 */}
+          {/* Monochromatic Done Button (✓) */}
           <button
             onClick={() => {
               editor.commands.blur();
@@ -179,7 +179,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
                 document.activeElement.blur();
               }
             }}
-            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-[#f4b300] hover:bg-[#e0a400] text-white font-bold shadow-xs active:scale-90 transition-all cursor-pointer"
+            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-[#141312] dark:bg-[var(--accent)] hover:opacity-90 text-white dark:text-[#141312] font-bold shadow-xs active:scale-90 transition-all cursor-pointer"
             aria-label="Done editing"
             title="Done"
           >
@@ -348,7 +348,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
             onClick={() => editor.chain().focus().toggleTaskList().run()}
             className={`flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all cursor-pointer ${
               editor.isActive("taskList")
-                ? "bg-[#f4b300] text-white shadow-xs"
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
                 : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
             }`}
             title="Checklist"
@@ -372,7 +372,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
             }
             className={`flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all cursor-pointer ${
               editor.isActive("table")
-                ? "bg-[#f4b300] text-white shadow-xs"
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
                 : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
             }`}
             title="Table"
@@ -396,7 +396,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             className={`flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all cursor-pointer ${
               editor.isActive("bulletList")
-                ? "bg-[#f4b300] text-white shadow-xs"
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
                 : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
             }`}
             title="Bullet list"
@@ -410,7 +410,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             className={`flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all cursor-pointer ${
               editor.isActive("blockquote")
-                ? "bg-[#f4b300] text-white shadow-xs"
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
                 : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
             }`}
             title="Quote"

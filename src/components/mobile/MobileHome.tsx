@@ -168,7 +168,7 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
                     className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
                   >
                     <span>All Notes</span>
-                    {filterPill === "all" && <Check size={16} className="text-amber-500" />}
+                    {filterPill === "all" && <Check size={16} className="text-[var(--text-primary)]" />}
                   </button>
                   <button
                     onClick={() => {
@@ -182,7 +182,7 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
                       <Pin size={16} />
                       <span>Pinned Notes</span>
                     </div>
-                    {filterPill === "pinned" && <Check size={16} className="text-amber-500" />}
+                    {filterPill === "pinned" && <Check size={16} className="text-[var(--text-primary)]" />}
                   </button>
                   <button
                     onClick={() => {
@@ -214,9 +214,9 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
                         size={16}
                         className={`${
                           isChecking
-                            ? "animate-spin text-amber-500"
+                            ? "animate-spin text-[var(--text-primary)]"
                             : availableUpdate?.available
-                            ? "text-amber-500"
+                            ? "text-[var(--text-primary)]"
                             : "text-[var(--text-muted)]"
                         }`}
                       />
@@ -229,7 +229,7 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
                       </span>
                     </div>
                     {availableUpdate?.available && !isChecking && (
-                      <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                      <span className="h-2 w-2 rounded-full bg-[var(--text-primary)] animate-pulse" />
                     )}
                   </button>
                   <div className="my-1.5 border-t border-black/[0.06] dark:border-white/[0.08]" />

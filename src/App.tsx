@@ -34,7 +34,15 @@ export function App() {
     searchQuery: "",
   });
 
-  const [theme, setTheme] = useState<ThemePreference>("system");
+  const [theme, setTheme] = useState<ThemePreference>(() => {
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem("noted_theme") as ThemePreference | null;
+      if (saved && (saved === "light" || saved === "dark" || saved === "system")) {
+        return saved;
+      }
+    }
+    return "system";
+  });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -73,6 +81,20 @@ export function App() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const handleThemeChange = useCallback(async (newTheme: ThemePreference) => {
+    setTheme(newTheme);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("noted_theme", newTheme);
+    }
+    settingsService.updatePreferences({ theme: newTheme });
+    try {
+      const storage = await getStorageAdapter();
+      await storage.setSetting("theme", newTheme);
+    } catch (e) {
+      console.error("Failed to persist theme setting", e);
+    }
+  }, []);
+
   // Theme application
   useEffect(() => {
     const root = document.documentElement;
@@ -83,18 +105,17 @@ export function App() {
     } else {
       // System
       const media = window.matchMedia("(prefers-color-scheme: dark)");
-      if (media.matches) {
-        root.classList.add("dark");
-      } else {
-        root.classList.remove("dark");
-      }
-
-      const listener = (e: MediaQueryListEvent) => {
-        if (e.matches) {
+      const applySystemTheme = (matches: boolean) => {
+        if (matches) {
           root.classList.add("dark");
         } else {
           root.classList.remove("dark");
         }
+      };
+      applySystemTheme(media.matches);
+
+      const listener = (e: MediaQueryListEvent) => {
+        applySystemTheme(e.matches);
       };
       media.addEventListener("change", listener);
       return () => media.removeEventListener("change", listener);
@@ -358,8 +379,14 @@ export function App() {
     // Initialize sync engine & settings
     (async () => {
       const storage = await getStorageAdapter();
-      const savedTheme = await storage.getSetting<ThemePreference>("theme", "system");
-      setTheme(savedTheme);
+      const savedTheme = await storage.getSetting<ThemePreference>("theme", theme);
+      if (savedTheme) {
+        setTheme(savedTheme);
+        if (typeof localStorage !== "undefined") {
+          localStorage.setItem("noted_theme", savedTheme);
+        }
+        settingsService.updatePreferences({ theme: savedTheme });
+      }
 
       const savedUrl = await storage.getSetting<string>("supabase_url", "");
       const savedKey = await storage.getSetting<string>("supabase_key", "");
@@ -847,7 +874,7 @@ export function App() {
         notes={notes}
         collections={collections}
         theme={theme}
-        onThemeChange={setTheme}
+        onThemeChange={handleThemeChange}
         onSelectSection={(section, collectionId = null) => {
           setFilter((prev) => ({ ...prev, section, collectionId }));
         }}
@@ -860,11 +887,7 @@ export function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         theme={theme}
-        onThemeChange={async (t) => {
-          setTheme(t);
-          const storage = await getStorageAdapter();
-          await storage.setSetting("theme", t);
-        }}
+        onThemeChange={handleThemeChange}
         pendingSyncCount={pendingSyncCount}
         lastSyncedAt={lastSyncedAt}
         onTriggerSync={async () => {

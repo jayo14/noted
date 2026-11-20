@@ -11,6 +11,24 @@
       href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem("noted_theme");
+          if (saved === "dark") {
+            document.documentElement.classList.add("dark");
+          } else if (saved === "light") {
+            document.documentElement.classList.remove("dark");
+          } else {
+            if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+              document.documentElement.classList.add("dark");
+            } else {
+              document.documentElement.classList.remove("dark");
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
 
   <body>

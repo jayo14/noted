@@ -215,10 +215,10 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
           Settings
         </h1>
 
-        {/* Right: Golden Done button */}
+        {/* Right: Done button */}
         <button
           onClick={onClose}
-          className="flex h-9 items-center justify-center rounded-full bg-[#f4b300] hover:bg-[#e0a400] text-white px-4 text-xs font-bold shadow-xs active:scale-95 transition-all cursor-pointer"
+          className="flex h-9 items-center justify-center rounded-full bg-[#141312] dark:bg-[var(--accent)] hover:opacity-90 text-white dark:text-[#141312] px-4 text-xs font-bold shadow-xs active:scale-95 transition-all cursor-pointer"
           aria-label="Done"
         >
           Done
@@ -236,7 +236,7 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
             {currentUser ? (
               <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[#f4b300]/15 text-[#f4b300] font-bold text-base">
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-black/5 dark:bg-white/10 text-[var(--text-primary)] font-bold text-base">
                     {currentUser.email ? currentUser.email.charAt(0).toUpperCase() : "U"}
                   </div>
                   <div className="min-w-0">
@@ -276,7 +276,7 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
                   </div>
                   <button
                     onClick={() => setShowAuthForm((prev) => !prev)}
-                    className="rounded-full bg-[#f4b300] text-white px-3.5 py-1.5 text-xs font-bold active:scale-95 transition-all cursor-pointer"
+                    className="rounded-full bg-[#141312] dark:bg-[var(--accent)] hover:opacity-90 text-white dark:text-[#141312] px-3.5 py-1.5 text-xs font-bold active:scale-95 transition-all cursor-pointer"
                   >
                     {showAuthForm ? "Hide" : "Sign In"}
                   </button>
@@ -339,7 +339,7 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
                     <button
                       type="submit"
                       disabled={isAuthLoading}
-                      className="w-full rounded-full bg-[#f4b300] hover:bg-[#e0a400] text-white py-2.5 text-xs font-bold active:scale-98 transition-all cursor-pointer disabled:opacity-50"
+                      className="w-full rounded-full bg-[#141312] dark:bg-[var(--accent)] hover:opacity-90 text-white dark:text-[#141312] py-2.5 text-xs font-bold active:scale-98 transition-all cursor-pointer disabled:opacity-50"
                     >
                       {isAuthLoading ? "Please wait..." : authMode === "signin" ? "Sign In" : "Register"}
                     </button>
@@ -353,7 +353,7 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
             <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-black/5 dark:bg-white/10 text-[var(--text-primary)]">
-                  <RefreshCw size={17} className={isSyncing ? "animate-spin text-[#f4b300]" : ""} />
+                  <RefreshCw size={17} className={isSyncing ? "animate-spin text-[var(--text-primary)]" : ""} />
                 </div>
                 <div>
                   <div className="text-[14px] font-semibold text-[var(--text-primary)]">
@@ -503,7 +503,7 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
                 type="checkbox"
                 checked={prefs.autoGenerateTitle}
                 onChange={(e) => updatePref("autoGenerateTitle", e.target.checked)}
-                className="h-6 w-11 rounded-full appearance-none bg-black/10 dark:bg-white/20 checked:bg-[#f4b300] relative cursor-pointer transition-colors duration-200 before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow-xs before:transition-transform before:duration-200 checked:before:translate-x-5"
+                className="h-6 w-11 rounded-full appearance-none bg-black/10 dark:bg-white/20 checked:bg-[#141312] dark:checked:bg-white relative cursor-pointer transition-colors duration-200 before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:h-5 before:w-5 before:rounded-full before:bg-white dark:before:bg-[#141312] before:shadow-xs before:transition-transform before:duration-200 checked:before:translate-x-5"
               />
             </div>
 
@@ -523,7 +523,7 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
                 type="checkbox"
                 checked={prefs.spellCheck}
                 onChange={(e) => updatePref("spellCheck", e.target.checked)}
-                className="h-6 w-11 rounded-full appearance-none bg-black/10 dark:bg-white/20 checked:bg-[#f4b300] relative cursor-pointer transition-colors duration-200 before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow-xs before:transition-transform before:duration-200 checked:before:translate-x-5"
+                className="h-6 w-11 rounded-full appearance-none bg-black/10 dark:bg-white/20 checked:bg-[#141312] dark:checked:bg-white relative cursor-pointer transition-colors duration-200 before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:h-5 before:w-5 before:rounded-full before:bg-white dark:before:bg-[#141312] before:shadow-xs before:transition-transform before:duration-200 checked:before:translate-x-5"
               />
             </div>
 
@@ -543,7 +543,7 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
                 type="checkbox"
                 checked={prefs.smartPunctuation}
                 onChange={(e) => updatePref("smartPunctuation", e.target.checked)}
-                className="h-6 w-11 rounded-full appearance-none bg-black/10 dark:bg-white/20 checked:bg-[#f4b300] relative cursor-pointer transition-colors duration-200 before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:h-5 before:w-5 before:rounded-full before:bg-white before:shadow-xs before:transition-transform before:duration-200 checked:before:translate-x-5"
+                className="h-6 w-11 rounded-full appearance-none bg-black/10 dark:bg-white/20 checked:bg-[#141312] dark:checked:bg-white relative cursor-pointer transition-colors duration-200 before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:h-5 before:w-5 before:rounded-full before:bg-white dark:before:bg-[#141312] before:shadow-xs before:transition-transform before:duration-200 checked:before:translate-x-5"
               />
             </div>
           </div>
@@ -602,7 +602,7 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
             <span>Cloud Database</span>
             <button
               onClick={() => setShowCloudConfig((prev) => !prev)}
-              className="text-[12px] font-semibold text-[#f4b300] cursor-pointer"
+              className="text-[12px] font-semibold text-[var(--text-primary)] hover:underline cursor-pointer"
             >
               {showCloudConfig ? "Hide" : "Configure"}
             </button>
@@ -631,7 +631,7 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
               </div>
               <button
                 type="submit"
-                className="w-full rounded-full bg-[#f4b300] hover:bg-[#e0a400] text-white py-2 text-xs font-bold active:scale-98 transition-all cursor-pointer"
+                className="w-full rounded-full bg-[#141312] dark:bg-[var(--accent)] hover:opacity-90 text-white dark:text-[#141312] py-2 text-xs font-bold active:scale-98 transition-all cursor-pointer"
               >
                 {isSaved ? "Saved!" : "Save Cloud Config"}
               </button>
@@ -660,7 +660,7 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
                 disabled={isCheckingUpdate}
                 className="flex items-center gap-1.5 rounded-full bg-white dark:bg-[#2C2C2E] border border-black/10 dark:border-white/10 px-3.5 py-1.5 text-xs font-semibold text-[var(--text-primary)] shadow-2xs active:scale-95 transition-all cursor-pointer disabled:opacity-50"
               >
-                <Sparkles size={13} className={isCheckingUpdate ? "animate-spin text-[#f4b300]" : "text-[#f4b300]"} />
+                <Sparkles size={13} className={isCheckingUpdate ? "animate-spin text-[var(--text-primary)]" : "text-[var(--text-primary)]"} />
                 <span>{isCheckingUpdate ? "Checking..." : "Check Updates"}</span>
               </button>
             </div>
