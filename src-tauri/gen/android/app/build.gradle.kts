@@ -22,8 +22,8 @@ android {
         applicationId = "com.jayo14.noted"
         minSdk = 24
         targetSdk = 36
-        versionCode = tauriProperties.getProperty("tauri.android.versionCode", "4").toInt()
-        versionName = tauriProperties.getProperty("tauri.android.versionName", "0.1.4")
+        versionCode = tauriProperties.getProperty("tauri.android.versionCode", "5").toInt()
+        versionName = tauriProperties.getProperty("tauri.android.versionName", "0.1.5")
     }
     signingConfigs {
         create("release") {
