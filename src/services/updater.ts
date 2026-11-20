@@ -7,6 +7,8 @@
 
 export const CURRENT_APP_VERSION = "0.1.2";
 export const GITHUB_REPO = "jayo14/noted";
+export const PLAY_STORE_PACKAGE_ID = "com.jayo14.noted";
+export const PLAY_STORE_WEB_URL = `https://play.google.com/store/apps/details?id=${PLAY_STORE_PACKAGE_ID}`;
 
 export interface UpdateAsset {
   name: string;
@@ -27,6 +29,7 @@ export interface UpdateInfo {
   releaseUrl: string;
   assetName?: string;
   assetSize?: number;
+  isPlayStore?: boolean;
 }
 
 const STORAGE_LAST_CHECK_KEY = "noted_last_update_check";
@@ -77,9 +80,11 @@ export function detectPlatform(): "android" | "windows" | "linux" | "macos" | "w
 }
 
 /**
- * Find the most suitable download asset for the current platform
+ * Find the most suitable download asset for the current platform.
+ * For Android, this routes safely to the Google Play Store to comply with
+ * Google Play Device & Network Abuse and Malware/PHA policies.
  */
-function findPlatformAsset(
+export function findPlatformAsset(
   assets: Array<{
     name: string;
     size: number;
@@ -87,20 +92,18 @@ function findPlatformAsset(
     content_type: string;
   }>,
   platform = detectPlatform()
-): { url: string; name?: string; size?: number } | null {
-  if (!assets || assets.length === 0) return null;
-
+): { url: string; name?: string; size?: number; isPlayStore?: boolean } | null {
   if (platform === "android") {
-    // Prefer universal release APK
-    const universal = assets.find((a) => a.name === "app-universal-release.apk");
-    if (universal) {
-      return { url: universal.browser_download_url, name: universal.name, size: universal.size };
-    }
-    const anyApk = assets.find((a) => a.name.endsWith(".apk"));
-    if (anyApk) {
-      return { url: anyApk.browser_download_url, name: anyApk.name, size: anyApk.size };
-    }
+    // Under Google Play policies, Android apps must NEVER download or sideload
+    // raw APK packages from external servers. Updates on Android are directed to the Play Store.
+    return {
+      url: PLAY_STORE_WEB_URL,
+      name: "Google Play Store",
+      isPlayStore: true,
+    };
   }
+
+  if (!assets || assets.length === 0) return null;
 
   if (platform === "windows") {
     const setupExe = assets.find((a) => a.name.includes("setup.exe") || a.name.endsWith(".exe"));
@@ -210,6 +213,7 @@ export async function checkForUpdates(options: { force?: boolean } = {}): Promis
       releaseUrl: data.html_url,
       assetName: targetAsset?.name,
       assetSize: targetAsset?.size,
+      isPlayStore: targetAsset?.isPlayStore,
     };
 
     return updateInfo;
@@ -237,10 +241,28 @@ export function isUpdateDismissed(version: string): boolean {
 }
 
 /**
+ * Safely validate that a URL uses trusted protocols before opening
+ */
+export function isSafeUpdateUrl(url: string): boolean {
+  if (!url || typeof url !== "string") return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    // Also allow market: intent protocol for Android Play Store
+    return url.startsWith("market://");
+  }
+}
+
+/**
  * Trigger download or opening of the update package
  */
 export async function openUpdate(updateInfo: UpdateInfo): Promise<void> {
   const url = updateInfo.downloadUrl || updateInfo.releaseUrl;
+  if (!isSafeUpdateUrl(url)) {
+    console.error("[Updater] Blocked unsafe update URL:", url);
+    return;
+  }
   try {
     // Dynamic import to support both Tauri native and browser environments
     const { openUrl } = await import("@tauri-apps/plugin-opener");
