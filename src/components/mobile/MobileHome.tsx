@@ -97,15 +97,15 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
 
   return (
     <div className="relative flex h-full w-full flex-col bg-[var(--bg-editor)] text-[var(--text-primary)] select-none overflow-hidden">
-      {/* Scrollable Main Area */}
-      <div className="flex-1 overflow-y-auto px-5 pt-3 pb-24 no-scrollbar">
-        {/* Top Header Row matching Image 0 */}
-        <header className="flex items-center justify-between pt-1 pb-4">
+      {/* Fixed Top Pane: Greeting, New Note Button, Header & Filters remain pinned while notes scroll */}
+      <div className="flex-shrink-0 px-5 bg-[var(--bg-editor)] z-10 border-b border-transparent">
+        {/* Top Header Row with status bar safe area spacing */}
+        <header className="flex items-center justify-between pt-[max(0.75rem,calc(env(safe-area-inset-top,0px)+0.5rem))] pb-3">
           {/* Brand Squircle with Ancient Feather Quill Logo */}
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#141312] text-white shadow-xs">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#141312] text-white shadow-xs">
             <svg
-              width="18"
-              height="18"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -120,21 +120,21 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
           </div>
 
           {/* Right Action Icons: Search & Overflow Menu */}
-          <div className="flex items-center gap-1 text-[var(--text-primary)]">
+          <div className="flex items-center gap-1.5 text-[var(--text-primary)]">
             <button
               onClick={() => setIsSearchActive((prev) => !prev)}
-              className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-[var(--bg-surface)] active:scale-95 transition-all cursor-pointer"
+              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--bg-surface)] active:scale-95 transition-all cursor-pointer"
               aria-label="Search notes"
             >
-              <Search size={19} strokeWidth={2.2} />
+              <Search size={20} strokeWidth={2.2} />
             </button>
             <div className="relative">
               <button
                 onClick={() => setIsMenuOpen((prev) => !prev)}
-                className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-[var(--bg-surface)] active:scale-95 transition-all cursor-pointer"
+                className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--bg-surface)] active:scale-95 transition-all cursor-pointer"
                 aria-label="More options"
               >
-                <MoreVertical size={19} strokeWidth={2.2} />
+                <MoreVertical size={20} strokeWidth={2.2} />
               </button>
 
               {/* Overflow dropdown */}
@@ -239,18 +239,18 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
           </p>
         </section>
 
-        {/* "+ New Note" Full-Width Primary Pill Button matching Image 0 */}
+        {/* "+ New Note" Full-Width Primary Pill Button */}
         <div className="pt-1 pb-4">
           <button
             onClick={onCreateNote}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#141312] dark:bg-[var(--accent)] text-white dark:text-[#141312] text-[14px] font-semibold tracking-tight shadow-xs active:scale-[0.985] transition-all cursor-pointer"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#141312] dark:bg-[var(--accent)] text-white dark:text-[#141312] text-[14.5px] font-semibold tracking-tight shadow-xs active:scale-[0.985] transition-all cursor-pointer"
           >
-            <Plus size={16} strokeWidth={2.5} />
+            <Plus size={18} strokeWidth={2.5} />
             <span>New Note</span>
           </button>
         </div>
 
-        {/* Filter Pills matching Image 0: All, Pinned, Later, Archive */}
+        {/* Filter Pills: All, Pinned, Later, Archive with comfortable touch targets */}
         <div className="flex items-center gap-2 pb-4 overflow-x-auto no-scrollbar">
           {(
             [
@@ -268,10 +268,10 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
                   setFilterPill(item.id);
                   onFilterSection(item.id);
                 }}
-                className={`flex h-8 items-center justify-center rounded-full px-4 text-[12.5px] font-semibold transition-all cursor-pointer ${
+                className={`flex h-9 items-center justify-center rounded-full px-4 text-[13px] font-semibold transition-all cursor-pointer ${
                   isActive
                     ? "bg-[#141312] dark:bg-[var(--accent)] text-white dark:text-[#141312] shadow-2xs"
-                    : "bg-[#EFECE6] dark:bg-white/10 text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]"
+                    : "bg-[#EFECE6] dark:bg-white/10 text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] active:bg-[var(--bg-surface-active)]"
                 }`}
               >
                 {item.label}
@@ -304,7 +304,10 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
             </button>
           </div>
         )}
+      </div>
 
+      {/* Scrollable Notes Area - List of notes scrolls while Greeting & New Note pane stays fixed */}
+      <div className="flex-1 overflow-y-auto px-5 pt-2 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] no-scrollbar">
         {/* Note Cards List matching Image 0 */}
         <div className="space-y-3">
           {filteredNotes.map((note) => (
@@ -324,30 +327,30 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
         </div>
       </div>
 
-      {/* Floating Action Button (FAB) matching Image 0 */}
+      {/* Floating Action Button (FAB) positioned safely above bottom navigation */}
       <button
         onClick={onCreateNote}
         aria-label="Create note"
-        className="absolute bottom-20 right-5 z-20 flex h-13 w-13 items-center justify-center rounded-full bg-[#141312] dark:bg-[var(--accent)] text-white dark:text-[#141312] shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+        className="absolute bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-[#141312] dark:bg-[var(--accent)] text-white dark:text-[#141312] shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
       >
-        <Plus size={24} strokeWidth={2.4} />
+        <Plus size={26} strokeWidth={2.4} />
       </button>
 
-      {/* Bottom Navigation Bar matching Image 0 */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 flex h-16 w-full items-center justify-around border-t border-[var(--border-subtle)] bg-[var(--bg-editor)]/95 backdrop-blur-md px-3 pb-safe select-none">
+      {/* Bottom Navigation Bar with taskbar / home indicator safe area inset */}
+      <nav className="fixed bottom-0 left-0 right-0 z-30 flex h-[calc(4rem+env(safe-area-inset-bottom,0px))] w-full items-center justify-around border-t border-[var(--border-subtle)] bg-[var(--bg-editor)]/95 backdrop-blur-md px-3 pb-[env(safe-area-inset-bottom,0px)] select-none">
         {/* Home Tab */}
         <button
           onClick={() => {
             onChangeTab("home");
             setFilterPill("all");
           }}
-          className={`flex flex-col items-center gap-1 py-1 px-3 text-[10.5px] font-medium transition-colors cursor-pointer ${
+          className={`flex min-h-[48px] min-w-[56px] flex-col items-center justify-center gap-1 py-1 px-3 text-[11px] font-medium transition-colors cursor-pointer ${
             activeTab === "home"
               ? "text-[var(--text-primary)] font-bold"
               : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           }`}
         >
-          <Home size={19} strokeWidth={activeTab === "home" ? 2.6 : 2} />
+          <Home size={21} strokeWidth={activeTab === "home" ? 2.6 : 2} />
           <span>Home</span>
         </button>
 
@@ -357,13 +360,13 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
             onChangeTab("search");
             setIsSearchActive(true);
           }}
-          className={`flex flex-col items-center gap-1 py-1 px-3 text-[10.5px] font-medium transition-colors cursor-pointer ${
+          className={`flex min-h-[48px] min-w-[56px] flex-col items-center justify-center gap-1 py-1 px-3 text-[11px] font-medium transition-colors cursor-pointer ${
             activeTab === "search" || isSearchActive
               ? "text-[var(--text-primary)] font-bold"
               : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           }`}
         >
-          <Search size={19} strokeWidth={activeTab === "search" ? 2.6 : 2} />
+          <Search size={21} strokeWidth={activeTab === "search" ? 2.6 : 2} />
           <span>Search</span>
         </button>
 
@@ -373,13 +376,13 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
             onChangeTab("collections");
             onOpenCollections();
           }}
-          className={`flex flex-col items-center gap-1 py-1 px-3 text-[10.5px] font-medium transition-colors cursor-pointer ${
+          className={`flex min-h-[48px] min-w-[56px] flex-col items-center justify-center gap-1 py-1 px-3 text-[11px] font-medium transition-colors cursor-pointer ${
             activeTab === "collections"
               ? "text-[var(--text-primary)] font-bold"
               : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           }`}
         >
-          <Bookmark size={19} strokeWidth={activeTab === "collections" ? 2.6 : 2} />
+          <Bookmark size={21} strokeWidth={activeTab === "collections" ? 2.6 : 2} />
           <span>Collections</span>
         </button>
 
@@ -389,13 +392,13 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
             onChangeTab("settings");
             onOpenSettings();
           }}
-          className={`flex flex-col items-center gap-1 py-1 px-3 text-[10.5px] font-medium transition-colors cursor-pointer ${
+          className={`flex min-h-[48px] min-w-[56px] flex-col items-center justify-center gap-1 py-1 px-3 text-[11px] font-medium transition-colors cursor-pointer ${
             activeTab === "settings"
               ? "text-[var(--text-primary)] font-bold"
               : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           }`}
         >
-          <Settings size={19} strokeWidth={activeTab === "settings" ? 2.6 : 2} />
+          <Settings size={21} strokeWidth={activeTab === "settings" ? 2.6 : 2} />
           <span>Settings</span>
         </button>
       </nav>
