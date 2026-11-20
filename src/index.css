@@ -220,6 +220,80 @@
   color: var(--text-primary);
 }
 
+/* Rich Tables */
+.tiptap table,
+.noted-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1.25rem 0;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-subtle);
+  font-size: 0.9375rem;
+}
+
+.tiptap table td,
+.tiptap table th,
+.noted-table td,
+.noted-table th {
+  min-width: 80px;
+  padding: 0.625rem 0.875rem;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+  border: 1px solid var(--border-subtle);
+}
+
+.tiptap table th,
+.noted-table th {
+  font-weight: 600;
+  text-align: left;
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.tiptap table td,
+.noted-table td {
+  background-color: transparent;
+  color: var(--text-primary);
+}
+
+.tiptap table tr:hover td,
+.noted-table tr:hover td {
+  background-color: var(--bg-surface-hover);
+}
+
+.tiptap table .selectedCell:after,
+.noted-table .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(180, 180, 220, 0.25);
+  pointer-events: none;
+}
+
+.tiptap table .column-resize-handle,
+.noted-table .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: var(--accent);
+  pointer-events: none;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  margin: 1.25rem 0;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Checklist task items matching the custom rounded checkboxes in the image */
 .tiptap ul[data-type="taskList"],
 .noted-task-list {
