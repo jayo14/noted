@@ -5,7 +5,7 @@
  * handles semver comparisons, manages update prompts, and triggers downloads.
  */
 
-export const CURRENT_APP_VERSION = "0.1.3";
+export const CURRENT_APP_VERSION = "0.1.4";
 export const GITHUB_REPO = "jayo14/noted";
 export const PLAY_STORE_PACKAGE_ID = "com.jayo14.noted";
 export const PLAY_STORE_WEB_URL = `https://play.google.com/store/apps/details?id=${PLAY_STORE_PACKAGE_ID}`;

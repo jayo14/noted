@@ -61,7 +61,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
               You're Up to Date
             </h3>
             <p className="mt-1 text-xs text-[var(--text-secondary)]">
-              Noted v{updateInfo?.currentVersion || "0.1.3"} is currently the latest version.
+              Noted v{updateInfo?.currentVersion || "0.1.4"} is currently the latest version.
             </p>
             <button
               onClick={onClose}
