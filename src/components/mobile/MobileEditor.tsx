@@ -2,22 +2,19 @@ import React, { useState, useEffect, useRef } from "react";
 import type { Editor } from "@tiptap/core";
 import { EditorContent } from "@tiptap/react";
 import {
-  ArrowLeft,
-  Undo2,
-  Redo2,
-  MoreVertical,
-  Bold,
-  Italic,
-  Underline as UnderlineIcon,
-  Strikethrough,
+  ChevronLeft,
+  MoreHorizontal,
+  Check,
+  Share2,
+  Table as TableIcon,
+  Paperclip,
   List,
-  CheckSquare,
+  ListTodo,
+  TextQuote,
   Pin,
   Trash2,
   Copy,
-  Share2,
   Download,
-  Table as TableIcon,
 } from "lucide-react";
 import { MobileInsertSheet } from "./MobileInsertSheet";
 import { EditorBubbleMenu } from "@/components/editor/EditorBubbleMenu";
@@ -52,9 +49,6 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
   onDelete,
   onShare,
   onExport,
-  collections = [],
-  collectionId = null,
-  onSelectCollection,
   isReadOnly = false,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -80,7 +74,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
       const bottomOffset = Math.max(0, window.innerHeight - (vv.offsetTop + vv.height));
       const isKeyboardByOffset = bottomOffset > 100;
 
-      // On Android with interactive-widget=resizes-content, innerHeight shrinks with keyboard
+      // Check if any editor element or input is focused
       const isFocused =
         editor?.isFocused ||
         document.activeElement?.tagName === "INPUT" ||
@@ -138,63 +132,72 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
   };
 
   return (
-    <div className="relative flex h-full w-full flex-col bg-[var(--bg-editor)] text-[var(--text-primary)] select-none overflow-hidden">
-      {/* Top Header Row with status bar safe area spacing */}
-      <header className="flex h-[calc(3.75rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px))] w-full items-center justify-between border-b border-[var(--border-subtle)]/40 bg-[var(--bg-editor)] px-3 sm:px-4 flex-shrink-0 z-20">
-        {/* Left: Back button with comfortable 44px+ touch target */}
+    <div className="relative flex h-full w-full flex-col bg-white dark:bg-[#000000] text-[var(--text-primary)] select-none overflow-hidden">
+      {/* Top Header Row with status bar safe area spacing matching Image 1 */}
+      <header className="flex w-full items-center justify-between px-4 pt-[max(0.75rem,calc(env(safe-area-inset-top,0px)+0.5rem))] pb-2 flex-shrink-0 z-20">
+        {/* Left: Circular Back button (<) matching Image 1 */}
         <button
           onClick={onBack}
-          className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-[var(--text-primary)] hover:bg-[var(--bg-surface)] active:scale-90 transition-all cursor-pointer"
+          className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] shadow-xs text-[var(--text-primary)] active:scale-90 transition-all cursor-pointer"
           aria-label="Back to notes"
         >
-          <ArrowLeft size={23} strokeWidth={2.2} />
+          <ChevronLeft size={24} strokeWidth={2.4} />
         </button>
 
-        {/* Center: Undo & Redo buttons with large touch targets */}
-        <div className="flex items-center gap-1.5 sm:gap-3 text-[var(--text-primary)]">
-          <button
-            onClick={() => editor.chain().focus().undo().run()}
-            disabled={!editor.can().undo()}
-            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center text-[var(--text-primary)] disabled:text-[var(--text-subtle)]/40 hover:bg-[var(--bg-surface)] active:bg-[var(--bg-surface-active)] rounded-full transition-colors cursor-pointer"
-            aria-label="Undo"
-          >
-            <Undo2 size={21} strokeWidth={2.2} />
-          </button>
-          <button
-            onClick={() => editor.chain().focus().redo().run()}
-            disabled={!editor.can().redo()}
-            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center text-[var(--text-primary)] disabled:text-[var(--text-subtle)]/40 hover:bg-[var(--bg-surface)] active:bg-[var(--bg-surface-active)] rounded-full transition-colors cursor-pointer"
-            aria-label="Redo"
-          >
-            <Redo2 size={21} strokeWidth={2.2} />
-          </button>
-        </div>
+        {/* Right: Pill container [Share, ...] + Golden Done button (✓) matching Image 1 */}
+        <div className="flex items-center gap-2.5">
+          {/* Pill action group with Share and More options */}
+          <div className="flex items-center gap-3.5 rounded-full bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] shadow-xs px-3.5 py-1.5 h-11">
+            {onShare && (
+              <button
+                onClick={onShare}
+                className="text-[var(--text-primary)] hover:opacity-75 active:scale-95 transition-all cursor-pointer"
+                title="Share Note"
+                aria-label="Share Note"
+              >
+                <Share2 size={19} strokeWidth={2.2} />
+              </button>
+            )}
+            <button
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              className="text-[var(--text-primary)] hover:opacity-75 active:scale-95 transition-all cursor-pointer"
+              title="More Options"
+              aria-label="More Options"
+            >
+              <MoreHorizontal size={20} strokeWidth={2.4} />
+            </button>
+          </div>
 
-        {/* Right: More Menu with touch target */}
-        <div className="relative">
+          {/* Golden Done Button (✓) matching Image 1 */}
           <button
-            onClick={() => setIsMenuOpen((prev) => !prev)}
-            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-[var(--text-primary)] hover:bg-[var(--bg-surface)] active:scale-90 transition-all cursor-pointer"
-            aria-label="Note options"
+            onClick={() => {
+              editor.commands.blur();
+              if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur();
+              }
+            }}
+            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-[#f4b300] hover:bg-[#e0a400] text-white font-bold shadow-xs active:scale-90 transition-all cursor-pointer"
+            aria-label="Done editing"
+            title="Done"
           >
-            <MoreVertical size={22} strokeWidth={2.2} />
+            <Check size={22} strokeWidth={2.8} />
           </button>
 
-          {/* More menu dropdown */}
+          {/* Overflow dropdown */}
           {isMenuOpen && (
             <>
               <div
                 className="fixed inset-0 z-30"
                 onClick={() => setIsMenuOpen(false)}
               />
-              <div className="absolute right-0 top-11 z-40 w-52 rounded-2xl bg-[var(--bg-editor)] border border-[var(--border-subtle)] p-2 shadow-2xl animate-in fade-in zoom-in-95 duration-150 text-[14px]">
+              <div className="absolute right-4 top-16 z-40 w-52 rounded-2xl bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] p-2 shadow-2xl animate-in fade-in zoom-in-95 duration-150 text-[14px]">
                 {onTogglePin && (
                   <button
                     onClick={() => {
                       onTogglePin();
                       setIsMenuOpen(false);
                     }}
-                    className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left hover:bg-[var(--bg-surface)] cursor-pointer"
+                    className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
                   >
                     <Pin size={17} />
                     <span>{isPinned ? "Unpin Note" : "Pin Note"}</span>
@@ -206,7 +209,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
                       onDuplicate();
                       setIsMenuOpen(false);
                     }}
-                    className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left hover:bg-[var(--bg-surface)] cursor-pointer"
+                    className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
                   >
                     <Copy size={17} />
                     <span>Duplicate</span>
@@ -218,7 +221,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
                       onShare();
                       setIsMenuOpen(false);
                     }}
-                    className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left hover:bg-[var(--bg-surface)] cursor-pointer"
+                    className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
                   >
                     <Share2 size={17} />
                     <span>Share Note</span>
@@ -230,7 +233,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
                       onExport();
                       setIsMenuOpen(false);
                     }}
-                    className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left hover:bg-[var(--bg-surface)] cursor-pointer"
+                    className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
                   >
                     <Download size={17} />
                     <span>Export Markdown</span>
@@ -238,13 +241,13 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
                 )}
                 {onDelete && (
                   <>
-                    <div className="my-1.5 border-t border-[var(--border-subtle)]" />
+                    <div className="my-1.5 border-t border-black/[0.06] dark:border-white/[0.08]" />
                     <button
                       onClick={() => {
                         onDelete();
                         setIsMenuOpen(false);
                       }}
-                      className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
+                      className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer"
                     >
                       <Trash2 size={17} />
                       <span>Delete Note</span>
@@ -261,10 +264,10 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
       <div
         style={{
           paddingBottom: isKeyboardOpen
-            ? `${Math.max(keyboardHeight, 0) + 90}px`
-            : "calc(7rem + env(safe-area-inset-bottom, 0px))",
+            ? `${Math.max(keyboardHeight, 0) + 85}px`
+            : "calc(6.5rem + env(safe-area-inset-bottom, 0px))",
         }}
-        className="flex-1 overflow-y-auto px-5 sm:px-6 pt-5 select-text no-scrollbar"
+        className="flex-1 overflow-y-auto px-5 sm:px-6 pt-3 select-text no-scrollbar"
       >
         {/* Note Title */}
         <div className="mb-4">
@@ -272,7 +275,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
             ref={titleInputRef}
             type="text"
             value={title === "Untitled" ? "" : title}
-            placeholder="Ideas for Kova"
+            placeholder="Title"
             onChange={(e) => onTitleChange(e.target.value)}
             onPaste={handleTitlePaste}
             disabled={isReadOnly}
@@ -299,109 +302,44 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
       {/* Selection bubble menu - dynamically positioned below text selection to avoid native callout */}
       <EditorBubbleMenu editor={editor} />
 
-      {/* Formatting Menubar at bottom: Docks above the virtual keyboard when open, or above safe area */}
+      {/* Floating Formatting Pill Menubar matching Image 1: Docks above the virtual keyboard when open */}
       <div
         style={{
           bottom: isKeyboardOpen
             ? keyboardHeight > 0
               ? `${keyboardHeight + 8}px`
               : "max(0.6rem, env(safe-area-inset-bottom, 0px))"
-            : "max(1rem, calc(0.75rem + env(safe-area-inset-bottom, 0px)))",
+            : "max(1.25rem, calc(0.75rem + env(safe-area-inset-bottom, 0px)))",
         }}
-        className="fixed left-3 right-3 sm:left-4 sm:right-4 z-40 flex justify-center pointer-events-none transition-[bottom] duration-150 ease-out"
+        className="fixed left-4 right-4 z-40 flex justify-center pointer-events-none transition-[bottom] duration-150 ease-out"
       >
         <div
           onMouseDown={(e) => e.preventDefault()}
           onTouchStart={(e) => e.stopPropagation()}
-          className="pointer-events-auto flex h-14 min-h-[56px] items-center justify-between gap-1.5 sm:gap-2.5 rounded-2xl sm:rounded-full bg-[var(--bg-surface)]/95 backdrop-blur-md px-2.5 sm:px-4 py-1.5 border border-[var(--border-subtle)] shadow-xl text-[var(--text-primary)] max-w-full overflow-x-auto no-scrollbar"
+          className="pointer-events-auto flex h-13 min-h-[52px] items-center justify-around gap-2 rounded-full bg-white dark:bg-[#1C1C1E] px-4 py-1.5 border border-black/[0.08] dark:border-white/[0.1] shadow-xl text-[var(--text-primary)] w-full max-w-[380px]"
         >
-          {/* "Aa" button opens Block Inserter */}
+          {/* "Aa" Block Inserter */}
           <button
             onClick={() => setIsInsertSheetOpen(true)}
-            className="flex h-11 min-h-[44px] min-w-[44px] px-3.5 items-center justify-center rounded-xl sm:rounded-full text-[15px] font-bold tracking-tight hover:bg-[var(--bg-surface-hover)] active:scale-95 transition-all cursor-pointer"
-            title="Insert block"
+            className="flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full text-[15px] font-bold tracking-tight hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
+            title="Typography & Blocks"
+            aria-label="Typography"
           >
             Aa
           </button>
 
-          <div className="h-6 w-px bg-[var(--border-strong)] mx-0.5 opacity-60 flex-shrink-0" />
-
-          {/* Bold */}
-          <button
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-xl sm:rounded-full transition-all cursor-pointer ${
-              editor.isActive("bold")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)] shadow-xs"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] active:bg-[var(--bg-surface-active)]"
-            }`}
-            title="Bold"
-          >
-            <Bold size={21} strokeWidth={2.4} />
-          </button>
-
-          {/* Italic */}
-          <button
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-xl sm:rounded-full transition-all cursor-pointer ${
-              editor.isActive("italic")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)] shadow-xs"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] active:bg-[var(--bg-surface-active)]"
-            }`}
-            title="Italic"
-          >
-            <Italic size={21} strokeWidth={2.4} />
-          </button>
-
-          {/* Underline */}
-          <button
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
-            className={`flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-xl sm:rounded-full transition-all cursor-pointer ${
-              editor.isActive("underline")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)] shadow-xs"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] active:bg-[var(--bg-surface-active)]"
-            }`}
-            title="Underline"
-          >
-            <UnderlineIcon size={21} strokeWidth={2.4} />
-          </button>
-
-          {/* Strikethrough */}
-          <button
-            onClick={() => editor.chain().focus().toggleStrike().run()}
-            className={`flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-xl sm:rounded-full transition-all cursor-pointer ${
-              editor.isActive("strike")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)] shadow-xs"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] active:bg-[var(--bg-surface-active)]"
-            }`}
-            title="Strikethrough"
-          >
-            <Strikethrough size={21} strokeWidth={2.4} />
-          </button>
-
-          {/* Bullet List */}
-          <button
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className={`flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-xl sm:rounded-full transition-all cursor-pointer ${
-              editor.isActive("bulletList")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)] shadow-xs"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] active:bg-[var(--bg-surface-active)]"
-            }`}
-            title="Bullet list"
-          >
-            <List size={22} strokeWidth={2.4} />
-          </button>
-
-          {/* Checklist */}
+          {/* Checklist Tasklist */}
           <button
             onClick={() => editor.chain().focus().toggleTaskList().run()}
-            className={`flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-xl sm:rounded-full transition-all cursor-pointer ${
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all cursor-pointer ${
               editor.isActive("taskList")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)] shadow-xs"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] active:bg-[var(--bg-surface-active)]"
+                ? "bg-[#f4b300] text-white shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
             }`}
             title="Checklist"
+            aria-label="Checklist"
           >
-            <CheckSquare size={21} strokeWidth={2.3} />
+            <ListTodo size={20} strokeWidth={2.3} />
           </button>
 
           {/* Table */}
@@ -417,14 +355,53 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
                 .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
                 .run()
             }
-            className={`flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-xl sm:rounded-full transition-all cursor-pointer ${
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all cursor-pointer ${
               editor.isActive("table")
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)] shadow-xs"
-                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] active:bg-[var(--bg-surface-active)]"
+                ? "bg-[#f4b300] text-white shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
             }`}
-            title="Insert table"
+            title="Table"
+            aria-label="Table"
           >
-            <TableIcon size={21} strokeWidth={2.3} />
+            <TableIcon size={20} strokeWidth={2.2} />
+          </button>
+
+          {/* Paperclip (Attachments / Link / Image) */}
+          <button
+            onClick={() => setIsInsertSheetOpen(true)}
+            className="flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
+            title="Attachments"
+            aria-label="Attachments"
+          >
+            <Paperclip size={20} strokeWidth={2.2} />
+          </button>
+
+          {/* Bullet List */}
+          <button
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all cursor-pointer ${
+              editor.isActive("bulletList")
+                ? "bg-[#f4b300] text-white shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+            }`}
+            title="Bullet list"
+            aria-label="Bullet list"
+          >
+            <List size={20} strokeWidth={2.4} />
+          </button>
+
+          {/* Blockquote / Indent */}
+          <button
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all cursor-pointer ${
+              editor.isActive("blockquote")
+                ? "bg-[#f4b300] text-white shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+            }`}
+            title="Quote"
+            aria-label="Quote"
+          >
+            <TextQuote size={20} strokeWidth={2.3} />
           </button>
         </div>
       </div>
