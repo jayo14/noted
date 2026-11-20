@@ -67,16 +67,16 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex bg-black/60 backdrop-blur-xs">
-      <div className="relative flex h-full w-72 flex-col justify-between bg-[var(--bg-sidebar)] p-4 shadow-2xl select-none">
+      <div className="relative flex h-full w-72 flex-col justify-between bg-[var(--bg-sidebar)] pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-4 shadow-2xl select-none">
         {/* Header */}
         <div>
           <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-[var(--accent)] text-[var(--accent-contrast)] shadow-xs">
+              <div className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-[var(--accent)] text-[var(--accent-contrast)] shadow-xs">
                 {/* Monochromatic feather quill symbol from noted logo */}
                 <svg
-                  width="13"
-                  height="13"
+                  width="14"
+                  height="14"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -89,15 +89,15 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                   <line x1="17.5" y1="15" x2="9" y2="15" />
                 </svg>
               </div>
-              <span className="text-[14.5px] font-bold tracking-tight text-[var(--text-primary)]">
+              <span className="text-[15px] font-bold tracking-tight text-[var(--text-primary)]">
                 noted.
               </span>
             </div>
             <button
               onClick={onClose}
-              className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
             >
-              <Icon name="close" size={17} />
+              <Icon name="close" size={19} />
             </button>
           </div>
 
