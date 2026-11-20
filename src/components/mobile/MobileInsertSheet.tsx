@@ -127,35 +127,35 @@ export const MobileInsertSheet: React.FC<MobileInsertSheetProps> = ({
         onClick={onClose}
       />
 
-      {/* Sheet panel matching Image 2 */}
-      <div className="relative z-10 w-full max-h-[82vh] overflow-hidden rounded-t-[28px] bg-[var(--bg-editor)] border-t border-[var(--border-subtle)] shadow-2xl flex flex-col pb-6 animate-in slide-in-from-bottom duration-250 select-none">
+      {/* Sheet panel with safe area bottom spacing */}
+      <div className="relative z-10 w-full max-h-[82vh] overflow-hidden rounded-t-[28px] bg-[var(--bg-editor)] border-t border-[var(--border-subtle)] shadow-2xl flex flex-col pb-[max(1.5rem,calc(1.25rem+env(safe-area-inset-bottom,0px)))] animate-in slide-in-from-bottom duration-250 select-none">
         {/* Top pill drag handle */}
         <div className="flex w-full justify-center pt-3 pb-2">
-          <div className="h-1 w-10 rounded-full bg-[var(--border-strong)] opacity-70" />
+          <div className="h-1.5 w-12 rounded-full bg-[var(--border-strong)] opacity-70" />
         </div>
 
-        {/* Search header matching Image 2 */}
+        {/* Search header with touch height */}
         <div className="px-5 pt-1 pb-3">
-          <div className="flex h-11 w-full items-center gap-2.5 rounded-xl bg-[var(--bg-surface)] px-3.5 border border-transparent focus-within:border-[var(--border-strong)] transition-all">
-            <Search size={16} className="text-[var(--text-muted)] flex-shrink-0" />
+          <div className="flex h-12 w-full items-center gap-2.5 rounded-2xl bg-[var(--bg-surface)] px-4 border border-transparent focus-within:border-[var(--border-strong)] transition-all">
+            <Search size={18} className="text-[var(--text-muted)] flex-shrink-0" />
             <input
               ref={inputRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Insert anything..."
-              className="flex-1 bg-transparent text-[14px] text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none border-none p-0 focus:ring-0"
+              className="flex-1 bg-transparent text-[15px] text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none border-none p-0 focus:ring-0"
             />
             <button
               onClick={onClose}
-              className="flex h-5 items-center rounded-md bg-[var(--bg-card-active)] px-2 text-[10px] font-semibold tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] active:scale-95 transition-all"
+              className="flex h-8 items-center rounded-lg bg-[var(--bg-card-active)] px-3 text-[11px] font-semibold tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] active:scale-95 transition-all cursor-pointer"
             >
-              ESC
+              CLOSE
             </button>
           </div>
         </div>
 
-        {/* Options list matching Image 2 */}
+        {/* Options list with generous tap targets */}
         <div className="flex-1 overflow-y-auto px-4 divide-y divide-[var(--border-subtle)]/40">
           {filtered.map((item) => (
             <button
@@ -164,23 +164,23 @@ export const MobileInsertSheet: React.FC<MobileInsertSheetProps> = ({
                 item.action(editor);
                 onClose();
               }}
-              className="flex w-full items-center justify-between py-3 px-2 text-left hover:bg-[var(--bg-surface)]/60 active:bg-[var(--bg-surface)] rounded-xl transition-colors cursor-pointer group"
+              className="flex min-h-[54px] w-full items-center justify-between py-3 px-2 text-left hover:bg-[var(--bg-surface)]/60 active:bg-[var(--bg-surface)] rounded-xl transition-colors cursor-pointer group"
             >
               <div className="flex items-center gap-3.5">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] group-hover:border-[var(--border-strong)] transition-colors">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] group-hover:border-[var(--border-strong)] transition-colors">
                   {item.icon}
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[14px] font-semibold text-[var(--text-primary)] tracking-tight">
+                  <span className="text-[14.5px] font-semibold text-[var(--text-primary)] tracking-tight">
                     {item.title}
                   </span>
-                  <span className="text-[12px] text-[var(--text-muted)]">
+                  <span className="text-[12.5px] text-[var(--text-muted)]">
                     {item.description}
                   </span>
                 </div>
               </div>
               <ChevronRight
-                size={16}
+                size={18}
                 className="text-[var(--text-subtle)] group-hover:text-[var(--text-muted)] transition-colors"
               />
             </button>
