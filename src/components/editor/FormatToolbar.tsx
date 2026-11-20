@@ -69,8 +69,13 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
   };
 
   const handleLinkSet = () => {
-    if (linkHref.trim()) {
-      editor.chain().focus().extendMarkRange("link").setLink({ href: linkHref.trim() }).run();
+    const trimmed = linkHref.trim();
+    if (
+      trimmed &&
+      !trimmed.toLowerCase().startsWith("javascript:") &&
+      !trimmed.toLowerCase().startsWith("vbscript:")
+    ) {
+      editor.chain().focus().extendMarkRange("link").setLink({ href: trimmed }).run();
     } else {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
     }

@@ -61,8 +61,17 @@ export function getEditorExtensions(placeholder = "Write freely... (type '/' for
       openOnClick: false,
       autolink: true,
       defaultProtocol: "https",
+      protocols: ["https", "http", "mailto"],
+      isAllowedUri: (url, ctx) => {
+        return (
+          ctx.defaultValidate(url) &&
+          !url.trim().toLowerCase().startsWith("javascript:") &&
+          !url.trim().toLowerCase().startsWith("vbscript:")
+        );
+      },
       HTMLAttributes: {
         class: "noted-link",
+        rel: "noopener noreferrer nofollow",
       },
     }),
     TaskList.configure({

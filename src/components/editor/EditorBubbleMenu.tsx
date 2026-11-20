@@ -119,8 +119,13 @@ export const EditorBubbleMenu: React.FC<EditorBubbleMenuProps> = ({ editor }) =>
   if (!editor || !coords) return null;
 
   const handleSetLink = () => {
-    if (linkUrl.trim()) {
-      editor.chain().focus().extendMarkRange("link").setLink({ href: linkUrl.trim() }).run();
+    const trimmed = linkUrl.trim();
+    if (
+      trimmed &&
+      !trimmed.toLowerCase().startsWith("javascript:") &&
+      !trimmed.toLowerCase().startsWith("vbscript:")
+    ) {
+      editor.chain().focus().extendMarkRange("link").setLink({ href: trimmed }).run();
     } else {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
     }
