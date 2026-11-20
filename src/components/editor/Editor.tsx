@@ -33,6 +33,7 @@ interface EditorProps {
   isReadOnly?: boolean;
   isZenMode?: boolean;
   onToggleZenMode?: () => void;
+  onCheckForUpdates?: () => void;
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -56,6 +57,7 @@ export const Editor: React.FC<EditorProps> = ({
   isReadOnly = false,
   isZenMode = false,
   onToggleZenMode,
+  onCheckForUpdates,
 }) => {
   const [title, setTitle] = useState(initialTitle);
   const [isTitleExplicit, setIsTitleExplicit] = useState(
@@ -306,6 +308,7 @@ export const Editor: React.FC<EditorProps> = ({
         collectionId={collectionId}
         onSelectCollection={onSelectCollection}
         isReadOnly={isReadOnly}
+        onCheckForUpdates={onCheckForUpdates}
       />
     );
   }
@@ -325,6 +328,7 @@ export const Editor: React.FC<EditorProps> = ({
         isMobile={isMobile}
         isZenMode={isZenMode}
         onToggleZenMode={onToggleZenMode}
+        onCheckForUpdates={onCheckForUpdates}
       />
 
       {/* Writing canvas scrollable area */}

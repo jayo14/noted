@@ -41,6 +41,8 @@ export function App() {
   const [availableUpdate, setAvailableUpdate] = useState<UpdateInfo | null>(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isManualUpdateCheck, setIsManualUpdateCheck] = useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
   const [isZenMode, setIsZenMode] = useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
@@ -393,15 +395,27 @@ export function App() {
   }, [loadInitialData]);
 
   const handleCheckForUpdates = useCallback(async (manual = true) => {
+    setIsCheckingUpdate(true);
     setIsManualUpdateCheck(manual);
+    setUpdateError(null);
     try {
       const info = await checkForUpdates({ force: manual });
       if (info) {
         setAvailableUpdate(info);
+      } else if (manual) {
+        setUpdateError("Failed to check for updates. Please check your internet connection.");
+      }
+      if (manual) {
         setIsUpdateModalOpen(true);
       }
     } catch (err) {
       console.error("[App] Update check failed:", err);
+      if (manual) {
+        setUpdateError("Failed to check for updates. Please check your internet connection.");
+        setIsUpdateModalOpen(true);
+      }
+    } finally {
+      setIsCheckingUpdate(false);
     }
   }, []);
 
@@ -729,6 +743,7 @@ export function App() {
                   isMobile={false}
                   isZenMode={isZenMode}
                   onToggleZenMode={() => setIsZenMode((prev) => !prev)}
+                  onCheckForUpdates={() => handleCheckForUpdates(true)}
                 />
               )
             ) : (
@@ -775,9 +790,11 @@ export function App() {
                 }
               }}
               availableUpdate={availableUpdate}
+              isCheckingUpdate={isCheckingUpdate}
               onOpenUpdateModal={(info) => {
                 setAvailableUpdate(info);
-                setIsManualUpdateCheck(false);
+                setIsManualUpdateCheck(true);
+                setUpdateError(null);
                 setIsUpdateModalOpen(true);
               }}
               onCheckForUpdates={() => handleCheckForUpdates(true)}
@@ -805,6 +822,7 @@ export function App() {
                   onBack={() => setMobileScreen("notes")}
                   isMobile={true}
                   isReadOnly={filter.section === "trash"}
+                  onCheckForUpdates={() => handleCheckForUpdates(true)}
                 />
               )}
             </div>
@@ -869,7 +887,8 @@ export function App() {
         onImportFile={handleImportFile}
         onOpenUpdateModal={(info) => {
           setAvailableUpdate(info);
-          setIsManualUpdateCheck(false);
+          setIsManualUpdateCheck(true);
+          setUpdateError(null);
           setIsUpdateModalOpen(true);
         }}
       />
@@ -878,8 +897,12 @@ export function App() {
       <UpdateModal
         isOpen={isUpdateModalOpen}
         updateInfo={availableUpdate}
-        onClose={() => setIsUpdateModalOpen(false)}
+        onClose={() => {
+          setIsUpdateModalOpen(false);
+          setUpdateError(null);
+        }}
         isManualCheck={isManualUpdateCheck}
+        error={updateError}
       />
 
       {/* Keyboard Shortcuts Cheat Sheet */}

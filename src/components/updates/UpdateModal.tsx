@@ -5,14 +5,16 @@ import {
   formatReleaseDate,
   openUpdate,
   dismissUpdate,
+  CURRENT_APP_VERSION,
 } from "@/services/updater";
-import { Download, ExternalLink, X, Sparkles, CheckCircle2 } from "lucide-react";
+import { Download, ExternalLink, X, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface UpdateModalProps {
   isOpen: boolean;
   updateInfo: UpdateInfo | null;
   onClose: () => void;
   isManualCheck?: boolean;
+  error?: string | null;
 }
 
 export const UpdateModal: React.FC<UpdateModalProps> = ({
@@ -20,6 +22,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
   updateInfo,
   onClose,
   isManualCheck = false,
+  error = null,
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [downloadStarted, setDownloadStarted] = useState(false);
@@ -46,6 +49,33 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
     onClose();
   };
 
+  // If there was an error checking for updates
+  if (error) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150 select-none">
+        <div className="w-full max-w-sm rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-editor)] p-5 shadow-2xl">
+          <div className="flex flex-col items-center text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500 mb-3 border border-amber-500/20">
+              <AlertCircle size={24} />
+            </div>
+            <h3 className="text-base font-semibold text-[var(--text-primary)]">
+              Check Failed
+            </h3>
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              {error}
+            </p>
+            <button
+              onClick={onClose}
+              className="mt-5 w-full rounded-xl bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-subtle)] py-2 text-xs font-medium text-[var(--text-primary)] transition-all cursor-pointer active:scale-98"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // If no update is available (e.g. manual check when already up to date)
   if (!updateInfo || !updateInfo.available) {
     if (!isManualCheck) return null;
@@ -61,7 +91,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
               You're Up to Date
             </h3>
             <p className="mt-1 text-xs text-[var(--text-secondary)]">
-              Noted v{updateInfo?.currentVersion || "0.1.5"} is currently the latest version.
+              Noted v{updateInfo?.currentVersion || CURRENT_APP_VERSION} is currently the latest version.
             </p>
             <button
               onClick={onClose}

@@ -15,6 +15,7 @@ interface FormatToolbarProps {
   isMobile?: boolean;
   isZenMode?: boolean;
   onToggleZenMode?: () => void;
+  onCheckForUpdates?: () => void;
 }
 
 export const FormatToolbar: React.FC<FormatToolbarProps> = ({
@@ -29,6 +30,7 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
   isMobile = false,
   isZenMode = false,
   onToggleZenMode,
+  onCheckForUpdates,
 }) => {
   const [isStyleMenuOpen, setIsStyleMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -391,10 +393,23 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
                     onToggleZenMode();
                     setIsMoreMenuOpen(false);
                   }}
-                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-surface)] cursor-pointer"
                 >
                   <Icon name={isZenMode ? "fullscreen_exit" : "fullscreen"} size={15} />
                   <span>{isZenMode ? "Exit Focus Mode" : "Focus Mode"}</span>
+                </button>
+              )}
+
+              {onCheckForUpdates && (
+                <button
+                  onClick={() => {
+                    onCheckForUpdates();
+                    setIsMoreMenuOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-surface)] cursor-pointer"
+                >
+                  <Icon name="sync" size={15} />
+                  <span>Check for Updates</span>
                 </button>
               )}
 

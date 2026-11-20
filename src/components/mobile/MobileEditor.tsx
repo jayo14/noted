@@ -15,6 +15,7 @@ import {
   Trash2,
   Copy,
   Download,
+  Sparkles,
 } from "lucide-react";
 import { MobileInsertSheet } from "./MobileInsertSheet";
 import { EditorBubbleMenu } from "@/components/editor/EditorBubbleMenu";
@@ -36,6 +37,7 @@ interface MobileEditorProps {
   collectionId?: string | null;
   onSelectCollection?: (colId: string | null) => void;
   isReadOnly?: boolean;
+  onCheckForUpdates?: () => void;
 }
 
 export const MobileEditor: React.FC<MobileEditorProps> = ({
@@ -50,6 +52,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
   onShare,
   onExport,
   isReadOnly = false,
+  onCheckForUpdates,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInsertSheetOpen, setIsInsertSheetOpen] = useState(false);
@@ -237,6 +240,18 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
                   >
                     <Download size={17} />
                     <span>Export Markdown</span>
+                  </button>
+                )}
+                {onCheckForUpdates && (
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onCheckForUpdates();
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                  >
+                    <Sparkles size={17} />
+                    <span>Check for Updates</span>
                   </button>
                 )}
                 {onDelete && (

@@ -31,7 +31,8 @@ interface MobileHomeProps {
   onChangeTab: (tab: "home" | "search" | "collections" | "settings") => void;
   availableUpdate?: UpdateInfo | null;
   onOpenUpdateModal?: (info: UpdateInfo) => void;
-  onCheckForUpdates?: () => void;
+  onCheckForUpdates?: () => Promise<void> | void;
+  isCheckingUpdate?: boolean;
 }
 
 export const MobileHome: React.FC<MobileHomeProps> = ({
@@ -46,10 +47,12 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
   availableUpdate,
   onOpenUpdateModal,
   onCheckForUpdates,
+  isCheckingUpdate = false,
 }) => {
   const [filterPill, setFilterPill] = useState<"all" | "pinned" | "later" | "archive">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [localChecking, setLocalChecking] = useState(false);
   const [, setPrefs] = useState(() => settingsService.getPreferences());
 
   useEffect(() => {
@@ -87,6 +90,30 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
 
   // Group filtered notes by relative date (Today, Yesterday, November, etc.)
   const noteGroups = useMemo(() => groupNotesByDate(filteredNotes), [filteredNotes]);
+
+  const isChecking = isCheckingUpdate || localChecking;
+
+  const handleCheckForUpdatesClick = async () => {
+    // If an update is already detected and available, open the update details modal
+    if (availableUpdate?.available && onOpenUpdateModal) {
+      setIsMenuOpen(false);
+      onOpenUpdateModal(availableUpdate);
+      return;
+    }
+
+    // Otherwise, trigger the update check
+    if (onCheckForUpdates) {
+      setLocalChecking(true);
+      try {
+        await onCheckForUpdates();
+      } finally {
+        setLocalChecking(false);
+        setIsMenuOpen(false);
+      }
+    } else {
+      setIsMenuOpen(false);
+    }
+  };
 
   // Dynamic header title matching Apple Notes
   const title = useMemo(() => {
@@ -178,21 +205,30 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
                     <span>Settings</span>
                   </button>
                   <button
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      if (availableUpdate && onOpenUpdateModal) {
-                        onOpenUpdateModal(availableUpdate);
-                      } else if (onCheckForUpdates) {
-                        onCheckForUpdates();
-                      }
-                    }}
-                    className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                    onClick={handleCheckForUpdatesClick}
+                    disabled={isChecking}
+                    className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer disabled:opacity-60"
                   >
                     <div className="flex items-center gap-2.5">
-                      <Sparkles size={16} className={availableUpdate?.available ? "text-amber-500" : "text-[var(--text-muted)]"} />
-                      <span>Check Updates</span>
+                      <Sparkles
+                        size={16}
+                        className={`${
+                          isChecking
+                            ? "animate-spin text-amber-500"
+                            : availableUpdate?.available
+                            ? "text-amber-500"
+                            : "text-[var(--text-muted)]"
+                        }`}
+                      />
+                      <span>
+                        {isChecking
+                          ? "Checking for Updates..."
+                          : availableUpdate?.available
+                          ? "Update Available"
+                          : "Check for Updates"}
+                      </span>
                     </div>
-                    {availableUpdate?.available && (
+                    {availableUpdate?.available && !isChecking && (
                       <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                     )}
                   </button>
