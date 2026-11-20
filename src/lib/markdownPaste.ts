@@ -155,7 +155,7 @@ function normalizeTablesForTipTap(html: string): string {
     // Wrap <th> contents in <p> if not already wrapped
     normalized = normalized.replace(
       /<th\b([^>]*)>([\s\S]*?)<\/th>/gi,
-      (_m, attrs, content) => {
+      (_m: string, attrs: string, content: string) => {
         const trimmed = content.trim();
         const inner = trimmed.startsWith("<p>") ? trimmed : `<p>${trimmed}</p>`;
         return `<th${attrs}>${inner}</th>`;
@@ -165,7 +165,7 @@ function normalizeTablesForTipTap(html: string): string {
     // Wrap <td> contents in <p> if not already wrapped
     normalized = normalized.replace(
       /<td\b([^>]*)>([\s\S]*?)<\/td>/gi,
-      (_m, attrs, content) => {
+      (_m: string, attrs: string, content: string) => {
         const trimmed = content.trim();
         const inner = trimmed.startsWith("<p>") ? trimmed : `<p>${trimmed}</p>`;
         return `<td${attrs}>${inner}</td>`;
