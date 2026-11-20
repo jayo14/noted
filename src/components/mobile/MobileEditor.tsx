@@ -17,6 +17,7 @@ import {
   Copy,
   Share2,
   Download,
+  Table as TableIcon,
 } from "lucide-react";
 import { MobileInsertSheet } from "./MobileInsertSheet";
 import { EditorBubbleMenu } from "@/components/editor/EditorBubbleMenu";
@@ -401,6 +402,29 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
             title="Checklist"
           >
             <CheckSquare size={21} strokeWidth={2.3} />
+          </button>
+
+          {/* Table */}
+          <button
+            onClick={() =>
+              (
+                editor.chain().focus() as unknown as {
+                  insertTable: (options: { rows: number; cols: number; withHeaderRow: boolean }) => {
+                    run: () => void;
+                  };
+                }
+              )
+                .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+                .run()
+            }
+            className={`flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-xl sm:rounded-full transition-all cursor-pointer ${
+              editor.isActive("table")
+                ? "bg-[var(--accent)] text-[var(--accent-contrast)] shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] active:bg-[var(--bg-surface-active)]"
+            }`}
+            title="Insert table"
+          >
+            <TableIcon size={21} strokeWidth={2.3} />
           </button>
         </div>
       </div>

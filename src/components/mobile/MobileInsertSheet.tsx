@@ -10,6 +10,7 @@ import {
   Link as LinkIcon,
   Search,
   ChevronRight,
+  Table as TableIcon,
 } from "lucide-react";
 
 interface InsertOption {
@@ -91,6 +92,22 @@ export const MobileInsertSheet: React.FC<MobileInsertSheetProps> = ({
       description: "Preserve code formatting",
       icon: <Code size={17} className="text-[var(--text-primary)]" />,
       action: (ed) => ed.chain().focus().toggleCodeBlock().run(),
+    },
+    {
+      id: "table",
+      title: "Table",
+      description: "Insert a table with rows & columns",
+      icon: <TableIcon size={17} className="text-[var(--text-primary)]" />,
+      action: (ed) =>
+        (
+          ed.chain().focus() as unknown as {
+            insertTable: (options: { rows: number; cols: number; withHeaderRow: boolean }) => {
+              run: () => void;
+            };
+          }
+        )
+          .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+          .run(),
     },
     {
       id: "divider",
