@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { isMarkdownText, markdownToTipTapHtml } from "@/lib/markdownPaste";
+import {
+  isMarkdownText,
+  shouldRenderAsMarkdown,
+  markdownToTipTapHtml,
+} from "@/lib/markdownPaste";
 
 describe("Markdown Paste Detection & Auto-formatting", () => {
   describe("isMarkdownText", () => {
@@ -19,6 +23,10 @@ describe("Markdown Paste Detection & Auto-formatting", () => {
       expect(isMarkdownText("This is ~~deprecated~~ syntax.")).toBe(true);
     });
 
+    it("detects highlight syntax", () => {
+      expect(isMarkdownText("Note this ==vital detail==")).toBe(true);
+    });
+
     it("detects fenced code blocks", () => {
       expect(isMarkdownText("```ts\nconst x = 42;\n```")).toBe(true);
     });
@@ -30,6 +38,11 @@ describe("Markdown Paste Detection & Auto-formatting", () => {
     it("detects markdown links and images", () => {
       expect(isMarkdownText("[Read more](https://noted.app/docs)")).toBe(true);
       expect(isMarkdownText("![Logo](https://noted.app/logo.png)")).toBe(true);
+    });
+
+    it("detects tables", () => {
+      const table = "| Col 1 | Col 2 |\n| --- | --- |\n| Val 1 | Val 2 |";
+      expect(isMarkdownText(table)).toBe(true);
     });
 
     it("detects multi-line bullet and numbered lists", () => {
@@ -44,11 +57,40 @@ describe("Markdown Paste Detection & Auto-formatting", () => {
     });
   });
 
+  describe("shouldRenderAsMarkdown", () => {
+    it("returns true for markdown text when html is absent or empty", () => {
+      expect(shouldRenderAsMarkdown("# Header\n\nContent", null)).toBe(true);
+      expect(shouldRenderAsMarkdown("**Bold statement**", "")).toBe(true);
+    });
+
+    it("returns true when html is from a codeblock wrapper", () => {
+      const md = "### Title\n- [ ] Task";
+      const html = "<pre><code>### Title\n- [ ] Task</code></pre>";
+      expect(shouldRenderAsMarkdown(md, html)).toBe(true);
+    });
+
+    it("returns true when html has raw markdown tokens in simple tags", () => {
+      const md = "# Heading 1\n**Bold** text";
+      const html = "<p># Heading 1</p><p>**Bold** text</p>";
+      expect(shouldRenderAsMarkdown(md, html)).toBe(true);
+    });
+
+    it("returns false for non-markdown plain text", () => {
+      expect(shouldRenderAsMarkdown("Just regular text", null)).toBe(false);
+      expect(shouldRenderAsMarkdown("A regular paragraph of thoughts.", "<p>A regular paragraph of thoughts.</p>")).toBe(false);
+    });
+  });
+
   describe("markdownToTipTapHtml", () => {
     it("converts headings to html headings", () => {
       const html = markdownToTipTapHtml("# My Title\n\nSome paragraph");
       expect(html).toContain("<h1>My Title</h1>");
       expect(html).toContain("<p>Some paragraph</p>");
+    });
+
+    it("maps h4-h6 to h3 for TipTap StarterKit compatibility", () => {
+      const html = markdownToTipTapHtml("#### Level 4 Subheading");
+      expect(html).toContain("<h3>Level 4 Subheading</h3>");
     });
 
     it("converts task list checkboxes to TipTap taskItem attributes", () => {
@@ -62,11 +104,12 @@ describe("Markdown Paste Detection & Auto-formatting", () => {
       expect(html).toContain("Completed task");
     });
 
-    it("converts bold, italic, and links correctly", () => {
-      const md = "This is **bold** and [a link](https://noted.app)";
+    it("converts bold, italic, highlights, and links correctly", () => {
+      const md = "This is **bold**, ==highlighted==, and [a link](https://noted.app)";
       const html = markdownToTipTapHtml(md);
 
       expect(html).toContain("<strong>bold</strong>");
+      expect(html).toContain("<mark>highlighted</mark>");
       expect(html).toContain('<a href="https://noted.app">a link</a>');
     });
 
@@ -84,6 +127,17 @@ describe("Markdown Paste Detection & Auto-formatting", () => {
 
       expect(html).toContain("<blockquote>");
       expect(html).toContain("Stay hungry, stay foolish.");
+    });
+
+    it("converts markdown tables to clean structured blockquotes", () => {
+      const md = "| Task | Status |\n| --- | --- |\n| Design | Done |\n| Build | Pending |";
+      const html = markdownToTipTapHtml(md);
+
+      expect(html).toContain("noted-blockquote");
+      expect(html).toContain("<strong>Task:</strong> Design");
+      expect(html).toContain("<strong>Status:</strong> Done");
+      expect(html).toContain("<strong>Task:</strong> Build");
+      expect(html).toContain("<strong>Status:</strong> Pending");
     });
   });
 });
