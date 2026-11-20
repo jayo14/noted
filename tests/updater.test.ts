@@ -92,7 +92,7 @@ describe("Updater Service", () => {
 
   describe("CURRENT_APP_VERSION", () => {
     it("is defined as a semver string", () => {
-      expect(CURRENT_APP_VERSION).toBe("0.1.0");
+      expect(CURRENT_APP_VERSION).toBe("0.1.2");
     });
   });
 });

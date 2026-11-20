@@ -1,6 +1,6 @@
 [package]
 name = "noted"
-version = "0.1.0"
+version = "0.1.2"
 description = "A fast, elegant, offline-first notes application"
 authors = ["jayo14 <ayobamidayo2007@gmail.com>"]
 repository = "https://github.com/jayo14/noted"
