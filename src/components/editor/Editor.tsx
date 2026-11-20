@@ -6,7 +6,7 @@ import { EditorBubbleMenu } from "./EditorBubbleMenu";
 import { FormatToolbar } from "./FormatToolbar";
 import { SlashCommandMenu } from "./SlashCommandMenu";
 import { calculateNoteStats, extractTitleAndPreview, formatNoteDateTime } from "@/lib/utils";
-import { isMarkdownText, markdownToTipTapHtml } from "@/lib/markdownPaste";
+import { isMarkdownText, shouldRenderAsMarkdown, markdownToTipTapHtml } from "@/lib/markdownPaste";
 import type { NoteStats, Collection } from "@/types";
 import { Icon } from "@/components/ui/Icon";
 import { MobileEditor } from "@/components/mobile/MobileEditor";
@@ -157,22 +157,17 @@ export const Editor: React.FC<EditorProps> = ({
           }
         }
 
-        // 2. Check for markdown plain text in clipboard
+        // 2. Check for markdown plain text in clipboard intelligently
         const plainText = event.clipboardData?.getData("text/plain");
         const html = event.clipboardData?.getData("text/html");
 
-        if (plainText && isMarkdownText(plainText)) {
-          // If html exists, check if it's just raw markdown copied from a code block or pre
-          const isRawMarkdownHtml =
-            !html || html.includes("<pre") || !/<(p|h[1-6]|ul|ol|table)/i.test(html);
-          if (isRawMarkdownHtml) {
-            event.preventDefault();
-            const formattedHtml = markdownToTipTapHtml(plainText);
-            setTimeout(() => {
-              editorRef.current?.commands.insertContent(formattedHtml);
-            }, 0);
-            return true;
-          }
+        if (plainText && shouldRenderAsMarkdown(plainText, html)) {
+          event.preventDefault();
+          const formattedHtml = markdownToTipTapHtml(plainText);
+          setTimeout(() => {
+            editorRef.current?.commands.insertContent(formattedHtml);
+          }, 0);
+          return true;
         }
 
         return false;
