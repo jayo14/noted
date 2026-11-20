@@ -177,6 +177,23 @@ function normalizeTablesForTipTap(html: string): string {
 }
 
 /**
+ * Strips dangerous HTML tags, inline event handlers, and malicious schemes (e.g., javascript:)
+ * to guarantee that rendered markdown cannot execute arbitrary scripts in the WebView.
+ */
+export function sanitizeHtml(html: string): string {
+  if (!html || typeof html !== "string") return "";
+
+  return html
+    // 1. Remove dangerous executable containers: script, iframe, object, embed, form, applet, base
+    .replace(/<\s*(script|iframe|object|embed|form|applet|base)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+    .replace(/<\s*(script|iframe|object|embed|form|applet|base)[^>]*\/?>/gi, "")
+    // 2. Remove inline event handlers (e.g. onerror=, onclick=, onload=)
+    .replace(/\s+on[a-z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, "")
+    // 3. Neutralize javascript:, vbscript: links and sources
+    .replace(/\s+(href|src)\s*=\s*['"]?\s*(?:javascript|vbscript):[^'">\s]*['"]?/gi, ' $1="#"');
+}
+
+/**
  * Converts a markdown string into clean HTML formatted for TipTap editor insertion.
  */
 export function markdownToTipTapHtml(markdown: string): string {
@@ -192,13 +209,16 @@ export function markdownToTipTapHtml(markdown: string): string {
     gfm: true,
   }) as string;
 
-  // 3. Normalize task lists for TipTap
-  let output = normalizeTaskListsForTipTap(rawHtml);
+  // 3. Sanitize raw HTML against script execution, iframes, and XSS
+  let output = sanitizeHtml(rawHtml);
 
-  // 4. Normalize headings for TipTap starter-kit levels (h1, h2, h3)
+  // 4. Normalize task lists for TipTap
+  output = normalizeTaskListsForTipTap(output);
+
+  // 5. Normalize headings for TipTap starter-kit levels (h1, h2, h3)
   output = normalizeHeadingsForTipTap(output);
 
-  // 5. Normalize tables so they render cleanly in TipTap
+  // 6. Normalize tables so they render cleanly in TipTap
   output = normalizeTablesForTipTap(output);
 
   return output.trim();
