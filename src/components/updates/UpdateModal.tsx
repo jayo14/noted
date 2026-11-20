@@ -118,7 +118,7 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
             </div>
             <p className="mt-0.5 text-xs text-[var(--text-muted)]">
               Current: v{updateInfo.currentVersion} • Published {formatReleaseDate(updateInfo.publishedAt)}
-              {updateInfo.assetSize ? ` • ${formatBytes(updateInfo.assetSize)}` : ""}
+              {updateInfo.assetSize && !updateInfo.isPlayStore ? ` • ${formatBytes(updateInfo.assetSize)}` : ""}
             </p>
           </div>
         </div>
@@ -136,7 +136,11 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
         {downloadStarted && (
           <div className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 text-xs text-emerald-500">
             <CheckCircle2 size={15} />
-            <span>Download started! Tap the downloaded file or notification to install.</span>
+            <span>
+              {updateInfo.isPlayStore
+                ? "Opening Google Play Store to complete the update..."
+                : "Download started! Tap the downloaded file or notification to install."}
+            </span>
           </div>
         )}
 
@@ -147,8 +151,14 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
             disabled={isUpdating}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] hover:opacity-90 active:scale-98 text-[var(--accent-contrast)] py-2.5 text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50"
           >
-            <Download size={15} />
-            <span>{isUpdating ? "Starting Download..." : `Download & Update (${updateInfo.tagName})`}</span>
+            {updateInfo.isPlayStore ? <ExternalLink size={15} /> : <Download size={15} />}
+            <span>
+              {updateInfo.isPlayStore
+                ? "Update on Google Play"
+                : isUpdating
+                ? "Starting Download..."
+                : `Download & Update (${updateInfo.tagName})`}
+            </span>
           </button>
 
           <div className="flex items-center justify-between gap-2">
