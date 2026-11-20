@@ -247,7 +247,7 @@ export function isSafeUpdateUrl(url: string): boolean {
   if (!url || typeof url !== "string") return false;
   try {
     const parsed = new URL(url);
-    return parsed.protocol === "https:" || parsed.protocol === "http:";
+    return parsed.protocol === "https:" || parsed.protocol === "http:" || parsed.protocol === "market:";
   } catch {
     // Also allow market: intent protocol for Android Play Store
     return url.startsWith("market://");

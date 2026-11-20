@@ -5,7 +5,10 @@ import {
   formatReleaseDate,
   dismissUpdate,
   isUpdateDismissed,
+  findPlatformAsset,
+  isSafeUpdateUrl,
   CURRENT_APP_VERSION,
+  PLAY_STORE_WEB_URL,
 } from "../src/services/updater";
 
 describe("Updater Service", () => {
@@ -87,6 +90,60 @@ describe("Updater Service", () => {
       dismissUpdate("v0.1.1");
       expect(isUpdateDismissed("v0.1.1")).toBe(true);
       expect(isUpdateDismissed("v0.1.2")).toBe(false);
+    });
+  });
+
+  describe("findPlatformAsset", () => {
+    const mockAssets = [
+      {
+        name: "app-universal-release.apk",
+        size: 50000000,
+        browser_download_url: "https://github.com/jayo14/noted/releases/download/v0.1.2/app-universal-release.apk",
+        content_type: "application/vnd.android.package-archive",
+      },
+      {
+        name: "noted_0.1.2_x64-setup.exe",
+        size: 40000000,
+        browser_download_url: "https://github.com/jayo14/noted/releases/download/v0.1.2/noted_0.1.2_x64-setup.exe",
+        content_type: "application/x-msdos-program",
+      },
+      {
+        name: "noted_0.1.2_amd64.AppImage",
+        size: 60000000,
+        browser_download_url: "https://github.com/jayo14/noted/releases/download/v0.1.2/noted_0.1.2_amd64.AppImage",
+        content_type: "application/octet-stream",
+      },
+    ];
+
+    it("routes android platform safely to Google Play Store rather than raw APK", () => {
+      const asset = findPlatformAsset(mockAssets, "android");
+      expect(asset).not.toBeNull();
+      expect(asset?.url).toBe(PLAY_STORE_WEB_URL);
+      expect(asset?.isPlayStore).toBe(true);
+      expect(asset?.url).not.toContain(".apk");
+    });
+
+    it("resolves desktop packages for windows and linux", () => {
+      const winAsset = findPlatformAsset(mockAssets, "windows");
+      expect(winAsset?.name).toContain("setup.exe");
+
+      const linuxAsset = findPlatformAsset(mockAssets, "linux");
+      expect(linuxAsset?.name).toContain("AppImage");
+    });
+  });
+
+  describe("isSafeUpdateUrl", () => {
+    it("accepts valid https URLs and market URLs", () => {
+      expect(isSafeUpdateUrl("https://play.google.com/store/apps/details?id=com.jayo14.noted")).toBe(true);
+      expect(isSafeUpdateUrl("https://github.com/jayo14/noted/releases")).toBe(true);
+      expect(isSafeUpdateUrl("market://details?id=com.jayo14.noted")).toBe(true);
+    });
+
+    it("rejects malicious or dangerous schemes", () => {
+      expect(isSafeUpdateUrl("javascript:alert(1)")).toBe(false);
+      expect(isSafeUpdateUrl("data:text/html,evil")).toBe(false);
+      expect(isSafeUpdateUrl("file:///etc/passwd")).toBe(false);
+      expect(isSafeUpdateUrl("")).toBe(false);
     });
   });
 
