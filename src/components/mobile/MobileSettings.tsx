@@ -435,20 +435,20 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
                     { id: "sans", label: "Sans" },
                     { id: "serif", label: "Serif" },
                     { id: "mono", label: "Mono" },
-                  ] as FontFamily[]
+                  ] as const
                 ).map((f) => {
-                  const isActive = prefs.fontFamily === f;
+                  const isActive = prefs.fontFamily === f.id;
                   return (
                     <button
-                      key={f}
-                      onClick={() => updatePref("fontFamily", f)}
+                      key={f.id}
+                      onClick={() => updatePref("fontFamily", f.id as FontFamily)}
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold capitalize transition-all cursor-pointer ${
                         isActive
                           ? "bg-white dark:bg-[#2C2C2E] text-[var(--text-primary)] shadow-xs"
                           : "text-[var(--text-muted)]"
                       }`}
                     >
-                      {f}
+                      {f.label}
                     </button>
                   );
                 })}
