@@ -268,7 +268,7 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
                   setFilterPill(item.id);
                   onFilterSection(item.id);
                 }}
-                className={`flex h-9 items-center justify-center rounded-full px-4 text-[13px] font-semibold transition-all cursor-pointer ${
+                className={`flex h-10 min-h-[40px] items-center justify-center rounded-full px-4 text-[13.5px] font-semibold transition-all cursor-pointer select-none ${
                   isActive
                     ? "bg-[#141312] dark:bg-[var(--accent)] text-white dark:text-[#141312] shadow-2xs"
                     : "bg-[#EFECE6] dark:bg-white/10 text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] active:bg-[var(--bg-surface-active)]"
@@ -344,13 +344,13 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
             onChangeTab("home");
             setFilterPill("all");
           }}
-          className={`flex min-h-[48px] min-w-[56px] flex-col items-center justify-center gap-1 py-1 px-3 text-[11px] font-medium transition-colors cursor-pointer ${
+          className={`flex min-h-[48px] min-w-[64px] flex-col items-center justify-center gap-1 py-1 px-3 text-[11px] font-medium transition-colors cursor-pointer ${
             activeTab === "home"
               ? "text-[var(--text-primary)] font-bold"
               : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           }`}
         >
-          <Home size={21} strokeWidth={activeTab === "home" ? 2.6 : 2} />
+          <Home size={22} strokeWidth={activeTab === "home" ? 2.6 : 2} />
           <span>Home</span>
         </button>
 
@@ -360,13 +360,13 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
             onChangeTab("search");
             setIsSearchActive(true);
           }}
-          className={`flex min-h-[48px] min-w-[56px] flex-col items-center justify-center gap-1 py-1 px-3 text-[11px] font-medium transition-colors cursor-pointer ${
+          className={`flex min-h-[48px] min-w-[64px] flex-col items-center justify-center gap-1 py-1 px-3 text-[11px] font-medium transition-colors cursor-pointer ${
             activeTab === "search" || isSearchActive
               ? "text-[var(--text-primary)] font-bold"
               : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           }`}
         >
-          <Search size={21} strokeWidth={activeTab === "search" ? 2.6 : 2} />
+          <Search size={22} strokeWidth={activeTab === "search" ? 2.6 : 2} />
           <span>Search</span>
         </button>
 
@@ -376,13 +376,13 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
             onChangeTab("collections");
             onOpenCollections();
           }}
-          className={`flex min-h-[48px] min-w-[56px] flex-col items-center justify-center gap-1 py-1 px-3 text-[11px] font-medium transition-colors cursor-pointer ${
+          className={`flex min-h-[48px] min-w-[64px] flex-col items-center justify-center gap-1 py-1 px-3 text-[11px] font-medium transition-colors cursor-pointer ${
             activeTab === "collections"
               ? "text-[var(--text-primary)] font-bold"
               : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           }`}
         >
-          <Bookmark size={21} strokeWidth={activeTab === "collections" ? 2.6 : 2} />
+          <Bookmark size={22} strokeWidth={activeTab === "collections" ? 2.6 : 2} />
           <span>Collections</span>
         </button>
 
@@ -392,13 +392,13 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
             onChangeTab("settings");
             onOpenSettings();
           }}
-          className={`flex min-h-[48px] min-w-[56px] flex-col items-center justify-center gap-1 py-1 px-3 text-[11px] font-medium transition-colors cursor-pointer ${
+          className={`flex min-h-[48px] min-w-[64px] flex-col items-center justify-center gap-1 py-1 px-3 text-[11px] font-medium transition-colors cursor-pointer ${
             activeTab === "settings"
               ? "text-[var(--text-primary)] font-bold"
               : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           }`}
         >
-          <Settings size={21} strokeWidth={activeTab === "settings" ? 2.6 : 2} />
+          <Settings size={22} strokeWidth={activeTab === "settings" ? 2.6 : 2} />
           <span>Settings</span>
         </button>
       </nav>
