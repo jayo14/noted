@@ -53,6 +53,8 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
   onDelete,
   onShare,
   onExport,
+  collections = [],
+  collectionId = null,
   isReadOnly = false,
   onCheckForUpdates,
 }) => {

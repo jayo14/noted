@@ -14,6 +14,28 @@ export default defineConfig(() => ({
       "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("@tiptap") || id.includes("prosemirror")) {
+              return "vendor-editor";
+            }
+            if (id.includes("@supabase")) {
+              return "vendor-supabase";
+            }
+            if (id.includes("lucide-react")) {
+              return "vendor-icons";
+            }
+            if (id.includes("react-dom") || id.includes("/react/")) {
+              return "vendor-react";
+            }
+          }
+        },
+      },
+    },
+  },
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   clearScreen: false,
   server: {

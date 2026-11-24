@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import type { Note, Collection, NavSection, FilterState, ThemePreference, NoteStats } from "@/types";
 import { noteService } from "@/services/noteService";
 import { collectionService } from "@/services/collectionService";
@@ -6,16 +6,11 @@ import { syncEngine } from "@/services/syncEngine";
 import { authService } from "@/services/authService";
 import { getStorageAdapter } from "@/lib/storage";
 import { Sidebar } from "@/components/navigation/Sidebar";
-import { MobileDrawer } from "@/components/navigation/MobileDrawer";
 import { MobileHome } from "@/components/mobile/MobileHome";
-import { ShortcutsModal } from "@/components/navigation/ShortcutsModal";
 import { NotesPanel } from "@/components/notes/NotesPanel";
 import { Editor } from "@/components/editor/Editor";
-import { SettingsModal } from "@/components/settings/SettingsModal";
-import { UpdateModal } from "@/components/updates/UpdateModal";
 import { extractTextFromJSONContent } from "@/lib/utils";
 import { exportNoteAsFile, jsonContentToMarkdown, parseImportFile } from "@/lib/export";
-import { ShareModal } from "@/components/editor/ShareModal";
 import { settingsService, type NotesViewMode } from "@/services/settingsService";
 import {
   checkForUpdates,
@@ -23,6 +18,22 @@ import {
   type UpdateInfo,
 } from "@/services/updater";
 import { Menu } from "lucide-react";
+
+const MobileDrawer = lazy(() =>
+  import("@/components/navigation/MobileDrawer").then((m) => ({ default: m.MobileDrawer })),
+);
+const ShortcutsModal = lazy(() =>
+  import("@/components/navigation/ShortcutsModal").then((m) => ({ default: m.ShortcutsModal })),
+);
+const SettingsModal = lazy(() =>
+  import("@/components/settings/SettingsModal").then((m) => ({ default: m.SettingsModal })),
+);
+const UpdateModal = lazy(() =>
+  import("@/components/updates/UpdateModal").then((m) => ({ default: m.UpdateModal })),
+);
+const ShareModal = lazy(() =>
+  import("@/components/editor/ShareModal").then((m) => ({ default: m.ShareModal })),
+);
 
 export function App() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -857,82 +868,94 @@ export function App() {
         </div>
       )}
 
-      {/* Share Note Modal */}
-      <ShareModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        note={currentNote}
-        onExportMarkdown={handleExportNote}
-      />
+      <Suspense fallback={null}>
+        {/* Share Note Modal */}
+        {isShareModalOpen && (
+          <ShareModal
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            note={currentNote}
+            onExportMarkdown={handleExportNote}
+          />
+        )}
 
-      {/* Mobile Navigation Drawer */}
-      <MobileDrawer
-        isOpen={isMobileDrawerOpen}
-        onClose={() => setIsMobileDrawerOpen(false)}
-        activeSection={filter.section}
-        activeCollectionId={filter.collectionId}
-        notes={notes}
-        collections={collections}
-        theme={theme}
-        onThemeChange={handleThemeChange}
-        onSelectSection={(section, collectionId = null) => {
-          setFilter((prev) => ({ ...prev, section, collectionId }));
-        }}
-        onCreateCollection={handleCreateCollection}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-      />
+        {/* Mobile Navigation Drawer */}
+        {isMobileDrawerOpen && (
+          <MobileDrawer
+            isOpen={isMobileDrawerOpen}
+            onClose={() => setIsMobileDrawerOpen(false)}
+            activeSection={filter.section}
+            activeCollectionId={filter.collectionId}
+            notes={notes}
+            collections={collections}
+            theme={theme}
+            onThemeChange={handleThemeChange}
+            onSelectSection={(section, collectionId = null) => {
+              setFilter((prev) => ({ ...prev, section, collectionId }));
+            }}
+            onCreateCollection={handleCreateCollection}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+          />
+        )}
 
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        theme={theme}
-        onThemeChange={handleThemeChange}
-        pendingSyncCount={pendingSyncCount}
-        lastSyncedAt={lastSyncedAt}
-        onTriggerSync={async () => {
-          await syncEngine.syncNow();
-          const storage = await getStorageAdapter();
-          const q = await storage.getPendingSyncQueue();
-          setPendingSyncCount(q.length);
-          const updatedNotes = await noteService.getAllNotes(true);
-          setNotes(updatedNotes);
-        }}
-        onExportAll={handleExportAll}
-        supabaseUrl={supabaseUrl}
-        supabaseKey={supabaseKey}
-        onSaveSupabaseConfig={async (url, key) => {
-          setSupabaseUrl(url);
-          setSupabaseKey(key);
-          await syncEngine.configureSupabase(url, key);
-          await authService.configureClient(url, key);
-        }}
-        onImportFile={handleImportFile}
-        onOpenUpdateModal={(info) => {
-          setAvailableUpdate(info);
-          setIsManualUpdateCheck(true);
-          setUpdateError(null);
-          setIsUpdateModalOpen(true);
-        }}
-      />
+        {/* Settings Modal */}
+        {isSettingsOpen && (
+          <SettingsModal
+            isOpen={isSettingsOpen}
+            onClose={() => setIsSettingsOpen(false)}
+            theme={theme}
+            onThemeChange={handleThemeChange}
+            pendingSyncCount={pendingSyncCount}
+            lastSyncedAt={lastSyncedAt}
+            onTriggerSync={async () => {
+              await syncEngine.syncNow();
+              const storage = await getStorageAdapter();
+              const q = await storage.getPendingSyncQueue();
+              setPendingSyncCount(q.length);
+              const updatedNotes = await noteService.getAllNotes(true);
+              setNotes(updatedNotes);
+            }}
+            onExportAll={handleExportAll}
+            supabaseUrl={supabaseUrl}
+            supabaseKey={supabaseKey}
+            onSaveSupabaseConfig={async (url, key) => {
+              setSupabaseUrl(url);
+              setSupabaseKey(key);
+              await syncEngine.configureSupabase(url, key);
+              await authService.configureClient(url, key);
+            }}
+            onImportFile={handleImportFile}
+            onOpenUpdateModal={(info) => {
+              setAvailableUpdate(info);
+              setIsManualUpdateCheck(true);
+              setUpdateError(null);
+              setIsUpdateModalOpen(true);
+            }}
+          />
+        )}
 
-      {/* OTA Update Prompt Modal */}
-      <UpdateModal
-        isOpen={isUpdateModalOpen}
-        updateInfo={availableUpdate}
-        onClose={() => {
-          setIsUpdateModalOpen(false);
-          setUpdateError(null);
-        }}
-        isManualCheck={isManualUpdateCheck}
-        error={updateError}
-      />
+        {/* OTA Update Prompt Modal */}
+        {isUpdateModalOpen && (
+          <UpdateModal
+            isOpen={isUpdateModalOpen}
+            updateInfo={availableUpdate}
+            onClose={() => {
+              setIsUpdateModalOpen(false);
+              setUpdateError(null);
+            }}
+            isManualCheck={isManualUpdateCheck}
+            error={updateError}
+          />
+        )}
 
-      {/* Keyboard Shortcuts Cheat Sheet */}
-      <ShortcutsModal
-        isOpen={isShortcutsOpen}
-        onClose={() => setIsShortcutsOpen(false)}
-      />
+        {/* Keyboard Shortcuts Cheat Sheet */}
+        {isShortcutsOpen && (
+          <ShortcutsModal
+            isOpen={isShortcutsOpen}
+            onClose={() => setIsShortcutsOpen(false)}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }
