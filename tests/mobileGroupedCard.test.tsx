@@ -80,6 +80,10 @@ describe("MobileGroupedCard Component", () => {
     // Rounded container and hairline divider
     expect(html).toContain("rounded-[22px]");
     expect(html).toContain("border-b border-black/[0.06]");
+
+    // Smart context-aware icons rendered
+    expect(html).toContain("Task list note");
+    expect(html).toContain("<svg");
   });
 
   it("handles null/empty notes list gracefully", () => {
