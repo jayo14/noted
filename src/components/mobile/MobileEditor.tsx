@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import type { Editor } from "@tiptap/core";
 import { EditorContent } from "@tiptap/react";
 import {
@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { MobileInsertSheet } from "./MobileInsertSheet";
 import { EditorBubbleMenu } from "@/components/editor/EditorBubbleMenu";
+import { Icon } from "@/components/ui/Icon";
+import { classifyNoteIcon } from "@/lib/noteClassifier";
 import type { Collection } from "@/types";
 import { settingsService } from "@/services/settingsService";
 
@@ -122,6 +124,31 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
     }
   }, []);
 
+  const currentCollection = useMemo(
+    () => collections.find((c) => c.id === collectionId),
+    [collections, collectionId],
+  );
+
+  const contextMeta = useMemo(
+    () =>
+      classifyNoteIcon(
+        {
+          id: "active",
+          user_id: "",
+          title,
+          content: editor?.getJSON() || { type: "doc", content: [] },
+          collection_id: collectionId,
+          is_pinned: isPinned,
+          created_at: "",
+          updated_at: "",
+          deleted_at: null,
+          revision: 1,
+        },
+        currentCollection?.name,
+      ),
+    [title, editor, collectionId, isPinned, currentCollection?.name],
+  );
+
   if (!editor) return null;
 
   // Clean pasted title text (stripping leading markdown header tags)
@@ -146,6 +173,20 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
         >
           <ChevronLeft size={24} strokeWidth={2.4} />
         </button>
+
+        {/* Center: Live smart context-aware pill */}
+        <div
+          className="flex items-center gap-1.5 rounded-full bg-[#F6F3EE] dark:bg-[#1C1C1E] border border-black/[0.05] dark:border-white/[0.08] px-3 py-1 text-[11.5px] font-medium text-[var(--text-secondary)] shadow-2xs"
+          title={contextMeta.accessibleLabel}
+        >
+          <Icon name={contextMeta.icon} size={13} className="text-[var(--text-primary)]" />
+          <span>{contextMeta.categoryName}</span>
+          {contextMeta.taskStats && (
+            <span className="ml-0.5 tabular-nums text-[var(--text-muted)]">
+              {contextMeta.taskStats.completed}/{contextMeta.taskStats.total}
+            </span>
+          )}
+        </div>
 
         {/* Right: Pill container [Share, ...] + Done button (✓) */}
         <div className="flex items-center gap-2.5">

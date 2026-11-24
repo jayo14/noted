@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import type { JSONContent } from "@tiptap/core";
 import { getEditorExtensions } from "./extensions";
@@ -6,6 +6,7 @@ import { EditorBubbleMenu } from "./EditorBubbleMenu";
 import { FormatToolbar } from "./FormatToolbar";
 import { SlashCommandMenu } from "./SlashCommandMenu";
 import { calculateNoteStats, extractTitleAndPreview, formatNoteDateTime } from "@/lib/utils";
+import { classifyNoteIcon } from "@/lib/noteClassifier";
 import { isMarkdownText, shouldRenderAsMarkdown, markdownToTipTapHtml } from "@/lib/markdownPaste";
 import type { NoteStats, Collection } from "@/types";
 import { Icon } from "@/components/ui/Icon";
@@ -287,6 +288,26 @@ export const Editor: React.FC<EditorProps> = ({
 
   const currentCollection = collections.find((c) => c.id === collectionId);
 
+  const contextMeta = useMemo(
+    () =>
+      classifyNoteIcon(
+        {
+          id: noteId,
+          user_id: "",
+          title,
+          content: editor?.getJSON() || initialContent,
+          collection_id: collectionId,
+          is_pinned: isPinned,
+          created_at: "",
+          updated_at: updatedAt || "",
+          deleted_at: null,
+          revision: 1,
+        },
+        currentCollection?.name,
+      ),
+    [noteId, title, editor, initialContent, collectionId, isPinned, updatedAt, currentCollection?.name],
+  );
+
   const scrollToTop = () => {
     canvasScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -353,8 +374,8 @@ export const Editor: React.FC<EditorProps> = ({
             />
           </div>
 
-          {/* Sub-row / Metadata row matching Image 0: "Today, 2:47 PM | 📁 Personal ⌵" */}
-          <div className="mb-6 flex items-center gap-2.5 text-xs text-[var(--text-secondary)] select-none">
+          {/* Sub-row / Metadata row matching Image 0: "Today, 2:47 PM | 📁 Personal ⌵ | [icon] Category" */}
+          <div className="mb-6 flex flex-wrap items-center gap-2.5 text-xs text-[var(--text-secondary)] select-none">
             {/* Date info */}
             <div className="flex items-center gap-1.5">
               <Icon name="calendar_today" size={14} className="text-[var(--text-muted)]" />
@@ -440,6 +461,22 @@ export const Editor: React.FC<EditorProps> = ({
                     </div>
                   )}
                 </div>
+              )}
+            </div>
+
+            <span className="h-3 w-px bg-[var(--border-subtle)]" />
+
+            {/* Live smart context-aware badge */}
+            <div
+              className="flex items-center gap-1.5 rounded-full bg-[var(--bg-surface)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-secondary)] border border-[var(--border-subtle)]/70"
+              title={contextMeta.accessibleLabel}
+            >
+              <Icon name={contextMeta.icon} size={12} className="text-[var(--text-primary)]" />
+              <span>{contextMeta.categoryName}</span>
+              {contextMeta.taskStats && (
+                <span className="tabular-nums text-[var(--text-muted)]">
+                  · {contextMeta.taskStats.completed}/{contextMeta.taskStats.total}
+                </span>
               )}
             </div>
           </div>
