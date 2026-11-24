@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useMemo } from "react";
 import type { Note, Collection } from "@/types";
 import { extractTextFromJSONContent, formatCompactRelativeTime } from "@/lib/utils";
 import { classifyNoteIcon } from "@/lib/noteClassifier";
 import { Icon } from "@/components/ui/Icon";
-import { settingsService } from "@/services/settingsService";
+import type { NoteListDensity } from "@/services/settingsService";
 
 interface NoteCardProps {
   note: Note;
@@ -11,6 +11,8 @@ interface NoteCardProps {
   collections: Collection[];
   searchSnippet?: string;
   viewMode?: "list" | "grid";
+  noteListDensity?: NoteListDensity;
+  showChecklistPreview?: boolean;
   onClick: () => void;
 }
 
@@ -51,24 +53,28 @@ function extractStructuredPreview(note: Note): PreviewItem[] {
   return items;
 }
 
-export const NoteCard: React.FC<NoteCardProps> = ({
+export const NoteCard: React.FC<NoteCardProps> = React.memo(({
   note,
   isSelected,
   collections,
   searchSnippet,
   viewMode = "list",
+  noteListDensity = "comfortable",
+  showChecklistPreview = true,
   onClick,
 }) => {
-  const collection = collections.find((c) => c.id === note.collection_id);
-  const [prefs, setPrefs] = React.useState(settingsService.getPreferences());
+  const collection = useMemo(
+    () => collections.find((c) => c.id === note.collection_id),
+    [collections, note.collection_id],
+  );
 
-  React.useEffect(() => {
-    return settingsService.subscribe((p) => setPrefs(p));
-  }, []);
+  const iconMeta = useMemo(
+    () => classifyNoteIcon(note, collection?.name),
+    [note, collection?.name],
+  );
 
-  const iconMeta = classifyNoteIcon(note, collection?.name);
   const relativeTime = formatCompactRelativeTime(note.updated_at);
-  const previewItems = extractStructuredPreview(note);
+  const previewItems = useMemo(() => extractStructuredPreview(note), [note]);
 
   if (viewMode === "grid") {
     return (
@@ -90,22 +96,30 @@ export const NoteCard: React.FC<NoteCardProps> = ({
         }`}
       >
         <div>
-          {/* Top row: Category icon and Pin */}
-          <div className="flex items-center justify-between">
-            <div
-              className={`flex h-6 w-6 items-center justify-center rounded-md transition-colors ${
-                isSelected
-                  ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)]"
-                  : "bg-black/5 dark:bg-white/5 text-[var(--text-muted)] group-hover:text-[var(--text-primary)]"
-              }`}
-              title={iconMeta.categoryName}
-            >
-              <Icon name={iconMeta.icon} size={15} />
+          {/* Top row: Category icon, task stats, and Pin */}
+          <div className="flex items-center justify-between gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <div
+                className={`flex h-6 w-6 items-center justify-center rounded-md transition-colors ${
+                  isSelected
+                    ? "bg-[var(--bg-surface-active)] text-[var(--text-primary)]"
+                    : "bg-black/5 dark:bg-white/5 text-[var(--text-muted)] group-hover:text-[var(--text-primary)]"
+                }`}
+                title={iconMeta.categoryName}
+              >
+                <Icon name={iconMeta.icon} size={14} />
+              </div>
+              {iconMeta.taskStats && (
+                <span className="rounded-full bg-black/[0.05] dark:bg-white/[0.07] px-1.5 py-0.5 text-[9.5px] font-medium tabular-nums text-[var(--text-muted)]">
+                  {iconMeta.taskStats.completed}/{iconMeta.taskStats.total}
+                </span>
+              )}
             </div>
             {note.is_pinned && (
               <Icon
                 name="keep"
                 size={13}
+                filled
                 className={`rotate-45 ${
                   isSelected ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
                 }`}
@@ -133,7 +147,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
                   }`}
                 >
                   {item.type === "task"
-                    ? `${prefs.showChecklistPreview ? (item.checked ? "✔ " : "- ") : ""}${item.text}`
+                    ? `${showChecklistPreview ? (item.checked ? "✓ " : "○ ") : ""}${item.text}`
                     : item.text}
                 </p>
               ))
@@ -148,7 +162,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
         {/* Bottom meta row: Collection tag and Relative timestamp */}
         <div className="mt-2.5 flex items-center justify-between border-t border-[var(--border-subtle)]/60 pt-1.5 text-[9.5px]">
           <span className="truncate max-w-[85px] text-[var(--text-muted)] font-medium">
-            {collection?.name || "Note"}
+            {collection?.name || iconMeta.categoryName}
           </span>
           <span
             className={`${
@@ -175,21 +189,23 @@ export const NoteCard: React.FC<NoteCardProps> = ({
         }
       }}
       className={`group relative flex cursor-pointer gap-2.5 rounded-xl transition-all select-none mb-1 mx-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
-        prefs.noteListDensity === "compact" ? "p-2" : "p-3"
+        noteListDensity === "compact" ? "p-2" : "p-3"
       } ${
         isSelected
           ? "bg-[var(--bg-card-active)] border border-[var(--border-strong)] shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
           : "bg-transparent hover:bg-[var(--bg-surface-hover)] border border-transparent"
       }`}
     >
-      {/* Intelligent Category Icon on left matching Image 1 */}
+      {/* Intelligent Category Icon */}
       <div
-        className={`pt-0.5 flex-shrink-0 transition-colors ${
-          isSelected ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+        className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md transition-colors ${
+          isSelected
+            ? "bg-black/[0.06] dark:bg-white/[0.08] text-[var(--text-primary)]"
+            : "text-[var(--text-muted)] group-hover:text-[var(--text-primary)]"
         }`}
         title={iconMeta.categoryName}
       >
-        <Icon name={iconMeta.icon} size={18} />
+        <Icon name={iconMeta.icon} size={16} />
       </div>
 
       {/* Main card body */}
@@ -200,6 +216,11 @@ export const NoteCard: React.FC<NoteCardProps> = ({
             {note.title || "Untitled"}
           </h3>
           <div className="flex items-center gap-1.5 flex-shrink-0">
+            {iconMeta.taskStats && (
+              <span className="rounded-full bg-black/[0.05] dark:bg-white/[0.07] px-1.5 py-0.5 text-[9.5px] font-medium tabular-nums text-[var(--text-muted)]">
+                {iconMeta.taskStats.completed}/{iconMeta.taskStats.total}
+              </span>
+            )}
             <span
               className={`text-[10.5px] leading-none ${
                 isSelected ? "text-[var(--text-secondary)] font-medium" : "text-[var(--text-muted)]"
@@ -210,7 +231,8 @@ export const NoteCard: React.FC<NoteCardProps> = ({
             {note.is_pinned && (
               <Icon
                 name="keep"
-                size={13}
+                size={12}
+                filled
                 className={`rotate-45 ${
                   isSelected ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
                 }`}
@@ -234,7 +256,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
                 }`}
               >
                 {item.type === "task"
-                  ? `${prefs.showChecklistPreview ? (item.checked ? "✔ " : "- ") : ""}${item.text}`
+                  ? `${showChecklistPreview ? (item.checked ? "✓ " : "○ ") : ""}${item.text}`
                   : item.text}
               </p>
             ))
@@ -247,4 +269,6 @@ export const NoteCard: React.FC<NoteCardProps> = ({
       </div>
     </div>
   );
-};
+});
+
+NoteCard.displayName = "NoteCard";

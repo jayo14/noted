@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import type { Note, Collection, FilterState } from "@/types";
 import { NoteCard } from "./NoteCard";
 import { searchService } from "@/services/searchService";
@@ -32,37 +32,38 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
 }) => {
   const internalSearchRef = useRef<HTMLInputElement>(null);
   const searchInputRef = externalSearchRef || internalSearchRef;
-  const [viewMode, setViewMode] = useState<NotesViewMode>(
-    () => settingsService.getPreferences().notesViewMode || "list",
-  );
+  const [prefs, setPrefs] = useState(() => settingsService.getPreferences());
+  const viewMode: NotesViewMode = prefs.notesViewMode || "list";
   const [isNewMenuOpen, setIsNewMenuOpen] = useState(false);
 
   useEffect(() => {
-    return settingsService.subscribe((prefs) => {
-      if (prefs.notesViewMode && prefs.notesViewMode !== viewMode) {
-        setViewMode(prefs.notesViewMode);
-      }
+    return settingsService.subscribe((nextPrefs) => {
+      setPrefs(nextPrefs);
     });
-  }, [viewMode]);
+  }, []);
 
   const handleSetViewMode = (mode: NotesViewMode) => {
-    setViewMode(mode);
     settingsService.updatePreferences({ notesViewMode: mode });
   };
 
-  const searchResults = searchService.filterNotes(notes, filter);
+  const searchResults = useMemo(
+    () => searchService.filterNotes(notes, filter),
+    [notes, filter],
+  );
 
   // Compute most recently edited note for the bottom bar "Last edited: X"
-  const mostRecentNote = notes.reduce<Note | null>((latest, current) => {
-    if (!latest) return current;
-    return new Date(current.updated_at).getTime() > new Date(latest.updated_at).getTime()
-      ? current
-      : latest;
-  }, null);
+  const mostRecentNote = useMemo(() => {
+    return notes.reduce<Note | null>((latest, current) => {
+      if (!latest) return current;
+      return new Date(current.updated_at).getTime() > new Date(latest.updated_at).getTime()
+        ? current
+        : latest;
+    }, null);
+  }, [notes]);
 
   const lastEditedTime = mostRecentNote
     ? formatCompactRelativeTime(mostRecentNote.updated_at)
-    : "2m ago";
+    : "—";
 
   return (
     <div className="flex h-full w-full flex-shrink-0 flex-col border-r border-[var(--border-subtle)] bg-[var(--bg-notes-panel)] select-none">
@@ -165,6 +166,8 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
               collections={collections}
               searchSnippet={result.snippet}
               viewMode={viewMode}
+              noteListDensity={prefs.noteListDensity}
+              showChecklistPreview={prefs.showChecklistPreview}
               onClick={() => onSelectNote(result.note.id)}
             />
           ))
@@ -173,7 +176,9 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
 
       {/* Bottom Footer matching Image 0: "{count} notes" on left, "Last edited: X" on right */}
       <div className="flex items-center justify-between border-t border-[var(--border-subtle)] px-4 py-2 text-[11px] text-[var(--text-muted)] bg-[var(--bg-notes-panel)]">
-        <span>{searchResults.length || 6} notes</span>
+        <span>
+          {searchResults.length} {searchResults.length === 1 ? "note" : "notes"}
+        </span>
         <span>Last edited: {lastEditedTime}</span>
       </div>
     </div>
