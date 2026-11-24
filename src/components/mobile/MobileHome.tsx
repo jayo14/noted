@@ -3,6 +3,7 @@ import type { Note, Collection, FilterState } from "@/types";
 import type { UpdateInfo } from "@/services/updater";
 import { MobileGroupedCard } from "./MobileGroupedCard";
 import { groupNotesByDate } from "@/lib/dateGrouping";
+import { extractTextFromJSONContent } from "@/lib/utils";
 import { settingsService } from "@/services/settingsService";
 import {
   ChevronLeft,
@@ -16,6 +17,7 @@ import {
   Settings,
   Pin,
   Check,
+  FileText,
 } from "lucide-react";
 
 interface MobileHomeProps {
@@ -81,7 +83,7 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
       list = list.filter(
         (n) =>
           n.title.toLowerCase().includes(q) ||
-          JSON.stringify(n.content || {}).toLowerCase().includes(q),
+          extractTextFromJSONContent(n.content).toLowerCase().includes(q),
       );
     }
 
@@ -167,7 +169,10 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
                     }}
                     className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
                   >
-                    <span>All Notes</span>
+                    <div className="flex items-center gap-2.5">
+                      <FileText size={16} />
+                      <span>All Notes</span>
+                    </div>
                     {filterPill === "all" && <Check size={16} className="text-[var(--text-primary)]" />}
                   </button>
                   <button
@@ -280,8 +285,13 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
         ))}
 
         {filteredNotes.length === 0 && (
-          <div className="py-24 text-center text-sm text-[var(--text-muted)] font-medium">
-            No Notes
+          <div className="flex flex-col items-center justify-center gap-2 py-24 text-center text-sm text-[var(--text-muted)] font-medium">
+            {searchQuery.trim() ? (
+              <Search size={24} strokeWidth={1.6} className="opacity-45" />
+            ) : (
+              <FileText size={24} strokeWidth={1.6} className="opacity-45" />
+            )}
+            <span>{searchQuery.trim() ? "No Matching Notes" : "No Notes"}</span>
           </div>
         )}
       </div>
