@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import type { NavSection, Collection, Note } from "@/types";
 import { authService, type AuthUser } from "@/services/authService";
 import { Icon } from "@/components/ui/Icon";
@@ -27,10 +27,16 @@ function getCollectionIcon(name: string, customIcon?: string): string {
   if (lower.includes("study") || lower.includes("learn") || lower.includes("book")) return "school";
   if (lower.includes("travel") || lower.includes("trip")) return "flight";
   if (lower.includes("grocery") || lower.includes("shop")) return "shopping_cart";
+  if (lower.includes("code") || lower.includes("dev")) return "code";
+  if (lower.includes("music")) return "music_note";
+  if (lower.includes("fitness") || lower.includes("health")) return "fitness_center";
+  if (lower.includes("recipe") || lower.includes("food")) return "restaurant";
+  if (lower.includes("finance") || lower.includes("budget")) return "payments";
+  if (lower.includes("meeting")) return "groups";
   return "folder";
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
+export const Sidebar: React.FC<SidebarProps> = React.memo(({
   activeSection,
   activeCollectionId,
   notes,
@@ -55,9 +61,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return unsub;
   }, []);
 
-  const activeNotes = notes.filter((n) => n.deleted_at === null);
-  const allCount = activeNotes.length;
-  const pinnedCount = activeNotes.filter((n) => n.is_pinned).length;
+  const { allCount, pinnedCount, collectionCounts } = useMemo(() => {
+    let all = 0;
+    let pinned = 0;
+    const colMap = new Map<string, number>();
+
+    for (const n of notes) {
+      if (n.deleted_at !== null) continue;
+      all += 1;
+      if (n.is_pinned) pinned += 1;
+      if (n.collection_id) {
+        colMap.set(n.collection_id, (colMap.get(n.collection_id) || 0) + 1);
+      }
+    }
+
+    return { allCount: all, pinnedCount: pinned, collectionCounts: colMap };
+  }, [notes]);
 
   const handleCreateSubmit = async () => {
     if (newCollectionName.trim()) {
@@ -121,7 +140,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <Icon name="description" size={17} className={isNavActive("all") ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
               <span className="text-[13px]">All Notes</span>
             </div>
-            <span className={`text-[11.5px] font-medium ${isNavActive("all") ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>{allCount || 24}</span>
+            <span className={`text-[11.5px] font-medium tabular-nums ${isNavActive("all") ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>{allCount}</span>
           </button>
 
           {/* Pinned */}
@@ -137,7 +156,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <Icon name="keep" size={17} className={isNavActive("pinned") ? "text-[var(--accent)]" : "text-[var(--text-muted)]"} />
               <span className="text-[13px]">Pinned</span>
             </div>
-            <span className={`text-[11.5px] font-medium ${isNavActive("pinned") ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>{pinnedCount || 4}</span>
+            <span className={`text-[11.5px] font-medium tabular-nums ${isNavActive("pinned") ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>{pinnedCount}</span>
           </button>
 
           {/* Today */}
@@ -223,7 +242,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Collections list */}
           <div className="flex flex-col gap-0.5">
             {collections.map((coll) => {
-              const count = activeNotes.filter((n) => n.collection_id === coll.id).length;
+              const count = collectionCounts.get(coll.id) || 0;
               const isActive = activeSection === "collection" && activeCollectionId === coll.id;
               const isEditing = editingCollectionId === coll.id;
               const collIcon = getCollectionIcon(coll.name, coll.icon);
@@ -334,4 +353,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
     </aside>
   );
-};
+});
+
+Sidebar.displayName = "Sidebar";
