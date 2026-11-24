@@ -1,32 +1,190 @@
 import React from "react";
+import {
+  AlertCircle,
+  AlignJustify,
+  AlignLeft,
+  Archive,
+  ArrowLeft,
+  ArrowUp,
+  Bookmark,
+  BookOpen,
+  Calendar,
+  Check,
+  CheckCircle2,
+  CheckSquare,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Cloud,
+  Code2,
+  Copy,
+  Database,
+  Download,
+  Dumbbell,
+  ExternalLink,
+  FileText,
+  Folder,
+  FolderX,
+  GraduationCap,
+  Heading1,
+  Heading2,
+  Heading3,
+  Highlighter,
+  Image,
+  Info,
+  Laptop,
+  LayoutGrid,
+  Lightbulb,
+  Link2,
+  List,
+  ListOrdered,
+  ListTodo,
+  LogIn,
+  LogOut,
+  Maximize2,
+  Minimize2,
+  Minus,
+  Monitor,
+  Moon,
+  MoreHorizontal,
+  MoreVertical,
+  Music,
+  Palette,
+  Pin,
+  Plane,
+  Plus,
+  Printer,
+  Quote,
+  Redo2,
+  RefreshCw,
+  Search,
+  Settings,
+  Share2,
+  ShieldCheck,
+  ShoppingCart,
+  SquarePen,
+  Sun,
+  Table,
+  Trash2,
+  Undo2,
+  Upload,
+  User,
+  UserPlus,
+  Users,
+  Utensils,
+  Wallet,
+  X,
+  type LucideIcon,
+} from "lucide-react";
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  add: Plus,
+  archive: Archive,
+  arrow_back: ArrowLeft,
+  arrow_upward: ArrowUp,
+  auto_stories: BookOpen,
+  bookmark: Bookmark,
+  calendar_today: Calendar,
+  check: Check,
+  check_box: CheckSquare,
+  check_circle: CheckCircle2,
+  checklist: ListTodo,
+  chevron_right: ChevronRight,
+  close: X,
+  cloud_done: Cloud,
+  cloud_sync: Cloud,
+  code: Code2,
+  content_copy: Copy,
+  dark_mode: Moon,
+  database: Database,
+  delete: Trash2,
+  description: FileText,
+  desktop_windows: Monitor,
+  devices: Laptop,
+  download: Download,
+  edit_note: SquarePen,
+  error: AlertCircle,
+  expand_more: ChevronDown,
+  fitness_center: Dumbbell,
+  flight: Plane,
+  folder: Folder,
+  folder_off: FolderX,
+  format_h1: Heading1,
+  format_h2: Heading2,
+  format_h3: Heading3,
+  format_list_bulleted: List,
+  format_list_numbered: ListOrdered,
+  format_quote: Quote,
+  fullscreen: Maximize2,
+  fullscreen_exit: Minimize2,
+  grid_on: Table,
+  grid_view: LayoutGrid,
+  groups: Users,
+  horizontal_rule: Minus,
+  image: Image,
+  info: Info,
+  ink_highlighter: Highlighter,
+  keep: Pin,
+  light_mode: Sun,
+  lightbulb: Lightbulb,
+  link: Link2,
+  login: LogIn,
+  logout: LogOut,
+  menu_book: BookOpen,
+  more_horiz: MoreHorizontal,
+  more_vert: MoreVertical,
+  music_note: Music,
+  notes: AlignLeft,
+  open_in_new: ExternalLink,
+  palette: Palette,
+  payments: Wallet,
+  person: User,
+  person_add: UserPlus,
+  print: Printer,
+  redo: Redo2,
+  refresh: RefreshCw,
+  restaurant: Utensils,
+  schedule: Clock,
+  school: GraduationCap,
+  search: Search,
+  segment: AlignJustify,
+  settings: Settings,
+  share: Share2,
+  shopping_cart: ShoppingCart,
+  sync: RefreshCw,
+  text_snippet: FileText,
+  undo: Undo2,
+  upload_file: Upload,
+  verified_user: ShieldCheck,
+};
 
 interface IconProps {
   name: string;
   size?: number | string;
   className?: string;
   filled?: boolean;
+  strokeWidth?: number;
 }
 
-export const Icon: React.FC<IconProps> = ({
+export const Icon: React.FC<IconProps> = React.memo(({
   name,
   size = 18,
   className = "",
   filled = false,
+  strokeWidth = 1.85,
 }) => {
-  const pixelSize = typeof size === "number" ? `${size}px` : size;
+  const LucideComponent = ICON_MAP[name] || FileText;
+  const numericSize = typeof size === "number" ? size : parseInt(size, 10) || 18;
 
   return (
-    <span
-      className={`material-symbols-rounded select-none inline-flex items-center justify-center ${className}`}
-      style={{
-        fontSize: pixelSize,
-        width: pixelSize,
-        height: pixelSize,
-        fontVariationSettings: filled ? "'FILL' 1, 'wght' 450, 'GRAD' 0, 'opsz' 24" : "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24",
-      }}
+    <LucideComponent
+      size={numericSize}
+      strokeWidth={strokeWidth}
+      fill={filled ? "currentColor" : "none"}
+      className={`flex-shrink-0 select-none ${className}`}
       aria-hidden="true"
-    >
-      {name}
-    </span>
+    />
   );
-};
+});
+
+Icon.displayName = "Icon";
