@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
-import type { Note, Collection, NavSection, FilterState, ThemePreference, NoteStats } from "@/types";
+import type { Note, Collection, NavSection, FilterState, ThemePreference, NoteStats, ClipboardItem } from "@/types";
 import { noteService } from "@/services/noteService";
 import { collectionService } from "@/services/collectionService";
 import { syncEngine } from "@/services/syncEngine";
 import { authService } from "@/services/authService";
 import { getStorageAdapter } from "@/lib/storage";
+import {
+  clipboardService,
+  isLinuxClipboardSupported,
+  type IncomingClipboardPayload,
+} from "@/services/clipboardService";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { MobileHome } from "@/components/mobile/MobileHome";
 import { NotesPanel } from "@/components/notes/NotesPanel";
@@ -33,6 +38,9 @@ const UpdateModal = lazy(() =>
 );
 const ShareModal = lazy(() =>
   import("@/components/editor/ShareModal").then((m) => ({ default: m.ShareModal })),
+);
+const ClipboardView = lazy(() =>
+  import("@/components/clipboard/ClipboardView").then((m) => ({ default: m.ClipboardView })),
 );
 
 export function App() {
@@ -76,6 +84,11 @@ export function App() {
   const [notesViewMode, setNotesViewMode] = useState<NotesViewMode>(
     () => settingsService.getPreferences().notesViewMode || "list",
   );
+  const [isClipboardSupported, setIsClipboardSupported] = useState(false);
+  const [clipboardItems, setClipboardItems] = useState<ClipboardItem[]>([]);
+  const [isClipboardPaused, setIsClipboardPaused] = useState(false);
+  const [clipboardSearchQuery, setClipboardSearchQuery] = useState("");
+  const [clipboardAutoFocus, setClipboardAutoFocus] = useState(false);
 
   useEffect(() => {
     return settingsService.subscribe((prefs) => {
@@ -685,6 +698,137 @@ export function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentNote]);
 
+  // Linux-only persistent clipboard initialization & Tauri event listeners
+  useEffect(() => {
+    let active = true;
+    const unlisteners: Array<() => void> = [];
+
+    (async () => {
+      const supported = await isLinuxClipboardSupported();
+      if (!active || !supported) return;
+      setIsClipboardSupported(true);
+
+      const [initialHistory, paused] = await Promise.all([
+        clipboardService.getHistory(500),
+        clipboardService.isPaused(),
+      ]);
+      if (!active) return;
+      setClipboardItems(initialHistory);
+      setIsClipboardPaused(paused);
+
+      try {
+        const { listen } = await import("@tauri-apps/api/event");
+        const unlistenNew = await listen<IncomingClipboardPayload>(
+          "clipboard://new-item",
+          async (event) => {
+            await clipboardService.recordIncomingItem(event.payload);
+            const updated = clipboardSearchQuery.trim()
+              ? await clipboardService.searchHistory(clipboardSearchQuery)
+              : await clipboardService.getHistory(500);
+            if (active) setClipboardItems(updated);
+          },
+        );
+        const unlistenOpen = await listen("clipboard://open-view", () => {
+          if (!active) return;
+          setIsZenMode(false);
+          setClipboardAutoFocus(true);
+          setFilter((prev) => ({ ...prev, section: "clipboard", collectionId: null }));
+        });
+        const unlistenPaused = await listen<boolean>("clipboard://paused-changed", (event) => {
+          if (active) setIsClipboardPaused(Boolean(event.payload));
+        });
+        unlisteners.push(unlistenNew, unlistenOpen, unlistenPaused);
+      } catch (err) {
+        console.warn("[Clipboard] Failed to attach Tauri listeners:", err);
+      }
+    })();
+
+    return () => {
+      active = false;
+      for (const unsub of unlisteners) unsub();
+    };
+  }, []);
+
+  const handleClipboardSearch = useCallback(async (query: string) => {
+    setClipboardSearchQuery(query);
+    const results = query.trim()
+      ? await clipboardService.searchHistory(query)
+      : await clipboardService.getHistory(500);
+    setClipboardItems(results);
+  }, []);
+
+  const handleCopyClipboardItem = useCallback(
+    async (item: ClipboardItem) => {
+      await clipboardService.copyToSystem(item);
+      const updated = clipboardSearchQuery.trim()
+        ? await clipboardService.searchHistory(clipboardSearchQuery)
+        : await clipboardService.getHistory(500);
+      setClipboardItems(updated);
+    },
+    [clipboardSearchQuery],
+  );
+
+  const handleToggleClipboardPin = useCallback(
+    async (id: string) => {
+      await clipboardService.togglePin(id);
+      const updated = clipboardSearchQuery.trim()
+        ? await clipboardService.searchHistory(clipboardSearchQuery)
+        : await clipboardService.getHistory(500);
+      setClipboardItems(updated);
+    },
+    [clipboardSearchQuery],
+  );
+
+  const handleDeleteClipboardItem = useCallback(
+    async (id: string) => {
+      await clipboardService.deleteItem(id);
+      setClipboardItems((prev) => prev.filter((item) => item.id !== id));
+    },
+    [],
+  );
+
+  const handleClearUnpinnedClipboard = useCallback(async () => {
+    await clipboardService.clearUnpinned();
+    setClipboardItems((prev) => prev.filter((item) => item.is_pinned));
+  }, []);
+
+  const handleToggleClipboardPause = useCallback(async () => {
+    const next = await clipboardService.setPaused(!isClipboardPaused);
+    setIsClipboardPaused(next);
+  }, [isClipboardPaused]);
+
+  const handleSaveClipAsNote = useCallback(
+    async (item: ClipboardItem) => {
+      const firstLine = item.content_text.split("\n")[0]?.trim() || "Clipboard Note";
+      const title = firstLine.length > 60 ? `${firstLine.slice(0, 60)}...` : firstLine;
+      const content =
+        item.category === "code" || item.category === "command"
+          ? {
+              type: "doc",
+              content: [
+                {
+                  type: "codeBlock",
+                  content: [{ type: "text", text: item.content_text }],
+                },
+              ],
+            }
+          : {
+              type: "doc",
+              content: item.content_text.split("\n").map((line) => ({
+                type: "paragraph",
+                content: line ? [{ type: "text", text: line }] : [],
+              })),
+            };
+
+      const created = await noteService.createNote(null, title);
+      const updated = (await noteService.updateNote(created.id, { title, content })) || created;
+      setNotes((prev) => [updated, ...prev]);
+      setSelectedNoteId(updated.id);
+      setFilter((prev) => ({ ...prev, section: "all", collectionId: null }));
+    },
+    [],
+  );
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-editor)] text-[var(--text-primary)] antialiased select-none">
       {/* Desktop 3-pane layout */}
@@ -705,11 +849,13 @@ export function App() {
               onDeleteCollection={handleDeleteCollection}
               onOpenSettings={() => setIsSettingsOpen(true)}
               onImportFile={handleImportFile}
+              showClipboard={isClipboardSupported}
+              clipboardCount={clipboardItems.length}
             />
           )}
 
           {/* Pane 2: Notes List Panel */}
-          {!isZenMode && (
+          {!isZenMode && filter.section !== "clipboard" && (
             <div
               className={`${
                 notesViewMode === "grid" ? "w-[350px]" : "w-72"
@@ -733,9 +879,25 @@ export function App() {
             </div>
           )}
 
-          {/* Pane 3: Writing Canvas */}
+          {/* Pane 3: Writing Canvas or Linux Clipboard View */}
           <main className="flex-1 h-full">
-            {currentNote ? (
+            {filter.section === "clipboard" ? (
+              <Suspense fallback={null}>
+                <ClipboardView
+                  items={clipboardItems}
+                  isPaused={isClipboardPaused}
+                  searchQuery={clipboardSearchQuery}
+                  onSearchChange={handleClipboardSearch}
+                  onCopyItem={handleCopyClipboardItem}
+                  onTogglePin={handleToggleClipboardPin}
+                  onDeleteItem={handleDeleteClipboardItem}
+                  onClearUnpinned={handleClearUnpinnedClipboard}
+                  onTogglePause={handleToggleClipboardPause}
+                  onSaveAsNote={handleSaveClipAsNote}
+                  autoFocusSearch={clipboardAutoFocus}
+                />
+              </Suspense>
+            ) : currentNote ? (
               filter.section === "trash" ? (
                 <div className="flex h-full flex-col">
                   <div className="flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-2.5 text-xs text-[var(--text-muted)]">

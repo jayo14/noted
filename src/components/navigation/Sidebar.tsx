@@ -14,6 +14,8 @@ interface SidebarProps {
   onDeleteCollection: (id: string) => Promise<void>;
   onOpenSettings: () => void;
   onImportFile?: (file: File) => Promise<void>;
+  showClipboard?: boolean;
+  clipboardCount?: number;
 }
 
 function getCollectionIcon(name: string, customIcon?: string): string {
@@ -47,6 +49,8 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
   onDeleteCollection,
   onOpenSettings,
   onImportFile,
+  showClipboard = false,
+  clipboardCount = 0,
 }) => {
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
@@ -203,6 +207,34 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
               <span className="text-[13px]">Trash</span>
             </div>
           </button>
+
+          {/* Clipboard (Linux Desktop Only) */}
+          {showClipboard && (
+            <button
+              onClick={() => onSelectSection("clipboard")}
+              className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                isNavActive("clipboard")
+                  ? "bg-[var(--bg-surface-active)] font-semibold text-[var(--text-primary)]"
+                  : "text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Icon
+                  name="clipboard"
+                  size={17}
+                  className={isNavActive("clipboard") ? "text-[var(--accent)]" : "text-[var(--text-muted)]"}
+                />
+                <span className="text-[13px]">Clipboard</span>
+              </div>
+              <span
+                className={`text-[11.5px] font-medium tabular-nums ${
+                  isNavActive("clipboard") ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+                }`}
+              >
+                {clipboardCount}
+              </span>
+            </button>
+          )}
         </nav>
 
         {/* Collections Section */}
