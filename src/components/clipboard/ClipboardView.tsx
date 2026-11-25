@@ -17,6 +17,8 @@ interface ClipboardViewProps {
   onTogglePause: () => Promise<void>;
   onSaveAsNote: (item: ClipboardItem) => Promise<void>;
   autoFocusSearch?: boolean;
+  isSidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 type FilterChip = "all" | "pinned" | "image" | "url" | "code" | "command";
@@ -65,6 +67,8 @@ export const ClipboardView: React.FC<ClipboardViewProps> = ({
   onTogglePause,
   onSaveAsNote,
   autoFocusSearch = false,
+  isSidebarCollapsed = false,
+  onToggleSidebar,
 }) => {
   const [activeFilter, setActiveFilter] = useState<FilterChip>("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -177,12 +181,22 @@ export const ClipboardView: React.FC<ClipboardViewProps> = ({
   }, []);
 
   return (
-    <div className="relative flex h-full flex-1 flex-col bg-[var(--bg-editor)] text-[var(--text-primary)] overflow-hidden">
+    <div className="relative flex h-full min-w-0 flex-1 flex-col bg-[var(--bg-editor)] text-[var(--text-primary)] overflow-hidden">
       {/* Top Header */}
-      <div className="flex-shrink-0 border-b border-[var(--border-subtle)] px-6 py-5 bg-[var(--bg-editor)]">
-        <div className="mx-auto max-w-4xl">
+      <div className="flex-shrink-0 border-b border-[var(--border-subtle)] px-4 sm:px-6 py-4 sm:py-5 bg-[var(--bg-editor)]">
+        <div className="mx-auto max-w-4xl xl:max-w-5xl 2xl:max-w-6xl">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
+              {onToggleSidebar && (
+                <button
+                  onClick={onToggleSidebar}
+                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                  title={isSidebarCollapsed ? "Show sidebar (Ctrl+\\)" : "Hide sidebar (Ctrl+\\)"}
+                  aria-label="Toggle sidebar"
+                >
+                  <Icon name="segment" size={17} />
+                </button>
+              )}
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)]">
                 <Icon name="clipboard" size={18} />
               </div>
@@ -301,9 +315,9 @@ export const ClipboardView: React.FC<ClipboardViewProps> = ({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto scroll-smooth px-6 py-4"
+        className="flex-1 overflow-y-auto scroll-smooth px-4 sm:px-6 py-4"
       >
-        <div className="mx-auto max-w-4xl space-y-2.5 pb-12">
+        <div className="mx-auto max-w-4xl xl:max-w-5xl 2xl:max-w-6xl space-y-2.5 pb-12">
           {filteredItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center text-[var(--text-muted)]">
               <Icon name="clipboard" size={32} className="mb-2 opacity-40" />

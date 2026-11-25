@@ -355,9 +355,9 @@ export const Editor: React.FC<EditorProps> = ({
       {/* Writing canvas scrollable area */}
       <div
         ref={canvasScrollRef}
-        className="relative flex flex-1 flex-col overflow-y-auto px-6 py-8 md:px-16 lg:px-24 selection:bg-[var(--selection-bg)]"
+        className="relative flex flex-1 flex-col overflow-y-auto px-5 py-6 sm:px-8 md:px-12 lg:px-16 xl:px-24 selection:bg-[var(--selection-bg)]"
       >
-        <div className="mx-auto w-full max-w-3xl flex-1 flex flex-col relative">
+        <div className="mx-auto w-full max-w-3xl xl:max-w-4xl 2xl:max-w-5xl flex-1 flex flex-col relative">
           {/* Note Title matching Image 0: bold editorial serif with blinking cursor */}
           <div className="mb-2">
             <input
@@ -367,7 +367,7 @@ export const Editor: React.FC<EditorProps> = ({
               placeholder="Untitled"
               onChange={handleTitleChange}
               onKeyDown={handleTitleKeyDown}
-              className={`w-full bg-transparent text-3xl md:text-[38px] font-bold tracking-tight text-[var(--text-primary)] placeholder-[var(--text-subtle)] outline-none border-none p-0 focus:ring-0 leading-tight ${
+              className={`w-full bg-transparent text-2xl sm:text-3xl lg:text-[36px] xl:text-[40px] font-bold tracking-tight text-[var(--text-primary)] placeholder-[var(--text-subtle)] outline-none border-none p-0 focus:ring-0 leading-tight ${
                 typographyMode === "serif" ? "font-serif-title" : "font-sans-title"
               }`}
               disabled={isReadOnly}

@@ -18,6 +18,8 @@ interface NotesPanelProps {
   onToggleChecklistFilter?: () => void;
   onEmptyTrash?: () => void;
   searchInputRef?: React.RefObject<HTMLInputElement | null>;
+  isSidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 export const NotesPanel: React.FC<NotesPanelProps> = ({
@@ -29,6 +31,8 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
   onCreateNote,
   onSearchChange,
   searchInputRef: externalSearchRef,
+  isSidebarCollapsed = false,
+  onToggleSidebar,
 }) => {
   const internalSearchRef = useRef<HTMLInputElement>(null);
   const searchInputRef = externalSearchRef || internalSearchRef;
@@ -67,26 +71,38 @@ export const NotesPanel: React.FC<NotesPanelProps> = ({
 
   return (
     <div className="flex h-full w-full flex-shrink-0 flex-col border-r border-[var(--border-subtle)] bg-[var(--bg-notes-panel)] select-none">
-      {/* Search Bar matching Image 0 with Ctrl K badge */}
+      {/* Search Bar matching Image 0 with optional Sidebar toggle */}
       <div className="p-3 pb-2 pt-2.5">
-        <div className="relative flex items-center">
-          <Icon
-            name="search"
-            size={16}
-            className="absolute left-3 text-[var(--text-muted)] pointer-events-none"
-          />
-          <input
-            ref={searchInputRef}
-            type="text"
-            placeholder="Search notes..."
-            value={filter.searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full rounded-xl bg-[var(--bg-surface)] py-2 pl-9 pr-14 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none border border-[var(--border-subtle)] focus:border-[var(--border-strong)] transition-all"
-          />
-          <div className="absolute right-2.5 flex items-center gap-1 pointer-events-none">
-            <kbd className="rounded-md border border-[var(--border-subtle)] bg-white dark:bg-[var(--bg-surface-active)] px-1.5 py-0.5 font-mono text-[9.5px] font-medium text-[var(--text-secondary)] shadow-2xs">
-              Ctrl K
-            </kbd>
+        <div className="flex items-center gap-1.5">
+          {onToggleSidebar && (
+            <button
+              onClick={onToggleSidebar}
+              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+              title={isSidebarCollapsed ? "Show sidebar (Ctrl+\\)" : "Hide sidebar (Ctrl+\\)"}
+              aria-label="Toggle sidebar"
+            >
+              <Icon name="segment" size={16} />
+            </button>
+          )}
+          <div className="relative flex flex-1 items-center min-w-0">
+            <Icon
+              name="search"
+              size={16}
+              className="absolute left-3 text-[var(--text-muted)] pointer-events-none"
+            />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search notes..."
+              value={filter.searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full rounded-xl bg-[var(--bg-surface)] py-2 pl-9 pr-14 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none border border-[var(--border-subtle)] focus:border-[var(--border-strong)] transition-all"
+            />
+            <div className="absolute right-2.5 flex items-center gap-1 pointer-events-none">
+              <kbd className="rounded-md border border-[var(--border-subtle)] bg-white dark:bg-[var(--bg-surface-active)] px-1.5 py-0.5 font-mono text-[9.5px] font-medium text-[var(--text-secondary)] shadow-2xs">
+                Ctrl K
+              </kbd>
+            </div>
           </div>
         </div>
       </div>

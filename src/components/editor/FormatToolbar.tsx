@@ -86,9 +86,9 @@ export const FormatToolbar: React.FC<FormatToolbarProps> = ({
   };
 
   return (
-    <div className="flex h-11 w-full items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-editor)] px-4 select-none">
+    <div className="flex h-11 w-full min-w-0 items-center justify-between gap-2 border-b border-[var(--border-subtle)] bg-[var(--bg-editor)] px-3 sm:px-4 select-none">
       {/* Left Formatting Tools matching Image 1 */}
-      <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+      <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto no-scrollbar">
         {isMobile && onBack && (
           <button
             onClick={onBack}

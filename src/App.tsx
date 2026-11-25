@@ -77,7 +77,13 @@ export function App() {
   const [supabaseUrl, setSupabaseUrl] = useState("");
   const [supabaseKey, setSupabaseKey] = useState("");
 
-  const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth < 768);
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200,
+  );
+  const isMobile = windowWidth < 640;
+  const isCompactDesktop = windowWidth >= 640 && windowWidth < 960;
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isCompactSidebarOpen, setIsCompactSidebarOpen] = useState(false);
   const [mobileScreen, setMobileScreen] = useState<"notes" | "editor">("notes");
   const [mobileTab, setMobileTab] = useState<"home" | "search" | "collections" | "settings">("home");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -96,10 +102,14 @@ export function App() {
     });
   }, []);
 
-  // Track window resize for responsive layout
+  // Track window resize for responsive desktop & mobile layout
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      const w = window.innerWidth;
+      setWindowWidth(w);
+      if (w >= 960) {
+        setIsCompactSidebarOpen(false);
+      }
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -682,6 +692,13 @@ export function App() {
       } else if (isCmdOrCtrl && e.key === "/") {
         e.preventDefault();
         setIsShortcutsOpen((prev) => !prev);
+      } else if (isCmdOrCtrl && e.key === "\\") {
+        e.preventDefault();
+        if (isCompactDesktop) {
+          setIsCompactSidebarOpen((prev) => !prev);
+        } else {
+          setIsSidebarCollapsed((prev) => !prev);
+        }
       } else if (isCmdOrCtrl && e.key === "1") {
         e.preventDefault();
         setFilter((prev) => ({ ...prev, section: "all", collectionId: null }));
@@ -831,11 +848,11 @@ export function App() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-editor)] text-[var(--text-primary)] antialiased select-none">
-      {/* Desktop 3-pane layout */}
+      {/* Desktop 3-pane responsive layout */}
       {!isMobile ? (
-        <div className="flex h-full w-full">
-          {/* Pane 1: Navigation Sidebar */}
-          {!isZenMode && (
+        <div className="relative flex h-full w-full overflow-hidden">
+          {/* Pane 1: Navigation Sidebar (inline on >=960px, slide-over drawer on 640-959px) */}
+          {!isZenMode && !isCompactDesktop && !isSidebarCollapsed && (
             <Sidebar
               activeSection={filter.section}
               activeCollectionId={filter.collectionId}
@@ -854,12 +871,45 @@ export function App() {
             />
           )}
 
+          {!isZenMode && isCompactDesktop && isCompactSidebarOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-30 bg-black/25 backdrop-blur-[1px]"
+                onClick={() => setIsCompactSidebarOpen(false)}
+              />
+              <div className="fixed inset-y-0 left-0 z-40 h-full shadow-2xl">
+                <Sidebar
+                  activeSection={filter.section}
+                  activeCollectionId={filter.collectionId}
+                  notes={notes}
+                  collections={collections}
+                  onSelectSection={(section, collectionId = null) => {
+                    setFilter((prev) => ({ ...prev, section, collectionId }));
+                    setIsCompactSidebarOpen(false);
+                  }}
+                  onCreateCollection={handleCreateCollection}
+                  onRenameCollection={handleRenameCollection}
+                  onDeleteCollection={handleDeleteCollection}
+                  onOpenSettings={() => {
+                    setIsCompactSidebarOpen(false);
+                    setIsSettingsOpen(true);
+                  }}
+                  onImportFile={handleImportFile}
+                  showClipboard={isClipboardSupported}
+                  clipboardCount={clipboardItems.length}
+                />
+              </div>
+            </>
+          )}
+
           {/* Pane 2: Notes List Panel */}
           {!isZenMode && filter.section !== "clipboard" && (
             <div
               className={`${
-                notesViewMode === "grid" ? "w-[350px]" : "w-72"
-              } flex-shrink-0 transition-all duration-200`}
+                notesViewMode === "grid"
+                  ? "w-[260px] md:w-[300px] lg:w-[340px] xl:w-[380px]"
+                  : "w-[230px] md:w-[260px] lg:w-72 xl:w-[300px] 2xl:w-[330px]"
+              } flex-shrink-0 transition-[width] duration-200`}
             >
               <NotesPanel
                 notes={notes}
@@ -875,12 +925,20 @@ export function App() {
                 }
                 onEmptyTrash={handleEmptyTrash}
                 searchInputRef={searchInputRef}
+                isSidebarCollapsed={isCompactDesktop ? !isCompactSidebarOpen : isSidebarCollapsed}
+                onToggleSidebar={() => {
+                  if (isCompactDesktop) {
+                    setIsCompactSidebarOpen((prev) => !prev);
+                  } else {
+                    setIsSidebarCollapsed((prev) => !prev);
+                  }
+                }}
               />
             </div>
           )}
 
           {/* Pane 3: Writing Canvas or Linux Clipboard View */}
-          <main className="flex-1 h-full">
+          <main className="flex-1 min-w-0 h-full">
             {filter.section === "clipboard" ? (
               <Suspense fallback={null}>
                 <ClipboardView
@@ -895,6 +953,14 @@ export function App() {
                   onTogglePause={handleToggleClipboardPause}
                   onSaveAsNote={handleSaveClipAsNote}
                   autoFocusSearch={clipboardAutoFocus}
+                  isSidebarCollapsed={isCompactDesktop ? !isCompactSidebarOpen : isSidebarCollapsed}
+                  onToggleSidebar={() => {
+                    if (isCompactDesktop) {
+                      setIsCompactSidebarOpen((prev) => !prev);
+                    } else {
+                      setIsSidebarCollapsed((prev) => !prev);
+                    }
+                  }}
                 />
               </Suspense>
             ) : currentNote ? (

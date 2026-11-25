@@ -100,7 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
   const isNavActive = (section: NavSection) => activeSection === section && activeCollectionId === null;
 
   return (
-    <aside className="flex h-full w-[220px] flex-shrink-0 flex-col justify-between border-r border-[var(--border-subtle)] bg-[var(--bg-sidebar)] p-3.5 text-[var(--text-primary)] select-none">
+    <aside className="flex h-full w-[210px] lg:w-[220px] xl:w-[238px] 2xl:w-[252px] flex-shrink-0 flex-col justify-between border-r border-[var(--border-subtle)] bg-[var(--bg-sidebar)] p-3.5 text-[var(--text-primary)] select-none transition-[width] duration-150">
       <div className="flex flex-col gap-1">
         {/* Brand Header matching Image 0: [icon] noted. */}
         <div
