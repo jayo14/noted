@@ -51,7 +51,34 @@ export interface DeviceInfo {
 
 export type ThemePreference = "light" | "dark" | "system";
 
-export type NavSection = "all" | "pinned" | "today" | "archive" | "collection" | "trash" | "settings";
+export type NavSection = "all" | "pinned" | "today" | "archive" | "collection" | "trash" | "clipboard" | "settings";
+
+export type ClipboardContentType = "text" | "html" | "image";
+
+export type ClipboardCategory =
+  | "text"
+  | "rich_text"
+  | "image"
+  | "url"
+  | "email"
+  | "color"
+  | "command"
+  | "code";
+
+export interface ClipboardItem {
+  id: string;
+  content_type: ClipboardContentType;
+  content_text: string;
+  content_html: string | null;
+  image_path: string | null;
+  image_width: number | null;
+  image_height: number | null;
+  content_hash: string;
+  category: ClipboardCategory;
+  is_pinned: boolean;
+  created_at: string;
+  last_copied_at: string;
+}
 
 export type SortOption = "updated" | "created" | "title";
 

@@ -1,4 +1,4 @@
-import type { Note, Collection, SyncQueueItem, SyncStatus } from "@/types";
+import type { Note, Collection, SyncQueueItem, SyncStatus, ClipboardItem } from "@/types";
 
 export interface DatabaseAdapter {
   init(): Promise<void>;
@@ -17,4 +17,13 @@ export interface DatabaseAdapter {
   setSetting<T>(key: string, value: T): Promise<void>;
   clearAllData(): Promise<void>;
   searchNotesFTS?(query: string): Promise<Note[]>;
+  getClipboardHistory?(limit?: number): Promise<ClipboardItem[]>;
+  searchClipboardHistory?(query: string, limit?: number): Promise<ClipboardItem[]>;
+  upsertClipboardItem?(
+    item: Omit<ClipboardItem, "id" | "is_pinned" | "created_at" | "last_copied_at">,
+    maxUnpinned?: number,
+  ): Promise<{ item: ClipboardItem; prunedImagePaths: string[] }>;
+  toggleClipboardPin?(id: string): Promise<ClipboardItem | null>;
+  deleteClipboardItem?(id: string): Promise<string | null>;
+  clearUnpinnedClipboard?(): Promise<string[]>;
 }

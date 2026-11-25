@@ -1,4 +1,12 @@
-import type { Note, Collection, SyncQueueItem, SyncStatus } from "@/types";
+import type {
+  Note,
+  Collection,
+  SyncQueueItem,
+  SyncStatus,
+  ClipboardItem,
+  ClipboardContentType,
+  ClipboardCategory,
+} from "@/types";
 import type { DatabaseAdapter } from "./types";
 import { generateUUID, nowISO } from "@/lib/utils";
 import Database from "@tauri-apps/plugin-sql";
@@ -86,6 +94,44 @@ export class TauriSqlAdapter implements DatabaseAdapter {
 
         CREATE TRIGGER IF NOT EXISTS notes_ad AFTER DELETE ON notes BEGIN
           DELETE FROM notes_fts WHERE id = old.id;
+        END;
+
+        -- Linux Clipboard History & FTS5
+        CREATE TABLE IF NOT EXISTS clipboard_history (
+          id TEXT PRIMARY KEY,
+          content_type TEXT NOT NULL DEFAULT 'text',
+          content_text TEXT NOT NULL DEFAULT '',
+          content_html TEXT,
+          image_path TEXT,
+          image_width INTEGER,
+          image_height INTEGER,
+          content_hash TEXT NOT NULL,
+          category TEXT NOT NULL DEFAULT 'text',
+          is_pinned INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          last_copied_at TEXT NOT NULL
+        );
+
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_clipboard_hash ON clipboard_history(content_hash);
+        CREATE INDEX IF NOT EXISTS idx_clipboard_last_copied ON clipboard_history(last_copied_at DESC);
+
+        CREATE VIRTUAL TABLE IF NOT EXISTS clipboard_fts USING fts5(
+          id UNINDEXED,
+          content_text,
+          tokenize = 'porter unicode61'
+        );
+
+        CREATE TRIGGER IF NOT EXISTS clipboard_ai AFTER INSERT ON clipboard_history BEGIN
+          INSERT INTO clipboard_fts(id, content_text)
+          VALUES (new.id, new.content_text);
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS clipboard_au AFTER UPDATE ON clipboard_history BEGIN
+          UPDATE clipboard_fts SET content_text = new.content_text WHERE id = new.id;
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS clipboard_ad AFTER DELETE ON clipboard_history BEGIN
+          DELETE FROM clipboard_fts WHERE id = old.id;
         END;
       `);
 
@@ -375,5 +421,252 @@ export class TauriSqlAdapter implements DatabaseAdapter {
       console.warn("[TauriSqlAdapter] FTS search fallback:", e);
       return [];
     }
+  }
+
+  private mapClipboardRow(r: {
+    id: string;
+    content_type: string;
+    content_text: string;
+    content_html: string | null;
+    image_path: string | null;
+    image_width: number | null;
+    image_height: number | null;
+    content_hash: string;
+    category: string;
+    is_pinned: number;
+    created_at: string;
+    last_copied_at: string;
+  }): ClipboardItem {
+    return {
+      ...r,
+      content_type: r.content_type as ClipboardContentType,
+      category: r.category as ClipboardCategory,
+      is_pinned: Boolean(r.is_pinned),
+    };
+  }
+
+  public async getClipboardHistory(limit = 500): Promise<ClipboardItem[]> {
+    await this.init();
+    if (!this.db) return [];
+
+    const rows = await this.db.select<Array<{
+      id: string;
+      content_type: string;
+      content_text: string;
+      content_html: string | null;
+      image_path: string | null;
+      image_width: number | null;
+      image_height: number | null;
+      content_hash: string;
+      category: string;
+      is_pinned: number;
+      created_at: string;
+      last_copied_at: string;
+    }>>(
+      "SELECT * FROM clipboard_history ORDER BY is_pinned DESC, last_copied_at DESC LIMIT $1",
+      [limit],
+    );
+
+    return rows.map((r) => this.mapClipboardRow(r));
+  }
+
+  public async searchClipboardHistory(query: string, limit = 200): Promise<ClipboardItem[]> {
+    await this.init();
+    if (!this.db) return [];
+    const trimmed = query.trim();
+    if (!trimmed) return this.getClipboardHistory(limit);
+
+    const sanitized = trimmed.replace(/[^a-zA-Z0-9_\s]/g, "").trim();
+    const likePattern = `%${trimmed}%`;
+
+    if (sanitized) {
+      try {
+        const rows = await this.db.select<Array<{
+          id: string;
+          content_type: string;
+          content_text: string;
+          content_html: string | null;
+          image_path: string | null;
+          image_width: number | null;
+          image_height: number | null;
+          content_hash: string;
+          category: string;
+          is_pinned: number;
+          created_at: string;
+          last_copied_at: string;
+        }>>(
+          `SELECT c.* FROM clipboard_history c
+           WHERE c.id IN (SELECT id FROM clipboard_fts WHERE clipboard_fts MATCH $1)
+              OR c.content_text LIKE $2
+           ORDER BY c.is_pinned DESC, c.last_copied_at DESC
+           LIMIT $3`,
+          [`${sanitized}*`, likePattern, limit],
+        );
+        return rows.map((r) => this.mapClipboardRow(r));
+      } catch {
+        // Fall through to LIKE query
+      }
+    }
+
+    const rows = await this.db.select<Array<{
+      id: string;
+      content_type: string;
+      content_text: string;
+      content_html: string | null;
+      image_path: string | null;
+      image_width: number | null;
+      image_height: number | null;
+      content_hash: string;
+      category: string;
+      is_pinned: number;
+      created_at: string;
+      last_copied_at: string;
+    }>>(
+      "SELECT * FROM clipboard_history WHERE content_text LIKE $1 ORDER BY is_pinned DESC, last_copied_at DESC LIMIT $2",
+      [likePattern, limit],
+    );
+
+    return rows.map((r) => this.mapClipboardRow(r));
+  }
+
+  public async upsertClipboardItem(
+    entry: Omit<ClipboardItem, "id" | "is_pinned" | "created_at" | "last_copied_at">,
+    maxUnpinned = 500,
+  ): Promise<{ item: ClipboardItem; prunedImagePaths: string[] }> {
+    await this.init();
+    const now = nowISO();
+    const id = generateUUID();
+
+    if (!this.db) {
+      return {
+        item: { ...entry, id, is_pinned: false, created_at: now, last_copied_at: now },
+        prunedImagePaths: [],
+      };
+    }
+
+    await this.db.execute(
+      `INSERT INTO clipboard_history (
+        id, content_type, content_text, content_html, image_path, image_width, image_height,
+        content_hash, category, is_pinned, created_at, last_copied_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0, $10, $10)
+      ON CONFLICT(content_hash) DO UPDATE SET
+        last_copied_at = excluded.last_copied_at,
+        content_text = excluded.content_text,
+        content_html = COALESCE(excluded.content_html, clipboard_history.content_html),
+        image_path = COALESCE(excluded.image_path, clipboard_history.image_path),
+        image_width = COALESCE(excluded.image_width, clipboard_history.image_width),
+        image_height = COALESCE(excluded.image_height, clipboard_history.image_height),
+        category = excluded.category`,
+      [
+        id,
+        entry.content_type,
+        entry.content_text,
+        entry.content_html,
+        entry.image_path,
+        entry.image_width,
+        entry.image_height,
+        entry.content_hash,
+        entry.category,
+        now,
+      ],
+    );
+
+    const savedRows = await this.db.select<Array<{
+      id: string;
+      content_type: string;
+      content_text: string;
+      content_html: string | null;
+      image_path: string | null;
+      image_width: number | null;
+      image_height: number | null;
+      content_hash: string;
+      category: string;
+      is_pinned: number;
+      created_at: string;
+      last_copied_at: string;
+    }>>(
+      "SELECT * FROM clipboard_history WHERE content_hash = $1 LIMIT 1",
+      [entry.content_hash],
+    );
+
+    // Prune oldest unpinned items beyond maxUnpinned
+    const toPrune = await this.db.select<Array<{ id: string; image_path: string | null }>>(
+      `SELECT id, image_path FROM clipboard_history
+       WHERE is_pinned = 0
+       ORDER BY last_copied_at DESC
+       LIMIT -1 OFFSET $1`,
+      [maxUnpinned],
+    );
+
+    const prunedImagePaths: string[] = [];
+    if (toPrune.length > 0) {
+      for (const row of toPrune) {
+        await this.db.execute("DELETE FROM clipboard_history WHERE id = $1", [row.id]);
+        if (row.image_path) {
+          prunedImagePaths.push(row.image_path);
+        }
+      }
+    }
+
+    const item = savedRows[0]
+      ? this.mapClipboardRow(savedRows[0])
+      : { ...entry, id, is_pinned: false, created_at: now, last_copied_at: now };
+
+    return { item, prunedImagePaths };
+  }
+
+  public async toggleClipboardPin(id: string): Promise<ClipboardItem | null> {
+    await this.init();
+    if (!this.db) return null;
+
+    await this.db.execute(
+      "UPDATE clipboard_history SET is_pinned = CASE WHEN is_pinned = 1 THEN 0 ELSE 1 END WHERE id = $1",
+      [id],
+    );
+
+    const rows = await this.db.select<Array<{
+      id: string;
+      content_type: string;
+      content_text: string;
+      content_html: string | null;
+      image_path: string | null;
+      image_width: number | null;
+      image_height: number | null;
+      content_hash: string;
+      category: string;
+      is_pinned: number;
+      created_at: string;
+      last_copied_at: string;
+    }>>(
+      "SELECT * FROM clipboard_history WHERE id = $1 LIMIT 1",
+      [id],
+    );
+
+    return rows[0] ? this.mapClipboardRow(rows[0]) : null;
+  }
+
+  public async deleteClipboardItem(id: string): Promise<string | null> {
+    await this.init();
+    if (!this.db) return null;
+
+    const rows = await this.db.select<Array<{ image_path: string | null }>>(
+      "SELECT image_path FROM clipboard_history WHERE id = $1 LIMIT 1",
+      [id],
+    );
+    const imagePath = rows[0]?.image_path || null;
+    await this.db.execute("DELETE FROM clipboard_history WHERE id = $1", [id]);
+    return imagePath;
+  }
+
+  public async clearUnpinnedClipboard(): Promise<string[]> {
+    await this.init();
+    if (!this.db) return [];
+
+    const rows = await this.db.select<Array<{ image_path: string | null }>>(
+      "SELECT image_path FROM clipboard_history WHERE is_pinned = 0 AND image_path IS NOT NULL",
+    );
+    const imagePaths = rows.map((r) => r.image_path).filter((p): p is string => Boolean(p));
+    await this.db.execute("DELETE FROM clipboard_history WHERE is_pinned = 0");
+    return imagePaths;
   }
 }

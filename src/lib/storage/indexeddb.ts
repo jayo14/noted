@@ -1,4 +1,4 @@
-import type { Note, Collection, SyncQueueItem, SyncStatus } from "@/types";
+import type { Note, Collection, SyncQueueItem, SyncStatus, ClipboardItem } from "@/types";
 import type { DatabaseAdapter } from "./types";
 import { generateUUID, nowISO } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ export class IndexedDBAdapter implements DatabaseAdapter {
   private memCollections = new Map<string, Collection>();
   private memSyncQueue = new Map<string, SyncQueueItem>();
   private memSettings = new Map<string, unknown>();
+  private memClipboard = new Map<string, ClipboardItem>();
 
   public async init(): Promise<void> {
     if (this.isInitialized && this.db) return;
@@ -387,6 +388,7 @@ export class IndexedDBAdapter implements DatabaseAdapter {
     this.memCollections.clear();
     this.memSyncQueue.clear();
     this.memSettings.clear();
+    this.memClipboard.clear();
 
     if (!this.db) return;
 
@@ -403,5 +405,104 @@ export class IndexedDBAdapter implements DatabaseAdapter {
         }
       });
     }
+  }
+
+  private sortClipboardItems(items: ClipboardItem[]): ClipboardItem[] {
+    return items.sort((a, b) => {
+      if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+      return new Date(b.last_copied_at).getTime() - new Date(a.last_copied_at).getTime();
+    });
+  }
+
+  public async getClipboardHistory(limit = 500): Promise<ClipboardItem[]> {
+    await this.init();
+    return this.sortClipboardItems(Array.from(this.memClipboard.values())).slice(0, limit);
+  }
+
+  public async searchClipboardHistory(query: string, limit = 200): Promise<ClipboardItem[]> {
+    await this.init();
+    const q = query.trim().toLowerCase();
+    if (!q) return this.getClipboardHistory(limit);
+    const filtered = Array.from(this.memClipboard.values()).filter((item) =>
+      item.content_text.toLowerCase().includes(q),
+    );
+    return this.sortClipboardItems(filtered).slice(0, limit);
+  }
+
+  public async upsertClipboardItem(
+    entry: Omit<ClipboardItem, "id" | "is_pinned" | "created_at" | "last_copied_at">,
+    maxUnpinned = 500,
+  ): Promise<{ item: ClipboardItem; prunedImagePaths: string[] }> {
+    await this.init();
+    const now = nowISO();
+
+    const existing = Array.from(this.memClipboard.values()).find(
+      (i) => i.content_hash === entry.content_hash,
+    );
+
+    let saved: ClipboardItem;
+    if (existing) {
+      saved = {
+        ...existing,
+        content_text: entry.content_text,
+        content_html: entry.content_html ?? existing.content_html,
+        image_path: entry.image_path ?? existing.image_path,
+        image_width: entry.image_width ?? existing.image_width,
+        image_height: entry.image_height ?? existing.image_height,
+        category: entry.category,
+        last_copied_at: now,
+      };
+    } else {
+      saved = {
+        ...entry,
+        id: generateUUID(),
+        is_pinned: false,
+        created_at: now,
+        last_copied_at: now,
+      };
+    }
+    this.memClipboard.set(saved.id, saved);
+
+    const unpinned = Array.from(this.memClipboard.values())
+      .filter((i) => !i.is_pinned)
+      .sort((a, b) => new Date(b.last_copied_at).getTime() - new Date(a.last_copied_at).getTime());
+
+    const prunedImagePaths: string[] = [];
+    if (unpinned.length > maxUnpinned) {
+      for (const old of unpinned.slice(maxUnpinned)) {
+        this.memClipboard.delete(old.id);
+        if (old.image_path) prunedImagePaths.push(old.image_path);
+      }
+    }
+
+    return { item: saved, prunedImagePaths };
+  }
+
+  public async toggleClipboardPin(id: string): Promise<ClipboardItem | null> {
+    await this.init();
+    const existing = this.memClipboard.get(id);
+    if (!existing) return null;
+    const updated = { ...existing, is_pinned: !existing.is_pinned };
+    this.memClipboard.set(id, updated);
+    return updated;
+  }
+
+  public async deleteClipboardItem(id: string): Promise<string | null> {
+    await this.init();
+    const existing = this.memClipboard.get(id);
+    this.memClipboard.delete(id);
+    return existing?.image_path || null;
+  }
+
+  public async clearUnpinnedClipboard(): Promise<string[]> {
+    await this.init();
+    const paths: string[] = [];
+    for (const [id, item] of this.memClipboard.entries()) {
+      if (!item.is_pinned) {
+        if (item.image_path) paths.push(item.image_path);
+        this.memClipboard.delete(id);
+      }
+    }
+    return paths;
   }
 }
