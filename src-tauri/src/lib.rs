@@ -63,6 +63,9 @@ pub fn run() {
             )
             .setup(|app| {
                 let handle = app.handle().clone();
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.hide();
+                }
                 let cb_state = clipboard::ClipboardState::new(&handle);
                 clipboard::start_clipboard_watcher(handle.clone(), &cb_state);
                 app.manage(cb_state);
