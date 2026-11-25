@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ClipboardCategory, ClipboardItem } from "@/types";
 import { Icon } from "@/components/ui/Icon";
 import { sanitizeClipboardHtml } from "@/services/clipboardService";
@@ -68,7 +68,12 @@ export const ClipboardView: React.FC<ClipboardViewProps> = ({
 }) => {
   const [activeFilter, setActiveFilter] = useState<FilterChip>("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   useEffect(() => {
     if (autoFocusSearch) {
@@ -77,6 +82,7 @@ export const ClipboardView: React.FC<ClipboardViewProps> = ({
   }, [autoFocusSearch]);
 
   const filteredItems = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
     return items.filter((item) => {
       if (activeFilter === "pinned" && !item.is_pinned) return false;
       if (
@@ -86,25 +92,92 @@ export const ClipboardView: React.FC<ClipboardViewProps> = ({
       ) {
         return false;
       }
+      if (q && !item.content_text.toLowerCase().includes(q)) {
+        return false;
+      }
       return true;
     });
-  }, [items, activeFilter]);
+  }, [items, activeFilter, searchQuery]);
+
+  // Keep selectedIndex within bounds when list changes
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [searchQuery, activeFilter]);
+
+  useEffect(() => {
+    if (selectedIndex >= filteredItems.length && filteredItems.length > 0) {
+      setSelectedIndex(filteredItems.length - 1);
+    }
+  }, [filteredItems.length, selectedIndex]);
 
   const unpinnedCount = useMemo(
     () => items.filter((i) => !i.is_pinned).length,
     [items],
   );
 
-  const handleCopy = async (item: ClipboardItem) => {
-    await onCopyItem(item);
-    setCopiedId(item.id);
-    setTimeout(() => {
-      setCopiedId((prev) => (prev === item.id ? null : prev));
-    }, 1500);
-  };
+  const handleCopy = useCallback(
+    async (item: ClipboardItem) => {
+      await onCopyItem(item);
+      setCopiedId(item.id);
+      setTimeout(() => {
+        setCopiedId((prev) => (prev === item.id ? null : prev));
+      }, 1500);
+    },
+    [onCopyItem],
+  );
+
+  const scrollCardIntoView = useCallback((index: number) => {
+    const target = filteredItems[index];
+    if (!target) return;
+    const el = cardRefs.current.get(target.id);
+    el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [filteredItems]);
+
+  // Global keyboard shortcuts inside ClipboardView (Ctrl+K/F, ArrowUp/Down, Enter)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "k" || e.key.toLowerCase() === "f")) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+        return;
+      }
+
+      if (filteredItems.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        const next = Math.min(selectedIndex + 1, filteredItems.length - 1);
+        setSelectedIndex(next);
+        scrollCardIntoView(next);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        const prev = Math.max(selectedIndex - 1, 0);
+        setSelectedIndex(prev);
+        scrollCardIntoView(prev);
+      } else if (e.key === "Enter" && document.activeElement === searchInputRef.current) {
+        e.preventDefault();
+        const item = filteredItems[selectedIndex];
+        if (item) void handleCopy(item);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [filteredItems, selectedIndex, scrollCardIntoView, handleCopy]);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    setShowScrollTop(el.scrollTop > 220);
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   return (
-    <div className="flex h-full flex-1 flex-col bg-[var(--bg-editor)] text-[var(--text-primary)] overflow-hidden">
+    <div className="relative flex h-full flex-1 flex-col bg-[var(--bg-editor)] text-[var(--text-primary)] overflow-hidden">
       {/* Top Header */}
       <div className="flex-shrink-0 border-b border-[var(--border-subtle)] px-6 py-5 bg-[var(--bg-editor)]">
         <div className="mx-auto max-w-4xl">
@@ -118,7 +191,10 @@ export const ClipboardView: React.FC<ClipboardViewProps> = ({
                   Clipboard
                 </h1>
                 <p className="text-[11.5px] text-[var(--text-muted)]">
-                  {items.length} {items.length === 1 ? "item" : "items"} · Persisted locally (500 unpinned max) · Super+V
+                  {searchQuery.trim()
+                    ? `${filteredItems.length} matching ${filteredItems.length === 1 ? "item" : "items"}`
+                    : `${items.length} ${items.length === 1 ? "item" : "items"}`}{" "}
+                  · Persisted locally (500 unpinned max) · Super+V
                 </p>
               </div>
             </div>
@@ -172,17 +248,30 @@ export const ClipboardView: React.FC<ClipboardViewProps> = ({
                 }
               }}
               placeholder="Search everything you've copied..."
-              className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] py-2.5 pl-10 pr-9 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--border-strong)] transition-colors"
+              className="w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] py-2.5 pl-10 pr-40 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-[var(--border-strong)] transition-colors"
             />
-            {searchQuery && (
-              <button
-                onClick={() => onSearchChange("")}
-                className="absolute right-3 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
-                aria-label="Clear clipboard search"
-              >
-                <Icon name="close" size={15} />
-              </button>
-            )}
+            <div className="absolute right-3 flex items-center gap-2">
+              {searchQuery ? (
+                <button
+                  onClick={() => onSearchChange("")}
+                  className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+                  aria-label="Clear clipboard search"
+                >
+                  <Icon name="close" size={15} />
+                </button>
+              ) : (
+                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-[var(--text-subtle)] pointer-events-none">
+                  <kbd className="rounded border border-[var(--border-subtle)] bg-[var(--bg-editor)] px-1.5 py-0.5 font-mono">
+                    ↑↓
+                  </kbd>
+                  <span>select</span>
+                  <kbd className="rounded border border-[var(--border-subtle)] bg-[var(--bg-editor)] px-1.5 py-0.5 font-mono">
+                    Enter
+                  </kbd>
+                  <span>copy</span>
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Filter Chips */}
@@ -209,8 +298,12 @@ export const ClipboardView: React.FC<ClipboardViewProps> = ({
       </div>
 
       {/* Scrollable Clipboard List */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
-        <div className="mx-auto max-w-4xl space-y-2.5">
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto scroll-smooth px-6 py-4"
+      >
+        <div className="mx-auto max-w-4xl space-y-2.5 pb-12">
           {filteredItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center text-[var(--text-muted)]">
               <Icon name="clipboard" size={32} className="mb-2 opacity-40" />
@@ -224,24 +317,36 @@ export const ClipboardView: React.FC<ClipboardViewProps> = ({
               </p>
             </div>
           ) : (
-            filteredItems.map((item) => {
+            filteredItems.map((item, idx) => {
               const meta = CATEGORY_META[item.category] || CATEGORY_META.text;
               const isCopied = copiedId === item.id;
+              const isHighlighted = idx === selectedIndex;
               const relTime = formatCompactRelativeTime(item.last_copied_at);
 
               return (
                 <div
                   key={item.id}
-                  onClick={() => handleCopy(item)}
+                  ref={(el) => {
+                    if (el) cardRefs.current.set(item.id, el);
+                    else cardRefs.current.delete(item.id);
+                  }}
+                  onClick={() => {
+                    setSelectedIndex(idx);
+                    void handleCopy(item);
+                  }}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      handleCopy(item);
+                      void handleCopy(item);
                     }
                   }}
-                  className="group relative flex flex-col gap-2.5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-notes-panel)] p-4 transition-all hover:border-[var(--border-strong)] hover:bg-[var(--bg-surface)]/60 cursor-pointer shadow-2xs"
+                  className={`group relative flex flex-col gap-2.5 rounded-2xl border p-4 transition-all cursor-pointer shadow-2xs ${
+                    isHighlighted
+                      ? "border-[var(--border-strong)] bg-[var(--bg-surface)]/80 ring-1 ring-[var(--accent)]/15"
+                      : "border-[var(--border-subtle)] bg-[var(--bg-notes-panel)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-surface)]/60"
+                  }`}
                 >
                   {/* Card Header: Category badge, timestamp, & quick actions */}
                   <div className="flex items-center justify-between gap-2">
@@ -349,6 +454,18 @@ export const ClipboardView: React.FC<ClipboardViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* Smooth Back-to-Top Floating Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="absolute bottom-5 right-6 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] shadow-md hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+          title="Scroll to top"
+          aria-label="Scroll to top"
+        >
+          <Icon name="arrow_upward" size={16} />
+        </button>
+      )}
     </div>
   );
 };
