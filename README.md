@@ -270,6 +270,12 @@ pnpm tauri dev
 
 Noted is pre-configured with dedicated scripts for packaging production desktop and mobile binaries across platforms:
 
+#### Linux Quick Install (Ubuntu, Zorin, Mint, Fedora, Arch, etc.)
+```bash
+curl -fsSL https://raw.githubusercontent.com/jayo14/noted/main/install.sh | bash
+```
+*Downloads the latest AppImage to `~/.local/bin/noted` (auto-extracting if `libfuse2` is absent) and adds a desktop menu entry.*
+
 #### Linux Packaging (`.deb`, `.AppImage`)
 ```bash
 # Package both Debian (.deb) and portable AppImage (.AppImage)
