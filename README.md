@@ -61,6 +61,18 @@ Download `noted_*_x64-setup.exe` (NSIS) or `noted_*_x64_en-US.msi` from the [Rel
 
 Download `app-universal-release.apk` from the [Releases page](https://github.com/jayo14/noted/releases/latest).
 
+### Update to Latest Version
+
+**Linux (Bash):**
+```bash
+pkill -x noted || true && curl -fsSL https://raw.githubusercontent.com/jayo14/noted/main/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+Stop-Process -Name "noted" -Force -ErrorAction SilentlyContinue; $url = (Invoke-RestMethod "https://api.github.com/repos/jayo14/noted/releases/latest").assets | Where-Object { $_.name -like "*x64-setup.exe" } | Select-Object -First 1 -ExpandProperty browser_download_url; $out = "$env:TEMP\noted-setup.exe"; Invoke-WebRequest -Uri $url -OutFile $out; Start-Process $out -Wait
+```
+
 ---
 
 ## Clone & Run Locally
