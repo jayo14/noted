@@ -7,6 +7,8 @@ INSTALL_DIR="${HOME}/.local/bin"
 SHARE_DIR="${HOME}/.local/share"
 APP_EXTRACT_DIR="${SHARE_DIR}/noted-app"
 DESKTOP_FILE="${SHARE_DIR}/applications/noted.desktop"
+AUTOSTART_DIR="${XDG_CONFIG_HOME:-${HOME}/.config}/autostart"
+AUTOSTART_FILE="${AUTOSTART_DIR}/noted.desktop"
 ICON_DIR="${SHARE_DIR}/icons/hicolor/128x128/apps"
 ICON_FILE="${ICON_DIR}/noted.png"
 VERSION="${NOTED_VERSION:-latest}"
@@ -54,7 +56,7 @@ if [[ -z "${APPIMAGE_URL}" ]]; then
   exit 1
 fi
 
-mkdir -p "${INSTALL_DIR}" "${SHARE_DIR}/applications" "${ICON_DIR}"
+mkdir -p "${INSTALL_DIR}" "${SHARE_DIR}/applications" "${AUTOSTART_DIR}" "${ICON_DIR}"
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
@@ -100,6 +102,20 @@ Terminal=false
 Type=Application
 Categories=Office;Utility;TextEditor;
 StartupWMClass=noted
+EOF
+
+cat > "${AUTOSTART_FILE}" <<EOF
+[Desktop Entry]
+Name=Noted
+Comment=A fast, elegant, offline-first notes & clipboard application
+Exec=${INSTALL_DIR}/${APP_NAME}
+Icon=${ICON_FILE}
+Terminal=false
+Type=Application
+Categories=Office;Utility;TextEditor;
+StartupNotify=false
+StartupWMClass=noted
+X-GNOME-Autostart-enabled=true
 EOF
 
 if command -v update-desktop-database >/dev/null 2>&1; then
