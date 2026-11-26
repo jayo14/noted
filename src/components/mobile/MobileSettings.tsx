@@ -31,7 +31,11 @@ import {
   Sliders,
   Type,
   FolderDown,
+  Lock,
+  Fingerprint,
 } from "lucide-react";
+import { hiddenNotesService, type BiometricAvailability } from "@/services/hiddenNotesService";
+import { HiddenNotesPinModal, type HiddenPinModalMode } from "./HiddenNotesPinModal";
 
 export interface MobileSettingsProps {
   isOpen: boolean;
@@ -86,6 +90,34 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
   // Updates state
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
+
+  // Hidden notes security state
+  const [hasHiddenPin, setHasHiddenPin] = useState(false);
+  const [biometricAvail, setBiometricAvail] = useState<BiometricAvailability>({
+    available: false,
+    mode: "none",
+    label: "",
+  });
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [pinModal, setPinModal] = useState<{ open: boolean; mode: HiddenPinModalMode }>({
+    open: false,
+    mode: "setup",
+  });
+
+  const refreshHiddenSecurity = async () => {
+    const [pinOk, avail, bioEnabled] = await Promise.all([
+      hiddenNotesService.hasPinConfigured(),
+      hiddenNotesService.getBiometricAvailability(),
+      hiddenNotesService.isBiometricEnabled(),
+    ]);
+    setHasHiddenPin(pinOk);
+    setBiometricAvail(avail);
+    setBiometricEnabled(bioEnabled);
+  };
+
+  useEffect(() => {
+    void refreshHiddenSecurity();
+  }, []);
 
   useEffect(() => {
     setUrl(supabaseUrl);
@@ -549,6 +581,76 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
           </div>
         </div>
 
+        {/* 3b. Hidden Notes & Security */}
+        <div className="space-y-1.5">
+          <div className="px-1 text-[13px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+            Hidden Notes & Security
+          </div>
+          <div className="w-full rounded-[22px] bg-white dark:bg-[#1C1C1E] border border-black/[0.04] dark:border-white/[0.06] shadow-2xs overflow-hidden">
+            <button
+              type="button"
+              onClick={() =>
+                setPinModal({ open: true, mode: hasHiddenPin ? "change" : "setup" })
+              }
+              className="w-full p-4 flex items-center justify-between text-left active:bg-black/5 dark:active:bg-white/5 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-black/5 dark:bg-white/10 text-[var(--text-primary)]">
+                  <Lock size={17} />
+                </div>
+                <div>
+                  <div className="text-[14px] font-semibold text-[var(--text-primary)]">
+                    {hasHiddenPin ? "Change 4-Digit PIN" : "Set 4-Digit PIN"}
+                  </div>
+                  <div className="text-[12px] text-[var(--text-muted)]">
+                    {hasHiddenPin
+                      ? "Pull down on Notes to unlock hidden notes"
+                      : "Required before hiding notes"}
+                  </div>
+                </div>
+              </div>
+              <span className="text-[12px] font-semibold text-[var(--text-muted)]">
+                {hasHiddenPin ? "Configured" : "Not set"}
+              </span>
+            </button>
+
+            {biometricAvail.available && hasHiddenPin && (
+              <>
+                <div className="ml-4 border-t border-black/[0.06] dark:border-white/[0.08]" />
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-black/5 dark:bg-white/10 text-[var(--text-primary)]">
+                      <Fingerprint size={17} />
+                    </div>
+                    <div>
+                      <div className="text-[14px] font-semibold text-[var(--text-primary)]">
+                        {biometricAvail.label}
+                      </div>
+                      <div className="text-[12px] text-[var(--text-muted)]">
+                        Unlock hidden notes using {biometricAvail.label}
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={biometricEnabled}
+                    onChange={async (e) => {
+                      if (e.target.checked) {
+                        const ok = await hiddenNotesService.enrollBiometric();
+                        setBiometricEnabled(ok);
+                      } else {
+                        await hiddenNotesService.disableBiometric();
+                        setBiometricEnabled(false);
+                      }
+                    }}
+                    className="h-6 w-11 rounded-full appearance-none bg-black/10 dark:bg-white/20 checked:bg-[#141312] dark:checked:bg-white relative cursor-pointer transition-colors duration-200 before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:h-5 before:w-5 before:rounded-full before:bg-white dark:before:bg-[#141312] before:shadow-xs before:transition-transform before:duration-200 checked:before:translate-x-5"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
         {/* 4. Data & Backups Inset Grouped Card */}
         <div className="space-y-1.5">
           <div className="px-1 text-[13px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
@@ -692,6 +794,16 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
           </div>
         </div>
       </div>
+
+      <HiddenNotesPinModal
+        isOpen={pinModal.open}
+        mode={pinModal.mode}
+        onClose={() => setPinModal({ open: false, mode: "setup" })}
+        onSuccess={() => {
+          setPinModal({ open: false, mode: "setup" });
+          void refreshHiddenSecurity();
+        }}
+      />
     </div>
   );
 };

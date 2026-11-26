@@ -26,12 +26,29 @@ describe("MobileHome Component", () => {
       local_revision: 1,
       sync_revision: 1,
     },
-  ];
+      {
+        id: "note-hidden",
+        user_id: "u1",
+        title: "Secret Vault Note",
+        content: {
+          type: "doc",
+          content: [{ type: "paragraph", content: [{ type: "text", text: "Top secret" }] }],
+        },
+        collection_id: null,
+        is_pinned: false,
+        is_hidden: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+        local_revision: 1,
+        sync_revision: 1,
+      },
+    ];
 
   const mockCollections: Collection[] = [];
-  const mockFilter: FilterState = { section: "all", collectionId: null };
+  const mockFilter: FilterState = { section: "all", collectionId: null, searchQuery: "" };
 
-  it("renders large Notes title and dynamic note count", () => {
+  it("renders large Notes title and excludes hidden notes by default", () => {
     const html = renderToString(
       <MobileHome
         notes={mockNotes}
@@ -41,7 +58,6 @@ describe("MobileHome Component", () => {
         onCreateNote={() => {}}
         onFilterSection={() => {}}
         onOpenSettings={() => {}}
-        onOpenCollections={() => {}}
         activeTab="home"
         onChangeTab={() => {}}
       />
@@ -50,6 +66,8 @@ describe("MobileHome Component", () => {
     expect(html).toContain("Notes");
     expect(html).toContain("1 Note");
     expect(html).toContain("Academic GEM — 19th Nov. 2026");
+    expect(html).not.toContain("Secret Vault Note");
+    expect(html).not.toContain('aria-label="Back to folders"');
     expect(html).toContain("Search");
   });
 
@@ -63,7 +81,6 @@ describe("MobileHome Component", () => {
         onCreateNote={() => {}}
         onFilterSection={() => {}}
         onOpenSettings={() => {}}
-        onOpenCollections={() => {}}
         activeTab="home"
         onChangeTab={() => {}}
       />
@@ -96,7 +113,6 @@ describe("MobileHome Component", () => {
         onCreateNote={() => {}}
         onFilterSection={() => {}}
         onOpenSettings={() => {}}
-        onOpenCollections={() => {}}
         activeTab="home"
         onChangeTab={() => {}}
         availableUpdate={mockUpdate}

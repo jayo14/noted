@@ -335,11 +335,14 @@ export class IndexedDBAdapter implements DatabaseAdapter {
     await this.init();
     if (!this.db) {
       try {
-        const stored = localStorage.getItem(`noted_setting_${key}`);
-        return stored !== null ? JSON.parse(stored) : defaultValue;
+        if (typeof localStorage !== "undefined") {
+          const stored = localStorage.getItem(`noted_setting_${key}`);
+          if (stored !== null) return JSON.parse(stored);
+        }
       } catch {
-        return defaultValue;
+        // Fallback to in-memory settings map
       }
+      return this.memSettings.has(key) ? (this.memSettings.get(key) as T) : defaultValue;
     }
 
     return new Promise((resolve) => {
@@ -371,7 +374,10 @@ export class IndexedDBAdapter implements DatabaseAdapter {
       localStorage.setItem(`noted_setting_${key}`, JSON.stringify(value));
     } catch {}
 
-    if (!this.db) return;
+    if (!this.db) {
+      this.memSettings.set(key, value);
+      return;
+    }
 
     return new Promise((resolve, reject) => {
       const store = this.getStore("settings", "readwrite");
