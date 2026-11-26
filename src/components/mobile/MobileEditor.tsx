@@ -3,7 +3,6 @@ import type { Editor } from "@tiptap/core";
 import { EditorContent } from "@tiptap/react";
 import {
   ChevronLeft,
-  MoreHorizontal,
   Check,
   Share2,
   Table as TableIcon,
@@ -11,11 +10,6 @@ import {
   List,
   ListTodo,
   TextQuote,
-  Pin,
-  Trash2,
-  Copy,
-  Download,
-  Sparkles,
 } from "lucide-react";
 import { MobileInsertSheet } from "./MobileInsertSheet";
 import { EditorBubbleMenu } from "@/components/editor/EditorBubbleMenu";
@@ -48,17 +42,11 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
   onTitleChange,
   onBack,
   isPinned = false,
-  onTogglePin,
-  onDuplicate,
-  onDelete,
   onShare,
-  onExport,
   collections = [],
   collectionId = null,
   isReadOnly = false,
-  onCheckForUpdates,
 }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInsertSheetOpen, setIsInsertSheetOpen] = useState(false);
   const [prefs, setPrefs] = useState(() => settingsService.getPreferences());
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -190,29 +178,18 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
           )}
         </div>
 
-        {/* Right: Pill container [Share, ...] + Done button (✓) */}
+        {/* Right: Share button + Done button (✓) */}
         <div className="flex items-center gap-2.5">
-          {/* Pill action group with Share and More options */}
-          <div className="flex items-center gap-3.5 rounded-full bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] shadow-xs px-3.5 py-1.5 h-11">
-            {onShare && (
-              <button
-                onClick={onShare}
-                className="text-[var(--text-primary)] hover:opacity-75 active:scale-95 transition-all cursor-pointer"
-                title="Share Note"
-                aria-label="Share Note"
-              >
-                <Share2 size={19} strokeWidth={2.2} />
-              </button>
-            )}
+          {onShare && (
             <button
-              onClick={() => setIsMenuOpen((prev) => !prev)}
-              className="text-[var(--text-primary)] hover:opacity-75 active:scale-95 transition-all cursor-pointer"
-              title="More Options"
-              aria-label="More Options"
+              onClick={onShare}
+              className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] shadow-xs text-[var(--text-primary)] active:scale-90 transition-all cursor-pointer"
+              title="Share Note"
+              aria-label="Share Note"
             >
-              <MoreHorizontal size={20} strokeWidth={2.4} />
+              <Share2 size={19} strokeWidth={2.2} />
             </button>
-          </div>
+          )}
 
           {/* Monochromatic Done Button (✓) */}
           <button
@@ -228,93 +205,6 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
           >
             <Check size={22} strokeWidth={2.8} />
           </button>
-
-          {/* Overflow dropdown */}
-          {isMenuOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-30"
-                onClick={() => setIsMenuOpen(false)}
-              />
-              <div className="absolute right-4 top-16 z-40 w-52 rounded-2xl bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] p-2 shadow-2xl animate-in fade-in zoom-in-95 duration-150 text-[14px]">
-                {onTogglePin && (
-                  <button
-                    onClick={() => {
-                      onTogglePin();
-                      setIsMenuOpen(false);
-                    }}
-                    className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                  >
-                    <Pin size={17} />
-                    <span>{isPinned ? "Unpin Note" : "Pin Note"}</span>
-                  </button>
-                )}
-                {onDuplicate && (
-                  <button
-                    onClick={() => {
-                      onDuplicate();
-                      setIsMenuOpen(false);
-                    }}
-                    className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                  >
-                    <Copy size={17} />
-                    <span>Duplicate</span>
-                  </button>
-                )}
-                {onShare && (
-                  <button
-                    onClick={() => {
-                      onShare();
-                      setIsMenuOpen(false);
-                    }}
-                    className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                  >
-                    <Share2 size={17} />
-                    <span>Share Note</span>
-                  </button>
-                )}
-                {onExport && (
-                  <button
-                    onClick={() => {
-                      onExport();
-                      setIsMenuOpen(false);
-                    }}
-                    className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                  >
-                    <Download size={17} />
-                    <span>Export Markdown</span>
-                  </button>
-                )}
-                {onCheckForUpdates && (
-                  <button
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      onCheckForUpdates();
-                    }}
-                    className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                  >
-                    <Sparkles size={17} />
-                    <span>Check for Updates</span>
-                  </button>
-                )}
-                {onDelete && (
-                  <>
-                    <div className="my-1.5 border-t border-black/[0.06] dark:border-white/[0.08]" />
-                    <button
-                      onClick={() => {
-                        onDelete();
-                        setIsMenuOpen(false);
-                      }}
-                      className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer"
-                    >
-                      <Trash2 size={17} />
-                      <span>Delete Note</span>
-                    </button>
-                  </>
-                )}
-              </div>
-            </>
-          )}
         </div>
       </header>
 
