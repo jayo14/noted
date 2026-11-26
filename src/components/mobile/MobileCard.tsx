@@ -101,7 +101,7 @@ export const MobileCard: React.FC<MobileCardProps> = React.memo(({ note, collect
               tasks.slice(0, 3).map((task, idx) => (
                 <div key={idx} className="flex items-center gap-2 text-[13px]">
                   <div
-                    className={`flex h-3.5 w-3.5 flex-shrink-0 items-center justify-center rounded-[3px] border ${
+                    className={`flex h-3.5 w-3.5 flex-shrink-0 items-center justify-center rounded-full border ${
                       task.checked
                         ? "bg-[var(--accent)] border-[var(--accent)] text-[var(--accent-contrast)]"
                         : "border-[var(--text-subtle)] bg-transparent"

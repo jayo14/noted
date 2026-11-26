@@ -232,17 +232,33 @@
   color: var(--text-primary);
 }
 
-/* Blockquote callout box styling matching image */
+/* Blockquote callout box styling with quote icon */
 .tiptap blockquote,
 .noted-blockquote {
+  position: relative;
   border-left: 3.5px solid var(--accent);
   background-color: var(--bg-callout);
-  border-radius: 0.65rem;
-  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  padding: 0.85rem 1.1rem 0.85rem 2.75rem;
   margin: 1.25rem 0;
   font-style: italic;
   font-weight: 500;
   color: var(--text-primary);
+}
+
+.tiptap blockquote::before,
+.noted-blockquote::before {
+  content: "";
+  position: absolute;
+  left: 0.9rem;
+  top: 0.92rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  background-color: var(--accent);
+  opacity: 0.72;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z'/%3E%3Cpath d='M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z'/%3E%3C/svg%3E") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z'/%3E%3Cpath d='M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z'/%3E%3C/svg%3E") no-repeat center / contain;
+  pointer-events: none;
 }
 
 .tiptap blockquote p,
@@ -365,10 +381,10 @@
 
 .tiptap ul[data-type="taskList"] li > label input[type="checkbox"] {
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
   border: 1.5px solid var(--text-subtle);
-  border-radius: 4px;
+  border-radius: 9999px;
   background-color: transparent;
   cursor: pointer;
   display: grid;
@@ -405,9 +421,31 @@
 
 /* Bullet list */
 .tiptap ul:not([data-type="taskList"]) {
-  list-style-type: disc;
-  padding-left: 1.25rem;
+  list-style: none;
+  padding-left: 1.45rem;
   margin: 0.5rem 0;
+}
+
+.tiptap ul:not([data-type="taskList"]) > li {
+  position: relative;
+}
+
+.tiptap ul:not([data-type="taskList"]) > li::before {
+  content: "";
+  position: absolute;
+  left: -1.05rem;
+  top: 0.52em;
+  width: 0.48rem;
+  height: 0.48rem;
+  border-radius: 9999px;
+  background-color: currentColor;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.tiptap ul:not([data-type="taskList"]) ul > li::before {
+  background-color: transparent;
+  border: 1.5px solid currentColor;
 }
 
 .tiptap ol {
