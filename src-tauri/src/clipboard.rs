@@ -25,6 +25,7 @@ pub struct ClipboardState {
     pub paused: Arc<AtomicBool>,
     pub ignore_hash: Arc<Mutex<Option<String>>>,
     pub images_dir: PathBuf,
+    pub writer_clipboard: Arc<Mutex<Option<arboard::Clipboard>>>,
 }
 
 impl ClipboardState {
@@ -40,6 +41,7 @@ impl ClipboardState {
             paused: Arc::new(AtomicBool::new(false)),
             ignore_hash: Arc::new(Mutex::new(None)),
             images_dir,
+            writer_clipboard: Arc::new(Mutex::new(None)),
         }
     }
 }
@@ -83,6 +85,7 @@ pub fn start_clipboard_watcher(app: AppHandle, state: &ClipboardState) {
 
     thread::spawn(move || {
         let mut last_hash = String::new();
+        let mut watcher_clipboard: Option<arboard::Clipboard> = None;
 
         loop {
             thread::sleep(Duration::from_millis(450));
@@ -91,7 +94,10 @@ pub fn start_clipboard_watcher(app: AppHandle, state: &ClipboardState) {
                 continue;
             }
 
-            let Ok(mut clipboard) = arboard::Clipboard::new() else {
+            if watcher_clipboard.is_none() {
+                watcher_clipboard = arboard::Clipboard::new().ok();
+            }
+            let Some(clipboard) = watcher_clipboard.as_mut() else {
                 continue;
             };
 
@@ -206,50 +212,74 @@ pub fn clipboard_write_item(
     content_html: Option<String>,
     image_path: Option<String>,
 ) -> Result<(), String> {
-    let mut clipboard =
-        arboard::Clipboard::new().map_err(|e| format!("Clipboard unavailable: {}", e))?;
+    let mut guard = state
+        .writer_clipboard
+        .lock()
+        .map_err(|_| "Clipboard state lock poisoned".to_string())?;
 
-    if content_type == "image" {
-        let path = image_path.ok_or_else(|| "Missing image path".to_string())?;
-        let dyn_img =
-            image::open(&path).map_err(|e| format!("Failed to open clipboard image: {}", e))?;
-        let rgba = dyn_img.to_rgba8();
-        let (w, h) = rgba.dimensions();
-        let raw = rgba.into_raw();
-
-        let mut hash_input = Vec::with_capacity(16 + raw.len());
-        hash_input.extend_from_slice(&(w as u64).to_le_bytes());
-        hash_input.extend_from_slice(&(h as u64).to_le_bytes());
-        hash_input.extend_from_slice(&raw);
-        let hash = sha256_hex(&hash_input);
-        *state.ignore_hash.lock().unwrap() = Some(hash);
-
-        clipboard
-            .set_image(arboard::ImageData {
-                width: w as usize,
-                height: h as usize,
-                bytes: std::borrow::Cow::Owned(raw),
-            })
-            .map_err(|e| format!("Failed to write image to clipboard: {}", e))?;
-        return Ok(());
+    if guard.is_none() {
+        *guard = Some(
+            arboard::Clipboard::new().map_err(|e| format!("Clipboard unavailable: {}", e))?,
+        );
     }
 
-    if content_type == "html" {
-        if let Some(ref html) = content_html {
-            let hash = sha256_hex(format!("html:{}:{}", content_text, html).as_bytes());
+    let write_once = |clipboard: &mut arboard::Clipboard| -> Result<(), String> {
+        if content_type == "image" {
+            let path = image_path
+                .as_deref()
+                .ok_or_else(|| "Missing image path".to_string())?;
+            let dyn_img =
+                image::open(path).map_err(|e| format!("Failed to open clipboard image: {}", e))?;
+            let rgba = dyn_img.to_rgba8();
+            let (w, h) = rgba.dimensions();
+            let raw = rgba.into_raw();
+
+            let mut hash_input = Vec::with_capacity(16 + raw.len());
+            hash_input.extend_from_slice(&(w as u64).to_le_bytes());
+            hash_input.extend_from_slice(&(h as u64).to_le_bytes());
+            hash_input.extend_from_slice(&raw);
+            let hash = sha256_hex(&hash_input);
             *state.ignore_hash.lock().unwrap() = Some(hash);
+
             clipboard
-                .set_html(html, Some(&content_text))
-                .map_err(|e| format!("Failed to write HTML to clipboard: {}", e))?;
+                .set_image(arboard::ImageData {
+                    width: w as usize,
+                    height: h as usize,
+                    bytes: std::borrow::Cow::Owned(raw),
+                })
+                .map_err(|e| format!("Failed to write image to clipboard: {}", e))?;
+            return Ok(());
+        }
+
+        if content_type == "html" {
+            if let Some(ref html) = content_html {
+                let hash = sha256_hex(format!("html:{}:{}", content_text, html).as_bytes());
+                *state.ignore_hash.lock().unwrap() = Some(hash);
+                if clipboard.set_html(html, Some(&content_text)).is_ok() {
+                    return Ok(());
+                }
+            }
+        }
+
+        let hash = sha256_hex(format!("text:{}", content_text).as_bytes());
+        *state.ignore_hash.lock().unwrap() = Some(hash);
+        clipboard
+            .set_text(&content_text)
+            .map_err(|e| format!("Failed to write text to clipboard: {}", e))?;
+        Ok(())
+    };
+
+    if let Some(ref mut cb) = *guard {
+        if write_once(cb).is_ok() {
             return Ok(());
         }
     }
 
-    let hash = sha256_hex(format!("text:{}", content_text).as_bytes());
-    *state.ignore_hash.lock().unwrap() = Some(hash);
-    clipboard
-        .set_text(content_text)
-        .map_err(|e| format!("Failed to write text to clipboard: {}", e))?;
+    // Re-initialize persistent clipboard handle once if the X11/Wayland connection went stale
+    let mut fresh =
+        arboard::Clipboard::new().map_err(|e| format!("Clipboard unavailable: {}", e))?;
+    write_once(&mut fresh)?;
+    *guard = Some(fresh);
     Ok(())
 }
 
