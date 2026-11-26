@@ -24,9 +24,6 @@ import {
 } from "@/services/updater";
 import { Menu } from "lucide-react";
 
-const MobileDrawer = lazy(() =>
-  import("@/components/navigation/MobileDrawer").then((m) => ({ default: m.MobileDrawer })),
-);
 const ShortcutsModal = lazy(() =>
   import("@/components/navigation/ShortcutsModal").then((m) => ({ default: m.ShortcutsModal })),
 );
@@ -86,7 +83,6 @@ export function App() {
   const [isCompactSidebarOpen, setIsCompactSidebarOpen] = useState(false);
   const [mobileScreen, setMobileScreen] = useState<"notes" | "editor">("notes");
   const [mobileTab, setMobileTab] = useState<"home" | "search" | "collections" | "settings">("home");
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [notesViewMode, setNotesViewMode] = useState<NotesViewMode>(
     () => settingsService.getPreferences().notesViewMode || "list",
   );
@@ -534,6 +530,20 @@ export function App() {
       setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
     }
   }, []);
+
+  const handleToggleHideNoteById = useCallback(
+    async (noteId: string) => {
+      const updated = await noteService.toggleHidden(noteId);
+      if (updated) {
+        setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+        if (selectedNoteId === noteId && updated.is_hidden) {
+          const visible = notes.filter((n) => n.deleted_at === null && !n.is_hidden && n.id !== noteId);
+          setSelectedNoteId(visible.length > 0 ? visible[0].id : null);
+        }
+      }
+    },
+    [notes, selectedNoteId],
+  );
 
   const handleDeleteNoteById = useCallback(
     async (noteId: string) => {
@@ -1060,6 +1070,7 @@ export function App() {
               onCreateNote={handleCreateNote}
               onDeleteNote={handleDeleteNoteById}
               onTogglePinNote={handleTogglePinNoteById}
+              onToggleHideNote={handleToggleHideNoteById}
               onFilterSection={(sec) => {
                 if (sec === "archive") {
                   setFilter((prev) => ({ ...prev, section: "trash" }));
@@ -1070,14 +1081,11 @@ export function App() {
                 }
               }}
               onOpenSettings={() => setIsSettingsOpen(true)}
-              onOpenCollections={() => setIsMobileDrawerOpen(true)}
               activeTab={mobileTab}
               onChangeTab={(tab) => {
                 setMobileTab(tab);
                 if (tab === "settings") {
                   setIsSettingsOpen(true);
-                } else if (tab === "collections") {
-                  setIsMobileDrawerOpen(true);
                 }
               }}
               availableUpdate={availableUpdate}
@@ -1129,25 +1137,6 @@ export function App() {
             onClose={() => setIsShareModalOpen(false)}
             note={currentNote}
             onExportMarkdown={handleExportNote}
-          />
-        )}
-
-        {/* Mobile Navigation Drawer */}
-        {isMobileDrawerOpen && (
-          <MobileDrawer
-            isOpen={isMobileDrawerOpen}
-            onClose={() => setIsMobileDrawerOpen(false)}
-            activeSection={filter.section}
-            activeCollectionId={filter.collectionId}
-            notes={notes}
-            collections={collections}
-            theme={theme}
-            onThemeChange={handleThemeChange}
-            onSelectSection={(section, collectionId = null) => {
-              setFilter((prev) => ({ ...prev, section, collectionId }));
-            }}
-            onCreateCollection={handleCreateCollection}
-            onOpenSettings={() => setIsSettingsOpen(true)}
           />
         )}
 
