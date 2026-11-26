@@ -56,4 +56,56 @@ describe("SettingsService", () => {
     expect(prefs.showWordCount).toBe(false);
     expect(prefs.noteListDensity).toBe("compact");
   });
+
+  it("applies global font preferences to document root and caches them", async () => {
+    const styleMap = new Map<string, string>();
+    const dataset: Record<string, string> = {};
+    const storageMap = new Map<string, string>();
+
+    const origDoc = globalThis.document;
+    const origStorage = globalThis.localStorage;
+
+    Object.defineProperty(globalThis, "document", {
+      configurable: true,
+      value: {
+        documentElement: {
+          dataset,
+          style: {
+            setProperty: (k: string, v: string) => styleMap.set(k, v),
+            getPropertyValue: (k: string) => styleMap.get(k) ?? "",
+          },
+        },
+      },
+    });
+
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: {
+        getItem: (k: string) => storageMap.get(k) ?? null,
+        setItem: (k: string, v: string) => storageMap.set(k, v),
+      },
+    });
+
+    try {
+      await settingsService.updatePreferences({
+        fontFamily: "mono",
+        fontSize: "large",
+        lineHeight: "relaxed",
+      });
+
+      expect(dataset.fontFamily).toBe("mono");
+      expect(dataset.fontSize).toBe("large");
+      expect(dataset.lineHeight).toBe("relaxed");
+      expect(styleMap.get("--noted-font-family")).toContain("monospace");
+      expect(styleMap.get("--noted-editor-line-height")).toBe("1.95");
+
+      const cached = storageMap.get("noted_font_prefs");
+      expect(cached).toContain('"fontFamily":"mono"');
+      expect(cached).toContain('"fontSize":"large"');
+      expect(cached).toContain('"lineHeight":"relaxed"');
+    } finally {
+      Object.defineProperty(globalThis, "document", { configurable: true, value: origDoc });
+      Object.defineProperty(globalThis, "localStorage", { configurable: true, value: origStorage });
+    }
+  });
 });

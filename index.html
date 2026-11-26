@@ -26,6 +26,13 @@
               document.documentElement.classList.remove("dark");
             }
           }
+          var savedFont = localStorage.getItem("noted_font_prefs");
+          if (savedFont) {
+            var fontPrefs = JSON.parse(savedFont);
+            if (fontPrefs.fontFamily) document.documentElement.dataset.fontFamily = fontPrefs.fontFamily;
+            if (fontPrefs.fontSize) document.documentElement.dataset.fontSize = fontPrefs.fontSize;
+            if (fontPrefs.lineHeight) document.documentElement.dataset.lineHeight = fontPrefs.lineHeight;
+          }
         } catch (e) {}
       })();
     </script>
