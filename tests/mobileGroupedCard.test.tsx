@@ -112,4 +112,18 @@ describe("MobileGroupedCard Component", () => {
     expect(html).toContain('aria-label="Delete Academic GEM — 19th Nov. 2026"');
     expect(html).toContain("touch-action:pan-y");
   });
+
+  it("renders swipe-to-pin action backdrop when onTogglePin is provided", () => {
+    const html = renderToString(
+      <MobileGroupedCard
+        notes={mockNotes}
+        collections={mockCollections}
+        onSelectNote={() => {}}
+        onTogglePin={() => {}}
+      />
+    );
+
+    expect(html).toContain("Pin");
+    expect(html).toContain('aria-label="Pin Academic GEM — 19th Nov. 2026"');
+  });
 });
