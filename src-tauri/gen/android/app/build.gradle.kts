@@ -23,7 +23,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "6").toInt()
-        versionName = tauriProperties.getProperty("tauri.android.versionName", "0.1.6")
+        versionName = tauriProperties.getProperty("tauri.android.versionName", "0.1.7")
     }
     signingConfigs {
         create("release") {

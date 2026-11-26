@@ -4,7 +4,7 @@
 
 **A fast, lightweight, offline-first notes & clipboard workspace for desktop, web, and mobile.**
 
-[![Version](https://img.shields.io/badge/Version-v0.1.6-141312.svg)](https://github.com/jayo14/noted/releases/latest)
+[![Version](https://img.shields.io/badge/Version-v0.1.7-141312.svg)](https://github.com/jayo14/noted/releases/latest)
 [![Tauri v2](https://img.shields.io/badge/Tauri-v2-blue.svg?logo=tauri&logoColor=white)](https://tauri.app)
 [![React 19](https://img.shields.io/badge/React-19-61dafb.svg?logo=react&logoColor=black)](https://react.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
