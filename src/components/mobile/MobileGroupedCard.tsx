@@ -11,6 +11,7 @@ interface MobileGroupedCardProps {
   onSelectNote: (id: string) => void;
   onRequestDelete?: (note: Note) => void;
   onTogglePin?: (note: Note) => void;
+  onHoldNote?: (note: Note) => void;
   pendingDeleteNoteId?: string | null;
 }
 
@@ -21,11 +22,13 @@ interface SwipeableNoteRowProps {
   onSelectNote: (id: string) => void;
   onRequestDelete?: (note: Note) => void;
   onTogglePin?: (note: Note) => void;
+  onHoldNote?: (note: Note) => void;
   isPendingDelete: boolean;
 }
 
 const SWIPE_ACTION_THRESHOLD = 72;
 const SWIPE_SNAP_OFFSET = -88;
+const HOLD_DURATION_MS = 480;
 
 const SwipeableNoteRow: React.FC<SwipeableNoteRowProps> = React.memo(({
   note,
@@ -34,6 +37,7 @@ const SwipeableNoteRow: React.FC<SwipeableNoteRowProps> = React.memo(({
   onSelectNote,
   onRequestDelete,
   onTogglePin,
+  onHoldNote,
   isPendingDelete,
 }) => {
   const [offsetX, setOffsetX] = useState(0);
@@ -43,10 +47,23 @@ const SwipeableNoteRow: React.FC<SwipeableNoteRowProps> = React.memo(({
     active: false,
     horizontal: false,
     didSwipe: false,
+    didHold: false,
     startX: 0,
     startY: 0,
     currentOffset: 0,
   });
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearHoldTimer = () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => clearHoldTimer();
+  }, []);
 
   useEffect(() => {
     if (!isPendingDelete && !isDragging && offsetX !== 0) {
@@ -61,23 +78,37 @@ const SwipeableNoteRow: React.FC<SwipeableNoteRowProps> = React.memo(({
   const iconMeta = classifyNoteIcon(note, collectionName === "Notes" ? undefined : collectionName);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if ((!onRequestDelete && !onTogglePin) || e.button !== 0) return;
+    if (e.button !== 0) return;
+    clearHoldTimer();
     dragStateRef.current = {
-      active: true,
+      active: Boolean(onRequestDelete || onTogglePin),
       horizontal: false,
       didSwipe: false,
+      didHold: false,
       startX: e.clientX,
       startY: e.clientY,
       currentOffset: offsetX,
     };
+
+    if (onHoldNote) {
+      holdTimerRef.current = setTimeout(() => {
+        dragStateRef.current.didHold = true;
+        dragStateRef.current.active = false;
+        onHoldNote(note);
+      }, HOLD_DURATION_MS);
+    }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const state = dragStateRef.current;
-    if (!state.active) return;
-
     const dx = e.clientX - state.startX;
     const dy = e.clientY - state.startY;
+
+    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+      clearHoldTimer();
+    }
+
+    if (!state.active) return;
 
     if (!state.horizontal) {
       if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) {
@@ -112,6 +143,7 @@ const SwipeableNoteRow: React.FC<SwipeableNoteRowProps> = React.memo(({
   };
 
   const finishSwipe = () => {
+    clearHoldTimer();
     const state = dragStateRef.current;
     if (!state.active) return;
     state.active = false;
@@ -198,10 +230,11 @@ const SwipeableNoteRow: React.FC<SwipeableNoteRowProps> = React.memo(({
         onPointerUp={finishSwipe}
         onPointerCancel={finishSwipe}
         onClick={(e) => {
-          if (dragStateRef.current.didSwipe) {
+          if (dragStateRef.current.didSwipe || dragStateRef.current.didHold) {
             e.preventDefault();
             e.stopPropagation();
             dragStateRef.current.didSwipe = false;
+            dragStateRef.current.didHold = false;
             return;
           }
           onSelectNote(note.id);
@@ -291,6 +324,7 @@ export const MobileGroupedCard: React.FC<MobileGroupedCardProps> = React.memo(({
   onSelectNote,
   onRequestDelete,
   onTogglePin,
+  onHoldNote,
   pendingDeleteNoteId = null,
 }) => {
   const collectionMap = useMemo(() => {
@@ -318,6 +352,7 @@ export const MobileGroupedCard: React.FC<MobileGroupedCardProps> = React.memo(({
             onSelectNote={onSelectNote}
             onRequestDelete={onRequestDelete}
             onTogglePin={onTogglePin}
+            onHoldNote={onHoldNote}
             isPendingDelete={pendingDeleteNoteId === note.id}
           />
         );

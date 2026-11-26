@@ -1,10 +1,12 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import type { Note, Collection, FilterState } from "@/types";
 import type { UpdateInfo } from "@/services/updater";
 import { MobileGroupedCard } from "./MobileGroupedCard";
+import { HiddenNotesPinModal, type HiddenPinModalMode } from "./HiddenNotesPinModal";
 import { groupNotesByDate } from "@/lib/dateGrouping";
 import { extractTextFromJSONContent } from "@/lib/utils";
 import { settingsService } from "@/services/settingsService";
+import { hiddenNotesService } from "@/services/hiddenNotesService";
 import {
   ChevronLeft,
   MoreHorizontal,
@@ -12,12 +14,14 @@ import {
   SquarePen,
   X,
   Trash2,
-  FolderPlus,
   Sparkles,
   Settings,
   Pin,
   Check,
   FileText,
+  Lock,
+  EyeOff,
+  Eye,
 } from "lucide-react";
 
 interface MobileHomeProps {
@@ -28,9 +32,9 @@ interface MobileHomeProps {
   onCreateNote: () => void;
   onDeleteNote?: (id: string) => Promise<void> | void;
   onTogglePinNote?: (id: string) => Promise<void> | void;
+  onToggleHideNote?: (id: string) => Promise<void> | void;
   onFilterSection: (section: "all" | "pinned" | "later" | "archive") => void;
   onOpenSettings: () => void;
-  onOpenCollections: () => void;
   activeTab: "home" | "search" | "collections" | "settings";
   onChangeTab: (tab: "home" | "search" | "collections" | "settings") => void;
   availableUpdate?: UpdateInfo | null;
@@ -47,9 +51,9 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
   onCreateNote,
   onDeleteNote,
   onTogglePinNote,
+  onToggleHideNote,
   onFilterSection,
   onOpenSettings,
-  onOpenCollections,
   availableUpdate,
   onOpenUpdateModal,
   onCheckForUpdates,
@@ -61,27 +65,55 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
   const [localChecking, setLocalChecking] = useState(false);
   const [pendingDeleteNote, setPendingDeleteNote] = useState<Note | null>(null);
   const [isDeletingNote, setIsDeletingNote] = useState(false);
+  const [heldNote, setHeldNote] = useState<Note | null>(null);
+  const [isHiddenUnlocked, setIsHiddenUnlocked] = useState(false);
+  const [pinModalState, setPinModalState] = useState<{
+    open: boolean;
+    mode: HiddenPinModalMode;
+    pendingHideNoteId?: string | null;
+  }>({ open: false, mode: "unlock", pendingHideNoteId: null });
+  const [pullOffset, setPullOffset] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const pullStartYRef = useRef<number | null>(null);
   const [, setPrefs] = useState(() => settingsService.getPreferences());
 
   useEffect(() => {
     return settingsService.subscribe(setPrefs);
   }, []);
 
-  // Filter notes based on active pill and search query
-  const filteredNotes = useMemo(() => {
-    let list = notes.filter((n) => n.deleted_at === null);
+  // Auto-lock hidden notes when app goes to background
+  useEffect(() => {
+    if (!isHiddenUnlocked || typeof document === "undefined") return;
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        setIsHiddenUnlocked(false);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [isHiddenUnlocked]);
 
-    if (filterPill === "pinned") {
-      list = list.filter((n) => n.is_pinned);
-    } else if (filterPill === "later") {
-      const laterCol = collections.find((c) => c.name.toLowerCase() === "later");
-      list = list.filter(
-        (n) =>
-          n.collection_id === laterCol?.id ||
-          n.title.toLowerCase().includes("later"),
-      );
+  // Filter notes based on active pill, hidden lock state, and search query
+  const filteredNotes = useMemo(() => {
+    let list: Note[];
+
+    if (isHiddenUnlocked) {
+      list = notes.filter((n) => n.deleted_at === null && Boolean(n.is_hidden));
     } else if (filterPill === "archive") {
-      list = notes.filter((n) => n.deleted_at !== null);
+      list = notes.filter((n) => n.deleted_at !== null && !n.is_hidden);
+    } else {
+      list = notes.filter((n) => n.deleted_at === null && !n.is_hidden);
+
+      if (filterPill === "pinned") {
+        list = list.filter((n) => n.is_pinned);
+      } else if (filterPill === "later") {
+        const laterCol = collections.find((c) => c.name.toLowerCase() === "later");
+        list = list.filter(
+          (n) =>
+            n.collection_id === laterCol?.id ||
+            n.title.toLowerCase().includes("later"),
+        );
+      }
     }
 
     if (searchQuery.trim()) {
@@ -94,7 +126,7 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
     }
 
     return list;
-  }, [notes, collections, filterPill, searchQuery]);
+  }, [notes, collections, filterPill, searchQuery, isHiddenUnlocked]);
 
   // Group filtered notes by relative date (Today, Yesterday, November, etc.)
   const noteGroups = useMemo(() => groupNotesByDate(filteredNotes), [filteredNotes]);
@@ -123,8 +155,69 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
     }
   };
 
+  const openHiddenUnlockFlow = async () => {
+    if (isHiddenUnlocked) return;
+    const configured = await hiddenNotesService.hasPinConfigured();
+    setPinModalState({
+      open: true,
+      mode: configured ? "unlock" : "setup",
+      pendingHideNoteId: null,
+    });
+  };
+
+  const handleRequestHideNote = async (note: Note) => {
+    setHeldNote(null);
+    if (note.is_hidden) {
+      await onToggleHideNote?.(note.id);
+      return;
+    }
+    const configured = await hiddenNotesService.hasPinConfigured();
+    if (!configured) {
+      setPinModalState({
+        open: true,
+        mode: "setup",
+        pendingHideNoteId: note.id,
+      });
+      return;
+    }
+    await onToggleHideNote?.(note.id);
+  };
+
+  const handlePullStart = (clientY: number) => {
+    if (isHiddenUnlocked) return;
+    const scroller = scrollContainerRef.current;
+    if (scroller && scroller.scrollTop <= 0) {
+      pullStartYRef.current = clientY;
+    } else {
+      pullStartYRef.current = null;
+    }
+  };
+
+  const handlePullMove = (clientY: number) => {
+    if (pullStartYRef.current === null || isHiddenUnlocked) return;
+    const dy = clientY - pullStartYRef.current;
+    if (dy <= 0) {
+      setPullOffset(0);
+      return;
+    }
+    const damped = Math.min(108, dy * 0.52);
+    setPullOffset(damped);
+  };
+
+  const handlePullEnd = () => {
+    if (pullStartYRef.current === null) return;
+    pullStartYRef.current = null;
+    if (pullOffset >= 64) {
+      setPullOffset(0);
+      void openHiddenUnlockFlow();
+    } else {
+      setPullOffset(0);
+    }
+  };
+
   // Dynamic header title matching Apple Notes
   const title = useMemo(() => {
+    if (isHiddenUnlocked) return "Hidden Notes";
     if (filterPill === "pinned") return "Pinned";
     if (filterPill === "later") return "Later";
     if (filterPill === "archive") return "Trash";
@@ -133,21 +226,37 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
       if (col) return col.name;
     }
     return "Notes";
-  }, [filterPill, filter.collectionId, collections]);
+  }, [isHiddenUnlocked, filterPill, filter.collectionId, collections]);
 
   return (
     <div className="relative flex h-full w-full flex-col bg-[#F2F2F7] dark:bg-[#000000] text-[var(--text-primary)] select-none overflow-hidden">
       {/* Top Header Row with status bar safe area spacing */}
       <div className="flex-shrink-0 px-4 pt-[max(0.75rem,calc(env(safe-area-inset-top,0px)+0.5rem))] pb-2 z-20">
         <header className="flex items-center justify-between">
-          {/* Circular Back button (<) matching Image 2 */}
-          <button
-            onClick={onOpenCollections}
-            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] shadow-xs text-[var(--text-primary)] active:scale-90 transition-all cursor-pointer"
-            aria-label="Back to folders"
-          >
-            <ChevronLeft size={24} strokeWidth={2.4} />
-          </button>
+          {/* Left: Back/Lock pill when inside a filtered view or Hidden Notes */}
+          {isHiddenUnlocked ? (
+            <button
+              onClick={() => setIsHiddenUnlocked(false)}
+              className="flex h-11 items-center gap-1.5 rounded-full bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] shadow-xs px-3.5 text-[13.5px] font-semibold text-[var(--text-primary)] active:scale-95 transition-all cursor-pointer"
+              aria-label="Lock hidden notes"
+            >
+              <Lock size={15} strokeWidth={2.2} />
+              <span>Lock</span>
+            </button>
+          ) : filterPill !== "all" ? (
+            <button
+              onClick={() => {
+                setFilterPill("all");
+                onFilterSection("all");
+              }}
+              className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] shadow-xs text-[var(--text-primary)] active:scale-90 transition-all cursor-pointer"
+              aria-label="Back to all notes"
+            >
+              <ChevronLeft size={24} strokeWidth={2.4} />
+            </button>
+          ) : (
+            <div className="h-11" />
+          )}
 
           {/* Right header actions: Settings cog + More options (...) */}
           <div className="flex items-center gap-2">
@@ -193,6 +302,7 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
                   </button>
                   <button
                     onClick={() => {
+                      setIsHiddenUnlocked(false);
                       setFilterPill("pinned");
                       onFilterSection("pinned");
                       setIsMenuOpen(false);
@@ -203,17 +313,7 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
                       <Pin size={16} />
                       <span>Pinned Notes</span>
                     </div>
-                    {filterPill === "pinned" && <Check size={16} className="text-[var(--text-primary)]" />}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      onOpenCollections();
-                    }}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                  >
-                    <FolderPlus size={16} />
-                    <span>Folders & Collections</span>
+                    {filterPill === "pinned" && !isHiddenUnlocked && <Check size={16} className="text-[var(--text-primary)]" />}
                   </button>
                   <button
                     onClick={handleCheckForUpdatesClick}
@@ -273,8 +373,27 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
         </div>
       </div>
 
-      {/* Scrollable Grouped Notes Area */}
-      <div className="flex-1 overflow-y-auto px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] no-scrollbar space-y-6">
+      {/* Scrollable Grouped Notes Area with Pull-Down-to-Unlock Hidden Notes */}
+      <div
+        ref={scrollContainerRef}
+        onTouchStart={(e) => e.touches[0] && handlePullStart(e.touches[0].clientY)}
+        onTouchMove={(e) => e.touches[0] && handlePullMove(e.touches[0].clientY)}
+        onTouchEnd={handlePullEnd}
+        onTouchCancel={handlePullEnd}
+        className="flex-1 overflow-y-auto px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] no-scrollbar space-y-6"
+      >
+        {pullOffset > 6 && !isHiddenUnlocked && (
+          <div
+            className="flex items-center justify-center transition-all duration-150"
+            style={{ height: `${Math.min(56, pullOffset * 0.65)}px`, opacity: Math.min(1, pullOffset / 56) }}
+          >
+            <div className="flex items-center gap-2 rounded-full bg-white/90 dark:bg-[#1C1C1E]/90 border border-black/[0.08] dark:border-white/[0.1] px-3.5 py-1.5 text-[12px] font-semibold text-[var(--text-secondary)] shadow-xs">
+              <Lock size={13} />
+              <span>{pullOffset >= 64 ? "Release to unlock Hidden Notes" : "Pull down for Hidden Notes"}</span>
+            </div>
+          </div>
+        )}
+
         {noteGroups.map((group) => (
           <div key={group.title} className="space-y-2">
             {/* Section Header (e.g. Yesterday, November) matching Image 2 */}
@@ -289,6 +408,7 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
               onSelectNote={onSelectNote}
               onRequestDelete={onDeleteNote ? (note) => setPendingDeleteNote(note) : undefined}
               onTogglePin={onTogglePinNote ? (note) => onTogglePinNote(note.id) : undefined}
+              onHoldNote={onToggleHideNote ? (note) => setHeldNote(note) : undefined}
               pendingDeleteNoteId={pendingDeleteNote?.id ?? null}
             />
           </div>
@@ -397,6 +517,57 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
           </div>
         </div>
       )}
+      {/* Hold Note Card Action Dialog (Hide / Unhide Note) */}
+      {heldNote && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs px-6 animate-in fade-in duration-150"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Note actions"
+          onClick={() => setHeldNote(null)}
+        >
+          <div
+            className="w-full max-w-xs rounded-[22px] bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] p-4 shadow-2xl animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="px-2 pb-3 text-[13px] font-semibold text-[var(--text-muted)] truncate border-b border-black/[0.06] dark:border-white/[0.08]">
+              {heldNote.title?.trim() || "Untitled"}
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleRequestHideNote(heldNote)}
+              className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[15px] font-semibold text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-98 transition-all cursor-pointer"
+            >
+              {heldNote.is_hidden ? <Eye size={18} /> : <EyeOff size={18} />}
+              <span>{heldNote.is_hidden ? "Unhide Note" : "Hide Note"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setHeldNote(null)}
+              className="mt-1 w-full rounded-xl bg-black/[0.05] dark:bg-white/[0.08] py-2.5 text-[14px] font-semibold text-[var(--text-secondary)] active:scale-98 transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 4-Digit PIN & Passkey / Biometric Modal */}
+      <HiddenNotesPinModal
+        isOpen={pinModalState.open}
+        mode={pinModalState.mode}
+        onClose={() => setPinModalState({ open: false, mode: "unlock", pendingHideNoteId: null })}
+        onSuccess={async () => {
+          const pendingId = pinModalState.pendingHideNoteId;
+          const modalMode = pinModalState.mode;
+          setPinModalState({ open: false, mode: "unlock", pendingHideNoteId: null });
+          if (pendingId) {
+            await onToggleHideNote?.(pendingId);
+          } else if (modalMode === "unlock" || modalMode === "setup") {
+            setIsHiddenUnlocked(true);
+          }
+        }}
+      />
     </div>
   );
 };
