@@ -297,10 +297,10 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
         )}
       </div>
 
-      {/* Floating Bottom Pill Bar: Pill Search Bar + Circular Compose Button matching Image 2 */}
+      {/* Floating Bottom Pill Bar: Liquid-Glass Search Bar + Circular Compose Button */}
       <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-3 px-4 pb-[max(1.25rem,calc(env(safe-area-inset-bottom,0px)+0.75rem))] pt-2 pointer-events-none">
-        {/* Floating Pill Search Bar */}
-        <div className="pointer-events-auto flex flex-1 items-center gap-2.5 rounded-full bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] shadow-md px-4 py-2.5 max-w-[280px]">
+        {/* Floating Liquid-Glass Pill Search Bar */}
+        <div className="liquid-glass pointer-events-auto flex flex-1 items-center gap-2.5 rounded-full px-4 py-2.5 max-w-[280px] transition-all">
           <Search size={18} className="text-[var(--text-muted)] flex-shrink-0" />
           <input
             type="text"
@@ -320,10 +320,10 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
           )}
         </div>
 
-        {/* Floating Circular Compose/New Note Button matching Image 2 */}
+        {/* Floating Liquid-Glass Circular Compose/New Note Button */}
         <button
           onClick={onCreateNote}
-          className="pointer-events-auto flex h-12 w-12 min-h-[48px] min-w-[48px] flex-shrink-0 items-center justify-center rounded-full bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] shadow-md text-[var(--text-primary)] active:scale-90 transition-transform cursor-pointer"
+          className="liquid-glass pointer-events-auto flex h-12 w-12 min-h-[48px] min-w-[48px] flex-shrink-0 items-center justify-center rounded-full text-[var(--text-primary)] active:scale-90 transition-transform cursor-pointer"
           aria-label="New Note"
           title="New Note"
         >
