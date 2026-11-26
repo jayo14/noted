@@ -528,6 +528,13 @@ export function App() {
     }
   };
 
+  const handleTogglePinNoteById = useCallback(async (noteId: string) => {
+    const updated = await noteService.togglePin(noteId);
+    if (updated) {
+      setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+    }
+  }, []);
+
   const handleDeleteNoteById = useCallback(
     async (noteId: string) => {
       await noteService.softDeleteNote(noteId);
@@ -1052,6 +1059,7 @@ export function App() {
               onSelectNote={handleSelectNote}
               onCreateNote={handleCreateNote}
               onDeleteNote={handleDeleteNoteById}
+              onTogglePinNote={handleTogglePinNoteById}
               onFilterSection={(sec) => {
                 if (sec === "archive") {
                   setFilter((prev) => ({ ...prev, section: "trash" }));

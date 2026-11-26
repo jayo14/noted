@@ -27,6 +27,7 @@ interface MobileHomeProps {
   onSelectNote: (id: string) => void;
   onCreateNote: () => void;
   onDeleteNote?: (id: string) => Promise<void> | void;
+  onTogglePinNote?: (id: string) => Promise<void> | void;
   onFilterSection: (section: "all" | "pinned" | "later" | "archive") => void;
   onOpenSettings: () => void;
   onOpenCollections: () => void;
@@ -45,6 +46,7 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
   onSelectNote,
   onCreateNote,
   onDeleteNote,
+  onTogglePinNote,
   onFilterSection,
   onOpenSettings,
   onOpenCollections,
@@ -286,6 +288,7 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
               collections={collections}
               onSelectNote={onSelectNote}
               onRequestDelete={onDeleteNote ? (note) => setPendingDeleteNote(note) : undefined}
+              onTogglePin={onTogglePinNote ? (note) => onTogglePinNote(note.id) : undefined}
               pendingDeleteNoteId={pendingDeleteNote?.id ?? null}
             />
           </div>

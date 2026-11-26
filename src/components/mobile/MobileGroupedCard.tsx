@@ -10,6 +10,7 @@ interface MobileGroupedCardProps {
   collections: Collection[];
   onSelectNote: (id: string) => void;
   onRequestDelete?: (note: Note) => void;
+  onTogglePin?: (note: Note) => void;
   pendingDeleteNoteId?: string | null;
 }
 
@@ -19,10 +20,11 @@ interface SwipeableNoteRowProps {
   showDivider: boolean;
   onSelectNote: (id: string) => void;
   onRequestDelete?: (note: Note) => void;
+  onTogglePin?: (note: Note) => void;
   isPendingDelete: boolean;
 }
 
-const SWIPE_DELETE_THRESHOLD = 72;
+const SWIPE_ACTION_THRESHOLD = 72;
 const SWIPE_SNAP_OFFSET = -88;
 
 const SwipeableNoteRow: React.FC<SwipeableNoteRowProps> = React.memo(({
@@ -31,6 +33,7 @@ const SwipeableNoteRow: React.FC<SwipeableNoteRowProps> = React.memo(({
   showDivider,
   onSelectNote,
   onRequestDelete,
+  onTogglePin,
   isPendingDelete,
 }) => {
   const [offsetX, setOffsetX] = useState(0);
@@ -58,7 +61,7 @@ const SwipeableNoteRow: React.FC<SwipeableNoteRowProps> = React.memo(({
   const iconMeta = classifyNoteIcon(note, collectionName === "Notes" ? undefined : collectionName);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!onRequestDelete || e.button !== 0) return;
+    if ((!onRequestDelete && !onTogglePin) || e.button !== 0) return;
     dragStateRef.current = {
       active: true,
       horizontal: false,
@@ -81,7 +84,10 @@ const SwipeableNoteRow: React.FC<SwipeableNoteRowProps> = React.memo(({
         state.active = false;
         return;
       }
-      if (dx < -8 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+        if ((dx < 0 && !onRequestDelete) || (dx > 0 && !onTogglePin)) {
+          return;
+        }
         state.horizontal = true;
         state.didSwipe = true;
         setIsDragging(true);
@@ -90,12 +96,17 @@ const SwipeableNoteRow: React.FC<SwipeableNoteRowProps> = React.memo(({
       }
     }
 
-    const raw = Math.min(0, dx);
-    const damped =
-      raw < SWIPE_SNAP_OFFSET
-        ? SWIPE_SNAP_OFFSET + (raw - SWIPE_SNAP_OFFSET) * 0.35
-        : raw;
-    const clamped = Math.max(-132, damped);
+    let raw = dx;
+    if (!onRequestDelete) raw = Math.max(0, raw);
+    if (!onTogglePin) raw = Math.min(0, raw);
+
+    let clamped = raw;
+    if (raw < SWIPE_SNAP_OFFSET) {
+      clamped = Math.max(-132, SWIPE_SNAP_OFFSET + (raw - SWIPE_SNAP_OFFSET) * 0.35);
+    } else if (raw > 88) {
+      clamped = Math.min(132, 88 + (raw - 88) * 0.35);
+    }
+
     state.currentOffset = clamped;
     setOffsetX(clamped);
   };
@@ -106,20 +117,54 @@ const SwipeableNoteRow: React.FC<SwipeableNoteRowProps> = React.memo(({
     state.active = false;
     setIsDragging(false);
 
-    if (state.horizontal && state.currentOffset <= -SWIPE_DELETE_THRESHOLD && onRequestDelete) {
+    if (state.horizontal && state.currentOffset <= -SWIPE_ACTION_THRESHOLD && onRequestDelete) {
       state.currentOffset = SWIPE_SNAP_OFFSET;
       setOffsetX(SWIPE_SNAP_OFFSET);
       onRequestDelete(note);
+    } else if (state.horizontal && state.currentOffset >= SWIPE_ACTION_THRESHOLD && onTogglePin) {
+      state.currentOffset = 0;
+      setOffsetX(0);
+      onTogglePin(note);
     } else {
       state.currentOffset = 0;
       setOffsetX(0);
     }
   };
 
-  const revealProgress = Math.min(1, Math.abs(offsetX) / SWIPE_DELETE_THRESHOLD);
+  const deleteRevealProgress = Math.min(1, Math.max(0, -offsetX) / SWIPE_ACTION_THRESHOLD);
+  const pinRevealProgress = Math.min(1, Math.max(0, offsetX) / SWIPE_ACTION_THRESHOLD);
 
   return (
     <div className="relative overflow-hidden" style={{ touchAction: "pan-y" }}>
+      {/* Amber Pin/Unpin action backdrop revealed on swipe right */}
+      {onTogglePin && (
+        <div
+          className="absolute inset-y-0 left-0 flex w-24 items-center justify-start bg-amber-500 pl-5 text-white transition-opacity"
+          style={{ opacity: offsetX > 4 ? 1 : 0 }}
+          aria-hidden={offsetX <= 4}
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onTogglePin(note);
+              setOffsetX(0);
+            }}
+            className="flex flex-col items-center gap-1 cursor-pointer"
+            style={{
+              transform: `scale(${0.82 + 0.18 * pinRevealProgress})`,
+              opacity: Math.max(0.35, pinRevealProgress),
+            }}
+            aria-label={`${note.is_pinned ? "Unpin" : "Pin"} ${title}`}
+          >
+            <Pin size={18} strokeWidth={2.2} className={note.is_pinned ? "" : "fill-white"} />
+            <span className="text-[11px] font-semibold tracking-tight">
+              {note.is_pinned ? "Unpin" : "Pin"}
+            </span>
+          </button>
+        </div>
+      )}
+
       {/* Red delete action backdrop revealed on swipe left */}
       {onRequestDelete && (
         <div
@@ -135,8 +180,8 @@ const SwipeableNoteRow: React.FC<SwipeableNoteRowProps> = React.memo(({
             }}
             className="flex flex-col items-center gap-1 cursor-pointer"
             style={{
-              transform: `scale(${0.82 + 0.18 * revealProgress})`,
-              opacity: Math.max(0.35, revealProgress),
+              transform: `scale(${0.82 + 0.18 * deleteRevealProgress})`,
+              opacity: Math.max(0.35, deleteRevealProgress),
             }}
             aria-label={`Delete ${title}`}
           >
@@ -245,6 +290,7 @@ export const MobileGroupedCard: React.FC<MobileGroupedCardProps> = React.memo(({
   collections,
   onSelectNote,
   onRequestDelete,
+  onTogglePin,
   pendingDeleteNoteId = null,
 }) => {
   const collectionMap = useMemo(() => {
@@ -271,6 +317,7 @@ export const MobileGroupedCard: React.FC<MobileGroupedCardProps> = React.memo(({
             showDivider={index < notes.length - 1}
             onSelectNote={onSelectNote}
             onRequestDelete={onRequestDelete}
+            onTogglePin={onTogglePin}
             isPendingDelete={pendingDeleteNoteId === note.id}
           />
         );
