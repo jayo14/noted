@@ -528,6 +528,20 @@ export function App() {
     }
   };
 
+  const handleDeleteNoteById = useCallback(
+    async (noteId: string) => {
+      await noteService.softDeleteNote(noteId);
+      const updatedNotes = await noteService.getAllNotes(true);
+      setNotes(updatedNotes);
+
+      if (selectedNoteId === noteId) {
+        const active = updatedNotes.filter((n) => n.deleted_at === null);
+        setSelectedNoteId(active.length > 0 ? active[0].id : null);
+      }
+    },
+    [selectedNoteId],
+  );
+
   const handleDeleteCurrentNote = async () => {
     if (!selectedNoteId) return;
     await noteService.softDeleteNote(selectedNoteId);
@@ -1037,6 +1051,7 @@ export function App() {
               filter={filter}
               onSelectNote={handleSelectNote}
               onCreateNote={handleCreateNote}
+              onDeleteNote={handleDeleteNoteById}
               onFilterSection={(sec) => {
                 if (sec === "archive") {
                   setFilter((prev) => ({ ...prev, section: "trash" }));
