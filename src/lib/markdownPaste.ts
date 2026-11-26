@@ -5,23 +5,32 @@ import { marked } from "marked";
  */
 export function isMarkdownText(rawText: string): boolean {
   if (!rawText || typeof rawText !== "string") return false;
-  const text = rawText.trim();
+  const text = rawText.replace(/\r\n/g, "\n").trim();
   if (text.length === 0) return false;
 
   // Code blocks (triple backticks or tildes)
   if (/```[\s\S]*?```/.test(text) || /~~~[\s\S]*?~~~/.test(text)) return true;
 
+  // Shebang scripts (e.g. #!/usr/bin/env bash) without fenced code blocks are code, not headings
+  if (/^#!\//.test(text)) return false;
+
   // ATX Headings: # Heading
   if (/^#{1,6}\s+\S+/m.test(text)) return true;
 
   // Setext Headings: Line 1 \n === or ---
-  if (/^.+\r?\n[=-]{2,}\s*$/m.test(text)) return true;
+  if (/^.+\n[=-]{2,}\s*$/m.test(text)) return true;
 
   // Task list items: - [ ] or - [x] or * [ ]
   if (/^\s*[-*+]\s+\[[ xX]\]\s+\S+/m.test(text)) return true;
 
-  // Markdown links: [text](https://...) or images ![alt](...)
+  // Markdown links: [text](url) or images ![alt](url) or angle-bracket autolinks <https://...>
   if (/!?\[[^\]\r\n]+\]\((?:https?:\/\/[^\s)]+|data:[^)]+|[^\s)]+)\)/.test(text)) return true;
+  if (/<https?:\/\/[^\s>]+>/.test(text)) return true;
+
+  // Reference-style links: [label][ref] with [ref]: url
+  if (/\[[^\]\r\n]+\]\[[^\]\r\n]*\]/.test(text) && /^\s*\[[^\]\r\n]+\]:\s+\S+/m.test(text)) {
+    return true;
+  }
 
   // Bold (**text** or __text__)
   if (/(\*\*|__)(?!\s).+?(?!\s)\1/.test(text)) return true;
@@ -35,8 +44,15 @@ export function isMarkdownText(rawText: string): boolean {
   // Blockquotes: > quote
   if (/^>\s+\S+/m.test(text)) return true;
 
-  // Tables: | Header | Header |
-  if (/^\|[^\r\n]+\|\r?\n\|[-: |]+\|\r?\n\|[^\r\n]+\|/m.test(text)) return true;
+  // GFM Tables: with or without outer pipes, with alignment colons
+  if (
+    /^\s*\|?[^\n|]+\|[^\n]*\n\s*\|?\s*:?-{2,}:?\s*(?:\|\s*:?-{2,}:?\s*)+\|?\s*(?:\n|$)/m.test(
+      text,
+    ) ||
+    /^\s*\|[^\n]+\|\s*\n\s*\|\s*:?-{2,}:?\s*\|\s*(?:\n|$)/m.test(text)
+  ) {
+    return true;
+  }
 
   // Horizontal rules: --- or *** or ___
   if (/^(\*{3,}|-{3,}|_{3,})$/m.test(text)) return true;
@@ -53,7 +69,7 @@ export function isMarkdownText(rawText: string): boolean {
   if (/`[^`\r\n]+`/.test(text) && /\w+/.test(text)) return true;
 
   // Italic formatting (*text* or _text_) - requiring boundary word checks
-  if (/(^|\s)(\*|_)[^\s*_].*?[^\s*_]\2(\s|$|[.,!?;:])/.test(text)) return true;
+  if (/(^|\s)(\*|_)[^\s*_](?:.*?[^\s*_])?\2(\s|$|[.,!?;:])/.test(text)) return true;
 
   return false;
 }
@@ -84,12 +100,14 @@ export function shouldRenderAsMarkdown(plainText: string, html?: string | null):
 
   // Many browsers and apps wrap copied text in simple <p> or <div> or <span> tags
   // but leave the raw markdown tokens inside (e.g., <p># Heading</p><p>**bold**</p>).
-  // If the HTML has raw Markdown tokens like "# ", "**", "- [ ]", "```"
   const hasRawMarkdownTokensInHtml =
     /(?:^|>)\s*#{1,6}\s+\S+/.test(trimmedHtml) ||
     /\*\*[^*]+\*\*/.test(trimmedHtml) ||
+    /~~[^~]+~~/.test(trimmedHtml) ||
+    /==[^=]+==/.test(trimmedHtml) ||
     /\[[ xX]\]/.test(trimmedHtml) ||
     /```/.test(trimmedHtml) ||
+    /\|[^|\n]+\|/.test(trimmedHtml) ||
     /(?:^|>)\s*>\s+\S+/.test(trimmedHtml);
 
   if (hasRawMarkdownTokensInHtml) {
@@ -106,26 +124,34 @@ export function shouldRenderAsMarkdown(plainText: string, html?: string | null):
 }
 
 /**
- * Transforms standard markdown task list checkboxes into TipTap taskList/taskItem format.
+ * Transforms standard markdown task list checkboxes into TipTap taskList/taskItem format,
+ * preserving nested lists and inline formatting inside task items.
  */
 function normalizeTaskListsForTipTap(html: string): string {
-  let output = html;
+  // Match opening <li> (with optional <p>) containing a checkbox input, capturing the item body
+  // up to any nested list (<ul>/<ol>) or closing </li>.
+  const taskItemPattern =
+    /<li([^>]*)>\s*(?:<p>)?\s*<input([^>]*type=["']checkbox["'][^>]*)>\s*([\s\S]*?)(?:<\/p>)?(?=\s*(?:<(?:ul|ol)\b|<\/li>))/gi;
 
-  // Replace <li> containing checked input
-  output = output.replace(
-    /<li[^>]*>\s*(?:<p>)?\s*<input[^>]*checked[^>]*>\s*([\s\S]*?)(?:<\/p>)?\s*<\/li>/gi,
-    '<li data-type="taskItem" data-checked="true"><div><p>$1</p></div></li>',
+  let output = html.replace(
+    taskItemPattern,
+    (_match, liAttrs: string, inputAttrs: string, content: string) => {
+      const isChecked = /\bchecked\b/i.test(inputAttrs);
+      return `<li${liAttrs} data-type="taskItem" data-checked="${isChecked}"><div><p>${content.trim()}</p></div>`;
+    },
   );
 
-  // Replace <li> containing unchecked input
+  // Also handle inputs where `checked` appears without `type="checkbox"` attribute order issues
   output = output.replace(
-    /<li[^>]*>\s*(?:<p>)?\s*<input[^>]*type=["']checkbox["'][^>]*>\s*([\s\S]*?)(?:<\/p>)?\s*<\/li>/gi,
-    '<li data-type="taskItem" data-checked="false"><div><p>$1</p></div></li>',
+    /<li([^>]*)>\s*(?:<p>)?\s*<input([^>]*\bchecked\b[^>]*)>\s*([\s\S]*?)(?:<\/p>)?(?=\s*(?:<(?:ul|ol)\b|<\/li>))/gi,
+    (_match, liAttrs: string, _inputAttrs: string, content: string) => {
+      return `<li${liAttrs} data-type="taskItem" data-checked="true"><div><p>${content.trim()}</p></div>`;
+    },
   );
 
-  // Wrap any <ul> that has taskItems with data-type="taskList"
+  // Mark any <ul> that contains at least one taskItem as data-type="taskList"
   output = output.replace(
-    /<ul([^>]*)>([\s\S]*?<li data-type="taskItem"[\s\S]*?)<\/ul>/gi,
+    /<ul(?![^>]*data-type="taskList")([^>]*)>([\s\S]*?<li[^>]*data-type="taskItem"[\s\S]*?)<\/ul>/gi,
     '<ul$1 data-type="taskList">$2</ul>',
   );
 
@@ -144,32 +170,37 @@ function normalizeHeadingsForTipTap(html: string): string {
 
 /**
  * Normalizes markdown tables into clean formatted structures for TipTap native Table extension.
- * Wraps cell contents in paragraphs and attaches the noted-table styling class.
+ * Wraps cell contents in paragraphs, preserves alignment, and attaches the noted-table styling class.
  */
 function normalizeTablesForTipTap(html: string): string {
   if (!html.includes("<table")) return html;
 
   return html.replace(/<table[^>]*>([\s\S]*?)<\/table>/gi, (_match, tableContent) => {
-    let normalized = tableContent;
+    let normalized = tableContent.replace(/>\s+</g, "><");
 
-    // Wrap <th> contents in <p> if not already wrapped
+    const normalizeCell = (tag: "th" | "td", attrs: string, content: string) => {
+      const trimmed = content.trim();
+      // Preserve marked's align="..." attribute as inline text-align style on the cell
+      let cleanAttrs = attrs;
+      const alignMatch = attrs.match(/\balign=["'](left|center|right)["']/i);
+      if (alignMatch && !/\bstyle=/i.test(attrs)) {
+        cleanAttrs = attrs.replace(
+          /\balign=["'](left|center|right)["']/i,
+          `style="text-align: $1"`,
+        );
+      }
+      const inner = /^<p[\s>]/i.test(trimmed) ? trimmed : `<p>${trimmed}</p>`;
+      return `<${tag}${cleanAttrs}>${inner}</${tag}>`;
+    };
+
     normalized = normalized.replace(
       /<th\b([^>]*)>([\s\S]*?)<\/th>/gi,
-      (_m: string, attrs: string, content: string) => {
-        const trimmed = content.trim();
-        const inner = trimmed.startsWith("<p>") ? trimmed : `<p>${trimmed}</p>`;
-        return `<th${attrs}>${inner}</th>`;
-      },
+      (_m: string, attrs: string, content: string) => normalizeCell("th", attrs, content),
     );
 
-    // Wrap <td> contents in <p> if not already wrapped
     normalized = normalized.replace(
       /<td\b([^>]*)>([\s\S]*?)<\/td>/gi,
-      (_m: string, attrs: string, content: string) => {
-        const trimmed = content.trim();
-        const inner = trimmed.startsWith("<p>") ? trimmed : `<p>${trimmed}</p>`;
-        return `<td${attrs}>${inner}</td>`;
-      },
+      (_m: string, attrs: string, content: string) => normalizeCell("td", attrs, content),
     );
 
     return `<table class="noted-table">${normalized}</table>`;
@@ -194,16 +225,42 @@ export function sanitizeHtml(html: string): string {
 }
 
 /**
+ * Converts ==highlight== syntax to <mark>highlight</mark> while leaving
+ * fenced code blocks and inline code spans untouched.
+ */
+function preprocessHighlights(markdown: string): string {
+  const codeSegments: string[] = [];
+  const placeholder = (idx: number) => `\u0000NOTED_CODE_${idx}\u0000`;
+
+  // Temporarily mask fenced code blocks and inline code spans
+  const masked = markdown
+    .replace(/```[\s\S]*?```|~~~[\s\S]*?~~~/g, (match) => {
+      const idx = codeSegments.push(match) - 1;
+      return placeholder(idx);
+    })
+    .replace(/`[^`\r\n]+`/g, (match) => {
+      const idx = codeSegments.push(match) - 1;
+      return placeholder(idx);
+    });
+
+  const highlighted = masked.replace(/==(?!\s)(.+?)(?!\s)==/g, "<mark>$1</mark>");
+
+  return highlighted.replace(/\u0000NOTED_CODE_(\d+)\u0000/g, (_m, idx) => codeSegments[Number(idx)]);
+}
+
+/**
  * Converts a markdown string into clean HTML formatted for TipTap editor insertion.
  */
 export function markdownToTipTapHtml(markdown: string): string {
   if (!markdown) return "";
 
-  // 1. Neutralize javascript: or vbscript: in markdown link syntax before parsing
-  let preprocessed = markdown.replace(/\[([^\]]+)\]\((?:javascript|vbscript):[^)]+\)/gi, "[$1](#)");
+  // 1. Normalize line endings and neutralize javascript: or vbscript: in markdown link syntax
+  let preprocessed = markdown
+    .replace(/\r\n/g, "\n")
+    .replace(/\[([^\]]+)\]\((?:javascript|vbscript):[^)]+\)/gi, "[$1](#)");
 
-  // 2. Convert ==highlight== to <mark>highlight</mark> before marked parsing
-  preprocessed = preprocessed.replace(/==(?!\s)(.+?)(?!\s)==/g, "<mark>$1</mark>");
+  // 2. Convert ==highlight== to <mark>highlight</mark> outside of code blocks/spans
+  preprocessed = preprocessHighlights(preprocessed);
 
   // 3. Configure marked for clean, synchronous GFM parsing
   const rawHtml = marked.parse(preprocessed, {

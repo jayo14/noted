@@ -159,6 +159,48 @@ describe("Markdown Paste Detection & Auto-formatting", () => {
       expect(html).not.toContain("onerror");
       expect(html).not.toContain("javascript:");
     });
+
+    it("detects and parses pipeless and aligned GFM tables", () => {
+      const pipelessTable = "Name | Score | Rank\n:--- | :---: | ---:\nAlice | 99 | 1";
+      expect(isMarkdownText(pipelessTable)).toBe(true);
+      const html = markdownToTipTapHtml(pipelessTable);
+      expect(html).toContain('class="noted-table"');
+      expect(html).toContain("<th");
+      expect(html).toContain("<p>Name</p></th>");
+      expect(html).toContain("<p>Alice</p></td>");
+      expect(html).toContain('text-align: center');
+      expect(html).toContain('text-align: right');
+    });
+
+    it("handles empty cells inside markdown tables", () => {
+      const md = "| A | B |\n| --- | --- |\n| 1 |  |";
+      const html = markdownToTipTapHtml(md);
+      expect(html).toContain("<td><p>1</p></td>");
+      expect(html).toContain("<td><p></p></td>");
+    });
+
+    it("preserves == inside fenced code blocks and inline code", () => {
+      const md = "Check `a == b` and:\n```js\nif (x == 1 && y == 2) {}\n```\nAnd ==highlighted==.";
+      const html = markdownToTipTapHtml(md);
+      expect(html).toContain("<code>a == b</code>");
+      expect(html).toContain("if (x == 1 &amp;&amp; y == 2) {}");
+      expect(html).not.toContain("<mark> 1");
+      expect(html).toContain("<mark>highlighted</mark>");
+    });
+
+    it("preserves nested task lists", () => {
+      const md = "- [ ] Parent\n  - [x] Child done";
+      const html = markdownToTipTapHtml(md);
+      expect(html).toContain('data-type="taskList"');
+      expect(html).toContain('data-type="taskItem" data-checked="false"');
+      expect(html).toContain('data-type="taskItem" data-checked="true"');
+      expect(html).toContain("Parent");
+      expect(html).toContain("Child done");
+    });
+
+    it("does not treat shebang scripts as markdown headings", () => {
+      expect(isMarkdownText("#!/usr/bin/env bash\necho hello")).toBe(false);
+    });
   });
 
   describe("sanitizeHtml", () => {
