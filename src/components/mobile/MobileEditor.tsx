@@ -48,6 +48,8 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
   isReadOnly = false,
 }) => {
   const [isInsertSheetOpen, setIsInsertSheetOpen] = useState(false);
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
   const [prefs, setPrefs] = useState(() => settingsService.getPreferences());
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
@@ -254,7 +256,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
       {/* Selection bubble menu - dynamically positioned below text selection to avoid native callout */}
       <EditorBubbleMenu editor={editor} />
 
-      {/* Floating Formatting Pill Menubar matching Image 1: Docks above the virtual keyboard when open */}
+      {/* Floating Slidable Formatting Pill Menubar: Docks above keyboard when open or at bottom */}
       <div
         style={{
           bottom: isKeyboardOpen
@@ -263,27 +265,207 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
               : "max(0.6rem, env(safe-area-inset-bottom, 0px))"
             : "max(1.25rem, calc(0.75rem + env(safe-area-inset-bottom, 0px)))",
         }}
-        className="fixed left-4 right-4 z-40 flex justify-center pointer-events-none transition-[bottom] duration-150 ease-out"
+        className="fixed left-3 right-3 z-40 flex flex-col items-center gap-2 pointer-events-none transition-[bottom] duration-150 ease-out"
       >
+        {showLinkInput && (
+          <div
+            onMouseDown={(e) => e.preventDefault()}
+            onTouchStart={(e) => e.stopPropagation()}
+            className="pointer-events-auto flex w-full max-w-[380px] items-center gap-2 rounded-full bg-white dark:bg-[#1C1C1E] px-3 py-1.5 border border-black/[0.08] dark:border-white/[0.1] shadow-xl"
+          >
+            <input
+              type="url"
+              placeholder="Paste or type URL..."
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const trimmed = linkUrl.trim();
+                  if (!trimmed) {
+                    editor.chain().focus().extendMarkRange("link").unsetLink().run();
+                  } else {
+                    const href = /^https?:\/\//i.test(trimmed) || trimmed.startsWith("mailto:") ? trimmed : `https://${trimmed}`;
+                    editor.chain().focus().extendMarkRange("link").setLink({ href }).run();
+                  }
+                  setShowLinkInput(false);
+                  setLinkUrl("");
+                } else if (e.key === "Escape") {
+                  setShowLinkInput(false);
+                }
+              }}
+              autoFocus
+              className="flex-1 bg-transparent px-2 text-[13.5px] text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none border-none"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const trimmed = linkUrl.trim();
+                if (!trimmed) {
+                  editor.chain().focus().extendMarkRange("link").unsetLink().run();
+                } else {
+                  const href = /^https?:\/\//i.test(trimmed) || trimmed.startsWith("mailto:") ? trimmed : `https://${trimmed}`;
+                  editor.chain().focus().extendMarkRange("link").setLink({ href }).run();
+                }
+                setShowLinkInput(false);
+                setLinkUrl("");
+              }}
+              className="rounded-full bg-[#141312] dark:bg-[var(--accent)] px-3 py-1 text-xs font-semibold text-white dark:text-[#141312] cursor-pointer"
+            >
+              Apply
+            </button>
+          </div>
+        )}
+
         <div
           onMouseDown={(e) => e.preventDefault()}
           onTouchStart={(e) => e.stopPropagation()}
-          className="pointer-events-auto flex h-13 min-h-[52px] items-center justify-around gap-2 rounded-full bg-white dark:bg-[#1C1C1E] px-4 py-1.5 border border-black/[0.08] dark:border-white/[0.1] shadow-xl text-[var(--text-primary)] w-full max-w-[380px]"
+          className="pointer-events-auto flex h-13 min-h-[52px] w-full max-w-[420px] flex-nowrap items-center gap-1.5 overflow-x-auto no-scrollbar rounded-full bg-white dark:bg-[#1C1C1E] px-3 py-1.5 border border-black/[0.08] dark:border-white/[0.1] shadow-xl text-[var(--text-primary)]"
         >
           {/* "Aa" Block Inserter */}
           <button
             onClick={() => setIsInsertSheetOpen(true)}
-            className="flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full text-[15px] font-bold tracking-tight hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
+            className="flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full text-[15px] font-bold tracking-tight hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
             title="Typography & Blocks"
             aria-label="Typography"
           >
             Aa
           </button>
 
+          {/* Bold */}
+          <button
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+              editor.isActive("bold")
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+            }`}
+            title="Bold"
+            aria-label="Bold"
+          >
+            <span className="font-bold text-[15px]">B</span>
+          </button>
+
+          {/* Italic */}
+          <button
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+              editor.isActive("italic")
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+            }`}
+            title="Italic"
+            aria-label="Italic"
+          >
+            <span className="italic font-serif text-[15px]">I</span>
+          </button>
+
+          {/* Underline */}
+          <button
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+              editor.isActive("underline")
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+            }`}
+            title="Underline"
+            aria-label="Underline"
+          >
+            <span className="underline text-[15px] font-medium">U</span>
+          </button>
+
+          {/* Strikethrough */}
+          <button
+            onClick={() => editor.chain().focus().toggleStrike().run()}
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+              editor.isActive("strike")
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+            }`}
+            title="Strikethrough"
+            aria-label="Strikethrough"
+          >
+            <span className="line-through text-[15px] font-medium">S</span>
+          </button>
+
+          {/* Highlight */}
+          <button
+            onClick={() => editor.chain().focus().toggleHighlight().run()}
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+              editor.isActive("highlight")
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+            }`}
+            title="Highlight"
+            aria-label="Highlight"
+          >
+            <Icon name="ink_highlighter" size={19} />
+          </button>
+
+          {/* Inline Code */}
+          <button
+            onClick={() => editor.chain().focus().toggleCode().run()}
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+              editor.isActive("code")
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+            }`}
+            title="Inline Code"
+            aria-label="Inline Code"
+          >
+            <Icon name="code" size={19} />
+          </button>
+
+          {/* Link */}
+          <button
+            onClick={() => {
+              const prevUrl = editor.getAttributes("link").href || "";
+              setLinkUrl(prevUrl);
+              setShowLinkInput((prev) => !prev);
+            }}
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+              editor.isActive("link") || showLinkInput
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+            }`}
+            title="Link"
+            aria-label="Link"
+          >
+            <Icon name="link" size={19} />
+          </button>
+
+          {/* Heading 1 */}
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+              editor.isActive("heading", { level: 1 })
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+            }`}
+            title="Heading 1"
+            aria-label="Heading 1"
+          >
+            <Icon name="format_h1" size={19} />
+          </button>
+
+          {/* Heading 2 */}
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+              editor.isActive("heading", { level: 2 })
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+            }`}
+            title="Heading 2"
+            aria-label="Heading 2"
+          >
+            <Icon name="format_h2" size={19} />
+          </button>
+
           {/* Checklist Tasklist */}
           <button
             onClick={() => editor.chain().focus().toggleTaskList().run()}
-            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all cursor-pointer ${
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
               editor.isActive("taskList")
                 ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
                 : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
@@ -292,6 +474,34 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
             aria-label="Checklist"
           >
             <ListTodo size={20} strokeWidth={2.3} />
+          </button>
+
+          {/* Bullet List */}
+          <button
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+              editor.isActive("bulletList")
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+            }`}
+            title="Bullet list"
+            aria-label="Bullet list"
+          >
+            <List size={20} strokeWidth={2.4} />
+          </button>
+
+          {/* Blockquote / Quote */}
+          <button
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+              editor.isActive("blockquote")
+                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
+                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
+            }`}
+            title="Quote"
+            aria-label="Quote"
+          >
+            <TextQuote size={20} strokeWidth={2.3} />
           </button>
 
           {/* Table */}
@@ -307,7 +517,7 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
                 .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
                 .run()
             }
-            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all cursor-pointer ${
+            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
               editor.isActive("table")
                 ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
                 : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
@@ -321,39 +531,11 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
           {/* Paperclip (Attachments / Link / Image) */}
           <button
             onClick={() => setIsInsertSheetOpen(true)}
-            className="flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
+            className="flex h-10 w-10 min-h-[40px] min-w-[40px] flex-shrink-0 items-center justify-center rounded-full text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
             title="Attachments"
             aria-label="Attachments"
           >
             <Paperclip size={20} strokeWidth={2.2} />
-          </button>
-
-          {/* Bullet List */}
-          <button
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all cursor-pointer ${
-              editor.isActive("bulletList")
-                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
-                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
-            }`}
-            title="Bullet list"
-            aria-label="Bullet list"
-          >
-            <List size={20} strokeWidth={2.4} />
-          </button>
-
-          {/* Blockquote / Indent */}
-          <button
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            className={`flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-all cursor-pointer ${
-              editor.isActive("blockquote")
-                ? "bg-[#141312] dark:bg-white text-white dark:text-[#141312] shadow-xs"
-                : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95"
-            }`}
-            title="Quote"
-            aria-label="Quote"
-          >
-            <TextQuote size={20} strokeWidth={2.3} />
           </button>
         </div>
       </div>
