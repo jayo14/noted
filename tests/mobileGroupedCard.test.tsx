@@ -97,4 +97,19 @@ describe("MobileGroupedCard Component", () => {
 
     expect(html).toBe("");
   });
+
+  it("renders swipe-to-delete action backdrop when onRequestDelete is provided", () => {
+    const html = renderToString(
+      <MobileGroupedCard
+        notes={mockNotes}
+        collections={mockCollections}
+        onSelectNote={() => {}}
+        onRequestDelete={() => {}}
+      />
+    );
+
+    expect(html).toContain("Delete");
+    expect(html).toContain('aria-label="Delete Academic GEM — 19th Nov. 2026"');
+    expect(html).toContain("touch-action:pan-y");
+  });
 });

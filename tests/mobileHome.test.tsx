@@ -70,6 +70,8 @@ describe("MobileHome Component", () => {
     );
 
     expect(html).toContain('aria-label="More options"');
+    expect(html).toContain('aria-label="Settings"');
+    expect(html).toContain("liquid-glass");
   });
 
   it("renders Update Available badge when update is available", () => {
@@ -103,6 +105,8 @@ describe("MobileHome Component", () => {
 
     // Initial render has menu closed, but component has props wired properly
     expect(html).toContain('aria-label="More options"');
+    expect(html).toContain('aria-label="Settings"');
+    expect(html).toContain("liquid-glass");
   });
 
   describe("UpdateModal Component", () => {
