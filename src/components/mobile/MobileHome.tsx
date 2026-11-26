@@ -143,18 +143,28 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
             <ChevronLeft size={24} strokeWidth={2.4} />
           </button>
 
-          {/* Circular More options button (...) matching Image 2 */}
-          <div className="relative">
+          {/* Right header actions: Settings cog + More options (...) */}
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setIsMenuOpen((prev) => !prev)}
+              onClick={onOpenSettings}
               className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] shadow-xs text-[var(--text-primary)] active:scale-90 transition-all cursor-pointer"
-              aria-label="More options"
+              aria-label="Settings"
+              title="Settings"
             >
-              <MoreHorizontal size={22} strokeWidth={2.4} />
+              <Settings size={20} strokeWidth={2.2} />
             </button>
 
-            {/* Overflow options menu */}
-            {isMenuOpen && (
+            <div className="relative">
+              <button
+                onClick={() => setIsMenuOpen((prev) => !prev)}
+                className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] shadow-xs text-[var(--text-primary)] active:scale-90 transition-all cursor-pointer"
+                aria-label="More options"
+              >
+                <MoreHorizontal size={22} strokeWidth={2.4} />
+              </button>
+
+              {/* Overflow options menu */}
+              {isMenuOpen && (
               <>
                 <div
                   className="fixed inset-0 z-30"
@@ -200,16 +210,6 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
                     <span>Folders & Collections</span>
                   </button>
                   <button
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      onOpenSettings();
-                    }}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                  >
-                    <Settings size={16} />
-                    <span>Settings</span>
-                  </button>
-                  <button
                     onClick={handleCheckForUpdatesClick}
                     disabled={isChecking}
                     className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer disabled:opacity-60"
@@ -252,6 +252,7 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
                 </div>
               </>
             )}
+            </div>
           </div>
         </header>
 
