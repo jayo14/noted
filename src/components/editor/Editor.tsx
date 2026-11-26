@@ -68,7 +68,9 @@ export const Editor: React.FC<EditorProps> = ({
   const [isCollectionPickerOpen, setIsCollectionPickerOpen] = useState(false);
   const [newColInput, setNewColInput] = useState("");
   const [isCreatingInlineCol, setIsCreatingInlineCol] = useState(false);
-  const [typographyMode, setTypographyMode] = useState<"serif" | "sans">("serif");
+  const [typographyMode, setTypographyMode] = useState<"serif" | "sans" | "mono">(
+    () => settingsService.getPreferences().fontFamily,
+  );
   const [prefs, setPrefs] = useState<AppPreferences>(settingsService.getPreferences());
   const [displayDateTime, setDisplayDateTime] = useState(() => formatNoteDateTime(updatedAt));
 
@@ -87,7 +89,7 @@ export const Editor: React.FC<EditorProps> = ({
   useEffect(() => {
     const unsub = settingsService.subscribe((p) => {
       setPrefs(p);
-      setTypographyMode(p.fontFamily === "sans" ? "sans" : "serif");
+      setTypographyMode(p.fontFamily);
     });
     return unsub;
   }, []);
@@ -160,11 +162,15 @@ export const Editor: React.FC<EditorProps> = ({
           }
         }
 
-        // 2. Check for markdown plain text in clipboard intelligently
+        // 2. Check for markdown plain text in clipboard intelligently (skip inside code blocks)
         const plainText = event.clipboardData?.getData("text/plain");
         const html = event.clipboardData?.getData("text/html");
 
-        if (plainText && shouldRenderAsMarkdown(plainText, html)) {
+        if (
+          !editorRef.current?.isActive("codeBlock") &&
+          plainText &&
+          shouldRenderAsMarkdown(plainText, html)
+        ) {
           event.preventDefault();
           const formattedHtml = markdownToTipTapHtml(plainText);
           setTimeout(() => {
@@ -368,7 +374,11 @@ export const Editor: React.FC<EditorProps> = ({
               onChange={handleTitleChange}
               onKeyDown={handleTitleKeyDown}
               className={`w-full bg-transparent text-2xl sm:text-3xl lg:text-[36px] xl:text-[40px] font-bold tracking-tight text-[var(--text-primary)] placeholder-[var(--text-subtle)] outline-none border-none p-0 focus:ring-0 leading-tight ${
-                typographyMode === "serif" ? "font-serif-title" : "font-sans-title"
+                typographyMode === "sans"
+                  ? "font-sans-title"
+                  : typographyMode === "mono"
+                  ? "font-mono-title"
+                  : "font-serif-title"
               }`}
               disabled={isReadOnly}
             />
@@ -529,12 +539,13 @@ export const Editor: React.FC<EditorProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
-              const nextMode = typographyMode === "serif" ? "sans" : "serif";
+              const nextMode =
+                typographyMode === "serif" ? "sans" : typographyMode === "sans" ? "mono" : "serif";
               setTypographyMode(nextMode);
               settingsService.updatePreferences({ fontFamily: nextMode });
             }}
             className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-bold text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors cursor-pointer"
-            title={`Title font: ${typographyMode === "serif" ? "Serif" : "Sans"}. Click to switch.`}
+            title={`Global font: ${typographyMode === "serif" ? "Newsreader (Serif)" : typographyMode === "sans" ? "Plus Jakarta Sans" : "Monospace"}. Click to switch.`}
           >
             <span>Aa</span>
           </button>

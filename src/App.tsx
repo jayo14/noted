@@ -16,7 +16,7 @@ import { NotesPanel } from "@/components/notes/NotesPanel";
 import { Editor } from "@/components/editor/Editor";
 import { extractTextFromJSONContent } from "@/lib/utils";
 import { exportNoteAsFile, jsonContentToMarkdown, parseImportFile } from "@/lib/export";
-import { settingsService, type NotesViewMode } from "@/services/settingsService";
+import { settingsService, applyFontPreferencesToDocument, type NotesViewMode } from "@/services/settingsService";
 import {
   checkForUpdates,
   isUpdateDismissed,
@@ -97,8 +97,10 @@ export function App() {
   const [clipboardAutoFocus, setClipboardAutoFocus] = useState(false);
 
   useEffect(() => {
+    void settingsService.init();
     return settingsService.subscribe((prefs) => {
       setNotesViewMode(prefs.notesViewMode || "list");
+      applyFontPreferencesToDocument(prefs);
     });
   }, []);
 

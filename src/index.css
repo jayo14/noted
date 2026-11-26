@@ -51,6 +51,51 @@
     --selection-bg: #383834;
   }
 
+  :root {
+    --noted-font-family: "Newsreader", Georgia, Cambria, "Times New Roman", serif;
+    --noted-editor-font-size: 1rem;
+    --noted-editor-line-height: 1.7;
+  }
+
+  html[data-font-family="serif"] {
+    --noted-font-family: "Newsreader", Georgia, Cambria, "Times New Roman", serif;
+  }
+
+  html[data-font-family="sans"] {
+    --noted-font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  html[data-font-family="mono"] {
+    --noted-font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  }
+
+  html[data-font-size="compact"] {
+    font-size: 14.5px;
+    --noted-editor-font-size: 0.90625rem;
+  }
+
+  html[data-font-size="normal"] {
+    font-size: 16px;
+    --noted-editor-font-size: 1rem;
+  }
+
+  html[data-font-size="large"] {
+    font-size: 17.5px;
+    --noted-editor-font-size: 1.125rem;
+  }
+
+  html[data-line-height="tight"] {
+    --noted-editor-line-height: 1.45;
+  }
+
+  html[data-line-height="normal"] {
+    --noted-editor-line-height: 1.7;
+  }
+
+  html[data-line-height="relaxed"] {
+    --noted-editor-line-height: 1.95;
+  }
+
   * {
     border-color: var(--border-subtle);
   }
@@ -58,7 +103,7 @@
   body {
     background-color: var(--bg-window);
     color: var(--text-primary);
-    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: var(--noted-font-family);
     letter-spacing: -0.012em;
     margin: 0;
     padding: 0;
@@ -87,6 +132,10 @@
   font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+.font-mono-title {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
 .font-sans .tiptap h1,
 .font-sans .tiptap h2,
 .font-sans .tiptap h3,
@@ -94,6 +143,25 @@
 .font-sans .tiptap blockquote,
 .font-sans-title {
   font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.font-serif .tiptap h1,
+.font-serif .tiptap h2,
+.font-serif .tiptap h3,
+.font-serif .tiptap p,
+.font-serif .tiptap blockquote,
+.font-serif-title {
+  font-family: "Newsreader", Georgia, Cambria, "Times New Roman", serif;
+}
+
+.font-mono .tiptap h1,
+.font-serif .tiptap .noted-code-block,
+.font-mono .tiptap h2,
+.font-mono .tiptap h3,
+.font-mono .tiptap p,
+.font-mono .tiptap blockquote,
+.font-mono-title {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
 
@@ -129,15 +197,15 @@
 }
 
 .tiptap p {
-  line-height: 1.7;
+  line-height: var(--noted-editor-line-height);
   margin-top: 0.5em;
   margin-bottom: 0.5em;
-  font-size: 1.025rem;
+  font-size: var(--noted-editor-font-size);
   color: var(--text-primary);
 }
 
 .tiptap h1 {
-  font-family: "Newsreader", Georgia, serif;
+  font-family: var(--noted-font-family);
   font-size: 2.25rem;
   font-weight: 700;
   line-height: 1.2;
@@ -350,7 +418,8 @@
 
 .tiptap li {
   margin: 0.25rem 0;
-  line-height: 1.6;
+  line-height: var(--noted-editor-line-height);
+  font-size: var(--noted-editor-font-size);
 }
 
 /* Horizontal rule */

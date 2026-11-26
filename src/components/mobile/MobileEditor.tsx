@@ -338,7 +338,11 @@ export const MobileEditor: React.FC<MobileEditorProps> = ({
             onPaste={handleTitlePaste}
             disabled={isReadOnly}
             className={`w-full bg-transparent text-[30px] font-bold tracking-tight text-[var(--text-primary)] placeholder-[var(--text-subtle)] outline-none border-none p-0 focus:ring-0 leading-tight ${
-              prefs.fontFamily === "sans" ? "font-sans-title" : "font-serif-title"
+              prefs.fontFamily === "sans"
+                ? "font-sans-title"
+                : prefs.fontFamily === "mono"
+                ? "font-mono-title"
+                : "font-serif-title"
             }`}
           />
         </div>
