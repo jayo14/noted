@@ -33,6 +33,7 @@ export class NoteService {
       content: createEmptyDoc(),
       collection_id: collectionId,
       is_pinned: false,
+      is_hidden: false,
       created_at: now,
       updated_at: now,
       deleted_at: null,
@@ -82,6 +83,18 @@ export class NoteService {
     if (!note) return null;
 
     return await this.updateNote(id, { is_pinned: !note.is_pinned });
+  }
+
+  public async setHidden(id: NoteId, isHidden: boolean): Promise<Note | null> {
+    return await this.updateNote(id, { is_hidden: isHidden });
+  }
+
+  public async toggleHidden(id: NoteId): Promise<Note | null> {
+    const storage = await getStorageAdapter();
+    const note = await storage.getNoteById(id);
+    if (!note) return null;
+
+    return await this.updateNote(id, { is_hidden: !note.is_hidden });
   }
 
   public async moveToCollection(noteId: NoteId, collectionId: CollectionId | null): Promise<Note | null> {
@@ -152,6 +165,7 @@ export class NoteService {
       content: JSON.parse(JSON.stringify(existing.content)),
       collection_id: existing.collection_id,
       is_pinned: false,
+      is_hidden: Boolean(existing.is_hidden),
       created_at: now,
       updated_at: now,
       deleted_at: null,

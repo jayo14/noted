@@ -25,9 +25,11 @@ export class SearchService {
 
     if (section === "trash") {
       scopedNotes = notes.filter((n) => n.deleted_at !== null);
+    } else if (section === "hidden") {
+      scopedNotes = notes.filter((n) => n.deleted_at === null && Boolean(n.is_hidden));
     } else {
-      // Normal active notes (not deleted)
-      const activeNotes = notes.filter((n) => n.deleted_at === null);
+      // Normal active notes (not deleted and not hidden)
+      const activeNotes = notes.filter((n) => n.deleted_at === null && !n.is_hidden);
 
       if (section === "all") {
         scopedNotes = activeNotes;

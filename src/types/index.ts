@@ -11,6 +11,7 @@ export interface Note {
   content: JSONContent;
   collection_id: CollectionId | null;
   is_pinned: boolean;
+  is_hidden?: boolean;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -51,7 +52,7 @@ export interface DeviceInfo {
 
 export type ThemePreference = "light" | "dark" | "system";
 
-export type NavSection = "all" | "pinned" | "today" | "archive" | "collection" | "trash" | "clipboard" | "settings";
+export type NavSection = "all" | "pinned" | "today" | "archive" | "collection" | "trash" | "clipboard" | "settings" | "hidden";
 
 export type ClipboardContentType = "text" | "html" | "image";
 

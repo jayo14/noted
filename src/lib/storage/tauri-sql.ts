@@ -30,6 +30,7 @@ export class TauriSqlAdapter implements DatabaseAdapter {
           content TEXT NOT NULL,
           collection_id TEXT,
           is_pinned INTEGER NOT NULL DEFAULT 0,
+          is_hidden INTEGER NOT NULL DEFAULT 0,
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL,
           deleted_at TEXT,
@@ -135,6 +136,13 @@ export class TauriSqlAdapter implements DatabaseAdapter {
         END;
       `);
 
+      // Safe column migration for existing SQLite databases
+      try {
+        await this.db.execute("ALTER TABLE notes ADD COLUMN is_hidden INTEGER NOT NULL DEFAULT 0");
+      } catch {
+        // Column already exists
+      }
+
       this.isInitialized = true;
     } catch (e) {
       console.error("Failed to initialize Tauri SQLite Database:", e);
@@ -157,6 +165,7 @@ export class TauriSqlAdapter implements DatabaseAdapter {
       content: string;
       collection_id: string | null;
       is_pinned: number;
+      is_hidden?: number;
       created_at: string;
       updated_at: string;
       deleted_at: string | null;
@@ -166,6 +175,7 @@ export class TauriSqlAdapter implements DatabaseAdapter {
     return rows.map((r) => ({
       ...r,
       is_pinned: Boolean(r.is_pinned),
+      is_hidden: Boolean(r.is_hidden),
       content: typeof r.content === "string" ? JSON.parse(r.content) : r.content,
     }));
   }
@@ -181,6 +191,7 @@ export class TauriSqlAdapter implements DatabaseAdapter {
       content: string;
       collection_id: string | null;
       is_pinned: number;
+      is_hidden?: number;
       created_at: string;
       updated_at: string;
       deleted_at: string | null;
@@ -192,6 +203,7 @@ export class TauriSqlAdapter implements DatabaseAdapter {
     return {
       ...r,
       is_pinned: Boolean(r.is_pinned),
+      is_hidden: Boolean(r.is_hidden),
       content: typeof r.content === "string" ? JSON.parse(r.content) : r.content,
     };
   }
@@ -202,15 +214,17 @@ export class TauriSqlAdapter implements DatabaseAdapter {
 
     const contentStr = JSON.stringify(note.content);
     const isPinnedInt = note.is_pinned ? 1 : 0;
+    const isHiddenInt = note.is_hidden ? 1 : 0;
 
     await this.db.execute(
-      `INSERT INTO notes (id, user_id, title, content, collection_id, is_pinned, created_at, updated_at, deleted_at, revision)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO notes (id, user_id, title, content, collection_id, is_pinned, is_hidden, created_at, updated_at, deleted_at, revision)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        ON CONFLICT(id) DO UPDATE SET
          title = excluded.title,
          content = excluded.content,
          collection_id = excluded.collection_id,
          is_pinned = excluded.is_pinned,
+         is_hidden = excluded.is_hidden,
          updated_at = excluded.updated_at,
          deleted_at = excluded.deleted_at,
          revision = excluded.revision`,
@@ -221,6 +235,7 @@ export class TauriSqlAdapter implements DatabaseAdapter {
         contentStr,
         note.collection_id,
         isPinnedInt,
+        isHiddenInt,
         note.created_at,
         note.updated_at,
         note.deleted_at,
@@ -394,7 +409,7 @@ export class TauriSqlAdapter implements DatabaseAdapter {
     const ftsQuery = `
       SELECT n.* FROM notes n
       JOIN notes_fts f ON n.id = f.id
-      WHERE notes_fts MATCH $1 AND n.deleted_at IS NULL
+      WHERE notes_fts MATCH $1 AND n.deleted_at IS NULL AND COALESCE(n.is_hidden, 0) = 0
       ORDER BY bm25(notes_fts), n.updated_at DESC
     `;
 
@@ -406,6 +421,7 @@ export class TauriSqlAdapter implements DatabaseAdapter {
         content: string;
         collection_id: string | null;
         is_pinned: number;
+        is_hidden?: number;
         created_at: string;
         updated_at: string;
         deleted_at: string | null;
@@ -415,6 +431,7 @@ export class TauriSqlAdapter implements DatabaseAdapter {
       return rows.map((r) => ({
         ...r,
         is_pinned: Boolean(r.is_pinned),
+        is_hidden: Boolean(r.is_hidden),
         content: typeof r.content === "string" ? JSON.parse(r.content) : r.content,
       }));
     } catch (e) {
