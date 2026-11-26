@@ -26,6 +26,7 @@ interface MobileHomeProps {
   filter: FilterState;
   onSelectNote: (id: string) => void;
   onCreateNote: () => void;
+  onDeleteNote?: (id: string) => Promise<void> | void;
   onFilterSection: (section: "all" | "pinned" | "later" | "archive") => void;
   onOpenSettings: () => void;
   onOpenCollections: () => void;
@@ -43,6 +44,7 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
   filter,
   onSelectNote,
   onCreateNote,
+  onDeleteNote,
   onFilterSection,
   onOpenSettings,
   onOpenCollections,
@@ -55,6 +57,8 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [localChecking, setLocalChecking] = useState(false);
+  const [pendingDeleteNote, setPendingDeleteNote] = useState<Note | null>(null);
+  const [isDeletingNote, setIsDeletingNote] = useState(false);
   const [, setPrefs] = useState(() => settingsService.getPreferences());
 
   useEffect(() => {
@@ -281,6 +285,8 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
               notes={group.notes}
               collections={collections}
               onSelectNote={onSelectNote}
+              onRequestDelete={onDeleteNote ? (note) => setPendingDeleteNote(note) : undefined}
+              pendingDeleteNoteId={pendingDeleteNote?.id ?? null}
             />
           </div>
         ))}
@@ -330,6 +336,64 @@ export const MobileHome: React.FC<MobileHomeProps> = ({
           <SquarePen size={22} strokeWidth={2.2} />
         </button>
       </div>
+
+      {/* Swipe-to-Delete Confirmation Dialog */}
+      {pendingDeleteNote && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs px-6 animate-in fade-in duration-150"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mobile-delete-dialog-title"
+          onClick={() => {
+            if (!isDeletingNote) setPendingDeleteNote(null);
+          }}
+        >
+          <div
+            className="w-full max-w-xs rounded-[22px] bg-white dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] p-5 shadow-2xl text-center animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-red-500/12 text-red-500">
+              <Trash2 size={20} strokeWidth={2.2} />
+            </div>
+            <h3
+              id="mobile-delete-dialog-title"
+              className="text-[17px] font-bold text-[var(--text-primary)] tracking-tight"
+            >
+              Delete Note?
+            </h3>
+            <p className="mt-1.5 text-[13.5px] text-[var(--text-muted)] leading-snug">
+              "{pendingDeleteNote.title?.trim() || "Untitled"}" will be moved to Trash.
+            </p>
+            <div className="mt-5 flex items-center gap-2.5">
+              <button
+                type="button"
+                disabled={isDeletingNote}
+                onClick={() => setPendingDeleteNote(null)}
+                className="flex-1 rounded-xl bg-black/[0.06] dark:bg-white/[0.1] py-2.5 text-[14px] font-semibold text-[var(--text-primary)] active:scale-95 transition-transform cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingNote}
+                onClick={async () => {
+                  if (!onDeleteNote) return;
+                  setIsDeletingNote(true);
+                  try {
+                    await onDeleteNote(pendingDeleteNote.id);
+                    setPendingDeleteNote(null);
+                  } finally {
+                    setIsDeletingNote(false);
+                  }
+                }}
+                className="flex-1 rounded-xl bg-red-500 hover:bg-red-600 py-2.5 text-[14px] font-semibold text-white active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isDeletingNote ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
